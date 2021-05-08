@@ -88,33 +88,31 @@ c0ef:
 	.text $8F, $8F, $E6, $8F, "G", $8F, $8F, $95, $EE, $06, "\", $0F, $35
 
 
+; Interpreter Single Byte Command Lookup Table
 
-  Interpreter Single Byte Command Lookup Table
-  --------------------------------------------
-
-C1DD  2D 2B 7C 3A FE                                   -+|:.
-C1E2  2A 2F 25 21 3F 26 FE                             */%!?&.
-C1E9  29 FF                                            ).
-C1EB  3D FF                                            =.
-C1ED  21 3F 24 FF                                      !?$.
-C1F1  3D 21 3F FF                                      =!?.
-C1F5  27 22 FE                                         '".
-
-
-  LSB Execution Address Table for Single Byte Commands
-  ----------------------------------------------------
-
-C1F8                          B7 9A D3 EF EF 13 5E 70
-C200  B3 9C 7B 7B 78 78 78 78 EE 06 5C 5C E5 75 7B 7B
-C210  6F 7A
+c1dd:
+	.text "-+|:", $FE
+	.text "*/%!?&", $FE
+	.text ")", $FF
+	.text "=", $FF
+	.text "!?$", $FF
+	.text "=!?", $FF
+	.text "'", $22, $FE
 
 
+; LSB Execution Address Table for Single Byte Commands
 
-  MSB Execution Address Table for Single Byte Commands
-  ----------------------------------------------------
+c1f8:
+	.text $B7, $9A, $D3, $EF, $EF, $13, $5E, $70
+	.text $B3, $9C, $7B, $7B, $78, $78, $78, $78, $EE, $06, $5C, $5C, $E5, $75, $7B, $7B
+	.text $6F, $7A
 
-C212        C7 C7 C7 C7 C7 C8 C8 C8 C8 C8 C8 C8 C2 C2
-C220  C2 C2 C3 C4 CD CD C3 CD CD CD C3 C3              ............
+
+; MSB Execution Address Table for Single Byte Commands
+
+c212:
+	.text $C7, $C7, $C7, $C7, $C7, $C8, $C8, $C8, $C8, $C8, $C8, $C8, $C2, $C2
+	.text $C2, $C2, $C3, $C4, $CD, $CD, $C3, $CD, $CD, $CD, $C3, $C3
 
 
   Function Interpreter subroutine
