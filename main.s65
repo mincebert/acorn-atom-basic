@@ -1,86 +1,69 @@
-              ****************************************
-              * Disassembly of Atom Operating System *
-              *           from #C000 to #CFFF        *
-              ****************************************
-
-1985-05-06	Version 1.0
-1993-08-25	Version 1.1 Minor corrections by KH:
-	C08D:	.BYTE	"*E",	$F0	;  ASTERISK MISSING FROM ORIGINAL DISASSEMBLY!
-	C09C:	.BYTE	"INT",	$C3	;; error in original disassembly
-	C09C:	.BYTE	"INK",	$C3	;; more likely end of LINK command
-	Noted conflict between original disassembly and some ROM binaries at:
-	CBB6  99 62 02  STA #262,Y	; 62 not 61
-	CBBB  99 6d 02  STA #26D,Y	; 6D not 6C
+; ATOM BASIC source code
 
 
+; Interpreter Command Lookup Table
+;
+; Each sub table is terminated by a negative byte.
+; A termination byte of #FF causes BRK to be executed on failure.
 
-  Interpreter Command Lookup Table
-  --------------------------------
-
-- Each sub table is terminated by a negative byte.
-- A termination byte of #FF causes BRK to be executed on failure.
-
-C000  3C 3D 3E FE                                      <=>.
-C004  2D 2B C8 23 28 21 3F 52 54 4C 43 41 50 45 47 42  -+.#(!?RTLCAPEGB
-C014  46 F0                                            F.
-C016  54 FF                                            T.
-C018  4F CB                                            O.
-C01A  53 CB                                            S.
-C01C  54 45 50 CB                                      TEP.
-C020  54 C3                                            T.
-C022  48 45 4E C3                                      HEN.
-C026  22 24 CE CE CC                                   "$...
-C02B  24 2C C5                                         $.,
-C02E  24 26 3B 0D 2C C3 C5 C2                          $&;.,...
-C036  3E C7                                            >.
-C038  3D C7 C7 C7                                      =...
-C03C  3D C7 C7 C8                                      =...
-C040  52 C7 C7                                         R..
-C043  4F 41 FE                                         OA.
-C046  24 C7                                            $.
-C048  48 C9                                            H.
-C04A  45 4E C9                                         EN.
-C04D  4E 44 C7 C9 C9 C9 C9                             ND.....
-C054  4E 44 C9                                         ND.
-C057  4F 50 C9                                         OP.
-C05A  4F 55 4E 54 C9                                   OUNT.
-C05F  42 53 C9                                         BS.
-C062  54 52 CF                                         TR.
-C065  58 54 CF                                         XT.
-C068  45 54 CF                                         ET.
-C06B  47 45 54 CF                                      GET.
-C06F  49 4E CF                                         IN.
-C072  4F 55 54 CF C3 C3                                OUT...
-C078  52 49 4E 54 C3                                   RINT.
-C07D  4E 4C 55 4E 49 47 52 46 21 3F 24 50 44 4C 53 42  NLUNIGRF!?$PDLSB
-C08D  2A 45 F0                                            *E.
-
-C090  41 56 45 CF                                      AVE.
-C094  45 57 C2                                         EW.
-C097  4F CC                                            O.
-C099  45 54 C3                                         ET.
-C09C  49 4E 4B C3                                      INK.
-
-C0A0  49 53 54 CA                                      IST.
-C0A4  4F 41 44 CE                                      OAD.
-C0A8  4E 54 49 4C CC                                   NTIL.
-C0AD  45 58 54 CA                                      EXT.
-C0B1  46 C5                                            F.
-C0B3  4E 50 55 54 CC                                   NPUT.
-C0B8  4F 53 55 42 CB                                   OSUB.
-C0BD  4F 54 4F CC  OTO.
-C0C1  45 54 55 52 4E CB                                ETURN.
-C0C7  45 4D C5                                         EM.
-C0CA  55 4E F1                                         UN.
-C0CD  4F 52 CB                                         OR.
-C0D0  4E 44 CD                                         ND.
-C0D2  47 45 54 CF                                      GET.
-C0D6  50 55 54 CF                                      PUT.
-C0DA  48 55 54 CF                                      HUT.
-C0DF  50 55 54 CF                                      PUT.
-C0E3  54 52 CF                                         TR.
-C0E6  55 54 CF C3 C4 CD C4                             UT.....
-C0ED  2C FE                                            ,.
+c000:	.text "<=>", $FE
+	.text "-+", $C8, "#(!RTLCAPEGB"
+	.text "F", $F0
+	.text "T", $FF
+	.text "O", $CB
+	.text "S", $CB
+	.text "TEP", $CB
+	.text "T", $C3
+	.text "HEN", $C3
+	.text $22, "$", $CE, $CE, $CC
+	.text "$", $C5, ","
+	.text "$&;", $0D, ",", $C3, $C5, $C2
+	.text ">", $C7
+	.text "=", $C7, $C7, $C7
+	.text "=", $C7, $C7, $C8
+	.text "R", $C7, $C7
+	.text "OA", $FE
+	.text "$", $C7
+	.text "H", $C9
+	.text "EN", $C9
+	.text "ND", $C7, $C9, $C9, $C9, $C9
+	.text "ND", $C9
+	.text "OP", $C9
+	.text "OUNT", $C9
+	.text "BS", $C9
+	.text "TR", $CF
+	.text "XT", $CF
+	.text "ET", $CF
+	.text "GET", $CF
+	.text "IN", $CF
+	.text "OUT", $CF, $C3, $C3
+	.text "RINT", $C3
+	.text "NLUNIGRF!?$PDLSB*E", $F0
+	.text "AVE", $CF
+	.text "EW", $C2
+	.text "O", $CC
+	.text "ET", $C3
+	.text "INK", $C3
+	.text "IST", $CA
+	.text "OAD", $CE
+	.text "NTIL", $CC
+	.text "EXT", $CA
+	.text "F", $C5
+	.text "NPUT", $CC
+	.text "OSUB", $CB
+	.text "OTO", $CC
+	.text "ETURN", $CB
+	.text "EM", $C5
+	.text "UN", $F1
+	.text "OR", $CB
+	.text "ND", $CD
+	.text "GET", $CF
+	.text "PUT", $CF
+	.text "HUT", $CF
+	.text "PUT", $CF
+	.text "TR", $CF
+	.text "UT", $CF, $C3, $C4, $CD, $C4
+	.text ",", $FE
 
 
   Jump Address and Return Branch Table
