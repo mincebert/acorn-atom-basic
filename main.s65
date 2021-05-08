@@ -115,105 +115,101 @@ c212:
 	.text $C2, $C2, $C3, $C4, $CD, $CD, $C3, $CD, $CD, $CD, $C3, $C3
 
 
-  Function Interpreter subroutine
-  -------------------------------
+; Function Interpreter subroutine
+;
+; Evaluates an arbitrarily complex function pointed to by (5),Y where Y=?3
+; and stores the result on the Workspace Stack pointed to by ?4.
 
-- Evaluates an arbitrarily complex function pointed to by (5),Y where Y=?3
-  and stores the result on the Workspace Stack pointed to by ?4.
-
-C22C  20 3E CF  JSR #CF3E       Get <factor> into Y register
-C22F  84 0F     STY #F          Hex print flag, updated by comma
-
-
-  Search for ',' subroutine
-  -------------------------
-
-C231  A2 ED     LDX @#ED        Set table pointer to #C0ED to search
-                                for ',' only
+c22c:	jsr cf3e		; get <factor> into Y register§
+	sty $0f			; hex print flag, updated by comma
 
 
-  Interpreter subroutine
-  ----------------------
+; Search for ',' subroutine
 
-- Interprets the command word at #C0EE,X against text at (#5),?3
-
-C233  A4 03     LDY #3          Get the interpreter pointer
-
-                                SKIP ANY PRECEDING SPACES
-
-C235  88        DEY
-C236  C8        INY             Point to the next character in text
-C237  B1 05     LDA (#5),Y      ..and fetch it
-C239  C9 20     CMP @#20        Is it <SPC> ?
-C23B  F0 F9     BEQ #C236       ..yes, skip to next character
-
-                                GET FIRST CHARACTER MATCH
-
-C23D  84 5E     STY #5E         Save current interpreter index
-C23F  85 52     STA #52         Save character under interpretation
-C241  E8        INX             Point to next character in command table
-C242  BD FF BF  LDA #BFFF,X     ..and fetch it
-C245  30 24     BMI #C26B       ..a negative byte indicates the end of
-                                the initial letter table
-C247  C5 52     CMP #52         Same as character under interpretation ?
-C249  D0 F6     BNE #C241       ..no, try next initial letter
-
-                                MATCH THE REST OF THE COMMAND WORD
-
-C24B  BD EE C0  LDA #C0EE,X     Get index to rest-of-command-word table
-C24E  AA        TAX             This is now the new table pointer
-C24F  E8        INX             Point to the next character in the table
-C250  C8        INY             Point to the next character under analysis
-C251  BD FF BF  LDA #BFFF,X     Fetch the next command table character
-C254  30 15     BMI #C26B       ..a negative byte means either a
-                                successful match of end of command table
-C256  D1 05     CMP (#5),Y      Same as character under interpretation ?
-C258  F0 F5     BEQ #C24F       ..yes, now try to match the next character
-C25A  B1 05     LDA (#5),Y      ..no, get the failed character under
-                                interpretation
-C25C  C9 2E     CMP @#2E        Is it '.' indicating an abbreviation ?
-C25E  F0 04     BEQ #C264       ..yes, so it's a successful match
-C260  A4 5E     LDY #5E         ..no, so reset the interpreter pointer
-C262  10 E7     BPL #C24B       ..and try to match the next word in the
-                                command table
-
-                                SUCCESSFUL ABREVIATED MATCH - SKIP TO
-                                THE END OF THE COMMAND WORD IN THE TABLE
-
-C264  E8        INX             Point to the next character in the table
-C265  BD FF BF  LDA #BFFF,X     ..and fetch it
-C268  10 FA     BPL #C264       Keep incrementing to reach the command
-                                word's negative termination byte
-C26A  C8        INY             Point to the next character under analysis
-
-                                 Test for success or failure
-
-C26B  C9 FE     CMP @#FE        reached the end of the command table ?
-C26D  B0 3B     BCS #C2AA       ..yes, return or execute BRK as required
-
-                                GET THE COMMAND WORD'S JUMP ADDRESS INTO
-                                ZERO PAGE AND JUMP TO IT
-
-C26F  85 53     STA #53         Termination byte is the MSB jump address
-C271  BD EE C0  LDA #C0EE,X     Get the LSB jump address from the table
-C274  90 29     BCC #C29F       Dump it to #52, update #3 and #4 and
-                                jump to the command address ow in (#52)
-
-C276  A6 04     LDX #4
-C278  60        RTS
+c231:	ldx #$ED		; set table pointer to #C0ED to search
+				; for ',' only
 
 
-  Search for '=' subroutine
-  -------------------------
+; Interpreter subroutine
+;
+; Interprets the command word at #C0EE,X against text at (#5),?3.
 
-- Looks for '=', skipping leading spaces, in text pointed to by (5),Y
-  where Y=?3.
-- Executes BRK if the first non space character is not '='.
-- Returns with Y register pointing to the next character.
-- Returns with the interpreter pointer ?3 updated.
-- Returns with X register loaded with the w/s pointer ?4.
+c233:	ldy $3			; get the interpreter pointer
 
-C279  A2 0E     LDX @#E         Point to '=' at #C1EB
+				; SKIP ANY PRECEDING SPACES
+
+c235:	dey
+	iny			; Point to the next character in text
+	lda ($5),y		; ... and fetch it
+	cmp #" "		; Is it <SPC>?
+	beq c236		; ... yes, skip to next character
+
+				; GET FIRST CHARACTER MATCH
+
+c23d:	sty $5e			; Save current interpreter index
+	sta $52			; Save character under interpretation
+	inx			; Point to next character in command table
+	lda c000 - 1,x		; ... and fetch it
+	bmi c26b		; ... a negative byte indicates the end of
+				; the initial letter table
+	cmp $52			; Same as character under interpretation?
+	bne C241		; ... no, try next initial letter
+
+				; MATCH THE REST OF THE COMMAND WORD
+
+c24b:	lda c0ee,x		; Get index to rest-of-command-word table
+	tax			; This is now the new table pointer
+	inx			; Point to the next character in the table
+	iny			; Point to the next character under analysis
+	lda c000-1,x		; Fetch the next command table character
+	bmi c26b		; ... a negative byte means either a
+				; successful match of end of command table
+	cmp ($5),y		; Same as character under interpretation?
+	beq c24f		; ... yes, now try to match the next character
+	lda ($5),Y		; ... no, get the failed character under
+				; interpretation
+	cmp #"."		; Is it '.' indicating an abbreviation?
+	beq c264		; ... yes, so it's a successful match
+	ldy $5E			; ... no, so reset the interpreter pointer
+	bpl c24b		; ... and try to match the next word in the
+				; command table
+
+				; SUCCESSFUL ABREVIATED MATCH - SKIP TO
+				; THE END OF THE COMMAND WORD IN THE TABLE
+
+c264:	inx			; Point to the next character in the table
+	lda c000 - 1,x		; and fetch it
+	bpl c264		; Keep incrementing to reach the command
+				; word's negative termination byte
+	iny			; Point to the next character under analysis
+
+                                ; Test for success or failure
+
+c26b:	cmp #$fe		; reached the end of the command table ?
+	bcs c2aa		; ... yes, return or execute BRK as required
+
+				; GET THE COMMAND WORD'S JUMP ADDRESS INTO
+				; ZERO PAGE AND JUMP TO IT
+
+c26f:	sta $53			; Termination byte is the MSB jump address
+	lda c0ee,x		; Get the LSB jump address from the table
+	bcc c29f		; Dump it to $52, update $3 and $4 and
+				; jump to the command address now in ($52)
+
+c276:	ldx #4
+	rts
+
+
+; Search for '=' subroutine
+;
+; Looks for '=', skipping leading spaces, in text pointed to by (5),Y
+; where Y=?3.
+; Executes BRK if the first non space character is not '='.
+; Returns with Y register pointing to the next character.
+; Returns with the interpreter pointer ?3 updated.
+; Returns with X register loaded with the w/s pointer ?4.
+
+c279:	ldx #$e			; Point to '=' at $c1eb
 
 
   Single Byte Command Interpreter
