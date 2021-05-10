@@ -4,7 +4,7 @@
 ; Interpreter Command Lookup Table
 ;
 ; Each sub table is terminated by a negative byte.
-; A termination byte of #FF causes BRK to be executed on failure.
+; A termination byte of $FF causes BRK to be executed on failure.
 
 c000:
 	.text "<=>", $FE
@@ -126,13 +126,13 @@ c22c:	jsr cf3e		; get <factor> into Y register§
 
 ; Search for ',' subroutine
 
-c231:	ldx #$ED		; set table pointer to #C0ED to search
+c231:	ldx #$ED		; set table pointer to $C0ED to search
 				; for ',' only
 
 
 ; Interpreter subroutine
 ;
-; Interprets the command word at #C0EE,X against text at (#5),?3.
+; Interprets the command word at $C0EE,X against text at ($5),?3.
 
 c233:	ldy $3			; get the interpreter pointer
 
@@ -153,7 +153,7 @@ c23d:	sty $5e			; Save current interpreter index
 	bmi c26b		; ... a negative byte indicates the end of
 				; the initial letter table
 	cmp $52			; Same as character under interpretation?
-	bne C241		; ... no, try next initial letter
+	bne c241		; ... no, try next initial letter
 
 				; MATCH THE REST OF THE COMMAND WORD
 
@@ -170,7 +170,7 @@ c24b:	lda c0ee,x		; Get index to rest-of-command-word table
 				; interpretation
 	cmp #"."		; Is it '.' indicating an abbreviation?
 	beq c264		; ... yes, so it's a successful match
-	ldy $5E			; ... no, so reset the interpreter pointer
+	ldy $5e			; ... no, so reset the interpreter pointer
 	bpl c24b		; ... and try to match the next word in the
 				; command table
 
@@ -196,7 +196,7 @@ c26f:	sta $53			; Termination byte is the MSB jump address
 	bcc c29f		; Dump it to $52, update $3 and $4 and
 				; jump to the command address now in ($52)
 
-c276:	ldx #4
+c276:	ldx $4
 	rts
 
 
@@ -214,41 +214,41 @@ c279:	ldx #$e			; Point to '=' at $c1eb
 
 ; Single Byte Command Interpreter
 ;
-; Interpretes the single byte symbols at #C1DD.
+; Interpretes the single byte symbols at $C1DD.
 ; Enter with X register pointing to the symbol table to be used.
 
-c27b:	ldy #3			; Get the interpreter pointer
+c27b:	ldy $3			; Get the interpreter pointer
 c27d:	dey
 c27e:	iny
-c27f:	lda (#5),y		; Get the next character from text
-c281:	cmp @#20		; Is it <spc> ?
-c283:	beq #c27e		; ... yes, skip preceding spaces
-c285:	cmp #c1dd,x		; Is it this single byte symbol ?
-c288:	beq #c296		; ... yes, go fetch its jump address
-c28a:	sta #52			; ... no, save the character under analysis
+c27f:	lda ($5),y		; Get the next character from text
+c281:	cmp #$20		; Is it <spc> ?
+c283:	beq $c27e		; ... yes, skip preceding spaces
+c285:	cmp $c1dd,x		; Is it this single byte symbol ?
+c288:	beq $c296		; ... yes, go fetch its jump address
+c28a:	sta $52			; ... no, save the character under analysis
 c28c:	inx			; Point to the next table symbol
-c28d:	lda #c1dd,x		; ... and fetch it
-c290:	bmi #c2a8		; ... a negative byte means the end of table
+c28d:	lda $c1dd,x		; ... and fetch it
+c290:	bmi $c2a8		; ... a negative byte means the end of table
                                 ; termination byte has been reached
-c292:	cmp #52			; Does this symbol match the text ?
-c294:	bne #c28c		; ... no, try the next symbol
+c292:	cmp $52			; Does this symbol match the text ?
+c294:	bne $c28c		; ... no, try the next symbol
 
                                 ; MATCHED SYMBOL - FETCH JUMP ADDRESS
 
-c296:	lda #c212,x		; Get the MSB jump address
-c299:	sta #53			; ... into workspace
-c29b:	lda #c1f8,x		; Get the LSB jump address
+c296:	lda $c212,x		; Get the MSB jump address
+c299:	sta $53			; ... into workspace
+c29b:	lda $c1f8,x		; Get the LSB jump address
 c29e:	iny			; Increment the text pointer past the
                                 ; character just successfully interpreted
-c29f:	sta #52			; Dump the MSB jump address to workspace
-c2a1:	sty #3			; Update the interpreter pointer
-c2a3:	ldx #4			; Get the current workspace pointer
-c2a5:	jmp (#52)		; ... and jump
+c29f:	sta $52			; Dump the MSB jump address to workspace
+c2a1:	sty $3			; Update the interpreter pointer
+c2a3:	ldx $4			; Get the current workspace pointer
+c2a5:	jmp ($52)		; ... and jump
 
                                 ; END OF TABLE ACTION
 
-c2a8:	cmp @#fe		; Non-destructive failure ?
-c2aa:	beq #c276		; ..yes, load workspace pointer and return
+c2a8:	cmp #$fe		; Non-destructive failure ?
+c2aa:	beq $c276		; ..yes, load workspace pointer and return
 c2ac:	brk			; ..no, error 174
 
 
@@ -257,250 +257,250 @@ c2ac:	brk			; ..no, error 174
 ; Resets the print field length LSB variable '@' to the default of 8.
 ; Exits back to direct mode.
 
-c2ad:	jsr #c4e4		; Perform the interpreter post test
-c2b0:	bne #c2b6
+c2ad:	jsr $c4e4		; Perform the interpreter post test
+c2b0:	bne $c2b6
 
 
-; 'Cold Start' routine - Text at #2900
+; 'Cold Start' routine - Text at $2900
 ;
-; Comes from BREAK routine  at #FF94.
-; Points the text pointer ?#12 at #2900 and performs a 'NEW'.
+; Comes from BREAK routine  at $FF94.
+; Points the text pointer ?$12 at $2900 and performs a 'NEW'.
 
-c2b2:	lda @#29
-c2b4:	sta #12			; Set text pointer to page #29
+c2b2:	lda #$29
+c2b4:	sta $12			; Set text pointer to page $29
 
 
 ; 'Cold Start' routine - unspecified text Space
 ;
-; If coming from the BREAK routine at #FF97, the text space is #8200.
+; If coming from the BREAK routine at $FF97, the text space is $8200.
 ; Performs an 'NEW' at the current text space.
 
-c2b6:	lda @#d
-c2b8:	ldy #12			; Get the text page
-c2ba:	sty #e			; Set MSB TOP to the start of text
-c2bc:	ldy @#0
-c2be:	sty #d			; Set LSB TOP to the start of text
-c2c0:	sta (#d),y		; First byte of text is #D
-c2c2:	lda @#ff		; Get a text terminator
+c2b6:	lda #$d
+c2b8:	ldy $12			; Get the text page
+c2ba:	sty $e			; Set MSB TOP to the start of text
+c2bc:	ldy #$0
+c2be:	sty $d			; Set LSB TOP to the start of text
+c2c0:	sta ($d),y		; First byte of text is $D
+c2c2:	lda #$ff		; Get a text terminator
 c2c4:	iny			; Point to the second byte of text
-c2c5:	sta (#d),y		; ..and dump the terminator
+c2c5:	sta ($d),y		; ..and dump the terminator
 c2c7:	iny			; Point to the third byte of text
-c2c8:	sty #d			; ..and set LSB TOP
-c2ca:	lda @#8			; Get the default print length
-c2cc:	sta #321		; ..and set LSB integer variable '@'
+c2c8:	sty $d			; ..and set LSB TOP
+c2ca:	lda #$8			; Get the default print length
+c2cc:	sta $321		; ..and set LSB integer variable '@'
 
 
 ; Direct Command Handler
 ;
 ; Entered after a command execution or at the end of a program.
 
-c2cf:	lda @#3e		; Get '>'
+c2cf:	lda #$3e		; Get '>'
 c2d1:	cld
-c2d2:	jsr #cd0f		; Print the contents of the accumulator and
+c2d2:	jsr $cd0f		; Print the contents of the accumulator and
                                 ; get a line of text terminated by <CR> from
-                                ; the keyboard into the #100 buffer
+                                ; the keyboard into the $100 buffer
 
                                 ; INITIALISE THE (5),Y TEXT POINTER TO THE
-                                ; START OF THE #100 BUFFER
+                                ; START OF THE $100 BUFFER
 
-c2d5:	ldx @#1
-c2d7:	stx #6
+c2d5:	ldx #$1
+c2d7:	stx $6
 c2d9:	dex
-c2da:	stx #5
+c2da:	stx $5
                                 ; CLEAR LINE NUMBER TO ZERO - DIRECT MODE
 
-c2dc:	stx #1			; Clear the MSB line number
-c2de:	stx #2			; Clear the LSB line number
+c2dc:	stx $1			; Clear the MSB line number
+c2de:	stx $2			; Clear the LSB line number
 
-                                ; SET BRKVEC TO THE DEFAULT ROUTINE AT #C9D8
+                                ; SET BRKVEC TO THE DEFAULT ROUTINE AT $C9D8
 
-c2e0:	lda @#d8
-c2e2:	sta #202
-c2e5:	lda @#c9
-c2e7:	sta #203
+c2e0:	lda #$d8
+c2e2:	sta $202
+c2e5:	lda #$c9
+c2e7:	sta $203
 
                                 ; SET THE BASIC ERROR HANDLER TO THE
-                                ; DEFAULT TEXT AT #C9E7
+                                ; DEFAULT TEXT AT $C9E7
 
-c2ea:	lda @#e7
-c2ec:	sta #10
-c2ee:	lda @#c9
-c2f0:	sta #11
+c2ea:	lda #$e7
+c2ec:	sta $10
+c2ee:	lda #$c9
+c2f0:	sta $11
 
                                 ; EXECUTE THE TEXT POINTED BTO BY (5),Y
 
-c2f2:	ldx @#ff
+c2f2:	ldx #$ff
 c2f4:	txs			; Reset the stack poimter
-c2f5:	lda @#0
-c2f7:	sta #4			; Reset the workspace stack poimter
-c2f9:	sta #3			; Reset the interpreter index
-c2fb:	sta #15			; Reset the FOR...NEXT stack poimter
-c2fd:	sta #13			; Reset the GOSUB..RETURN stack poimter
-c2ff:	sta #14			; Reset the DO...UNTIL stack poimter
-c301:	ldx @#34
+c2f5:	lda #$0
+c2f7:	sta $4			; Reset the workspace stack poimter
+c2f9:	sta $3			; Reset the interpreter index
+c2fb:	sta $15			; Reset the FOR...NEXT stack poimter
+c2fd:	sta $13			; Reset the GOSUB..RETURN stack poimter
+c2ff:	sta $14			; Reset the DO...UNTIL stack poimter
+c301:	ldx #$34
 
                                 CLEAR THE LABEL (@ to z) ADDRESS STACK
 
-c303:	sta #38c,x
+c303:	sta $38c,x
 c306:	dex
-c307:	bne #c303
+c307:	bne $c303
 
-c309:	jsr #c434		; If the first non space character is
+c309:	jsr $c434		; If the first non space character is
                                 ; alphabetic and the the subsequent
                                 ; is not (but is not '.')
-c30c:	bcs #c32f		; ..then interpret a simple integer variable
+c30c:	bcs $c32f		; ..then interpret a simple integer variable
                                 ; definition
 
                                 ; CHECK FOR TEXT LINE ENTRY OR DELETION
 
-c30e:	jsr #c46a		; interpret a decimal string as a number
+c30e:	jsr $c46a		; interpret a decimal string as a number
                                 ; into the w/s stack, and increment ?4
-c311:	bcc #c316		; ... nvalid number
-c313:	jmp #cdc9		; Deal with line insertion and removal
+c311:	bcc $c316		; ... nvalid number
+c313:	jmp $cdc9		; Deal with line insertion and removal
 
-                                ; EXECUTE A DIRECT COMMAND AT #100
+                                ; EXECUTE A DIRECT COMMAND AT $100
 
-c316:	ldx @#7d		; Set the interpreter table pointer to #C???
-c318:	jmp #c233		; ..and interpret & execute the command
+c316:	ldx #$7d		; Set the interpreter table pointer to $C???
+c318:	jmp $c233		; ..and interpret & execute the command
 
 
 ; Execute the command 'THEN'
 
-c31b:	jsr #c434		; If the first non space character is
+c31b:	jsr $c434		; If the first non space character is
                                 ; alphabetic and the the subsequent
                                 ; is not (but is not '.')
-c31e:	bcs #c32f		; ..then treat this as an integer variable
+c31e:	bcs $c32f		; ..then treat this as an integer variable
                                 ; assignment
-c320:	ldx @#7f		; Set the interpreter table pointer to #C???
-c322:	jmp #c233		; ..and interpret & execute the command
+c320:	ldx #$7f		; Set the interpreter table pointer to $C???
+c322:	jmp $c233		; ..and interpret & execute the command
 
 
 ; Execute the command 'LET'
 
-c325:	jsr #c434		; If the first non space character is
+c325:	jsr $c434		; If the first non space character is
                                 ; alphabetic and the the subsequent
                                 ; is not (but is not '.')
-c328:	bcs #c32f		; ..then interpret a simple integer variable
-c32a:	ldx @#10		; Otherwise set the table pointer
-c32c:	jmp #c27b		; ..and interpret a ?, ! or $ definition
+c328:	bcs $c32f		; ..then interpret a simple integer variable
+c32a:	ldx #$10		; Otherwise set the table pointer
+c32c:	jmp $c27b		; ..and interpret a ?, ! or $ definition
 
                                 ; EXECUTE {simple integer variable} =, ? OR
                                 ; ! ASSIGNMENT
 
-c32f:	ldx @#14		; Set table pointer to
-c331:	jmp #c27b		; Search for & execute '=', '?' or '!'
+c32f:	ldx #$14		; Set table pointer to
+c331:	jmp $c27b		; Search for & execute '=', '?' or '!'
 
 
 ; Execute the command 'PRINT'
 
 c334:	sec
-c335:	ror #f			; Set bit 7 of the hex print flag to get
+c335:	ror $f			; Set bit 7 of the hex print flag to get
                                 ; the default decimal print mode
-c337:	jsr #c372
-c33a:	ldx @#2e		; Set the interpreter table pointer to #C???
-c33c:	jmp #c233		; ..and interpret & execute '=', '?' or '!'
+c337:	jsr $c372
+c33a:	ldx #$2e		; Set the interpreter table pointer to $C???
+c33c:	jmp $c233		; ..and interpret & execute '=', '?' or '!'
 
 
 ; Execute and Print an Arbitrarily Complex Expression
 
-c33f:	jsr #c78b		; Evaluate an arbitrarily complex
+c33f:	jsr $c78b		; Evaluate an arbitrarily complex
                                 ; expression, followed by a single byte
                                 ; symbol, followed by '<', '=' or '>'
-c342:	jsr #c3cb		; Copy the last level of the w/s stack to
-                                ; #52(LSB)..#55(MSB) & increment w/s pointer
-c345:	lda #f			; Print in decimal ?
-c347:	bmi #c36a		; ... yes, branch to decimal print routine
+c342:	jsr $c3cb		; Copy the last level of the w/s stack to
+                                ; $52(LSB)..$55(MSB) & increment w/s pointer
+c345:	lda $f			; Print in decimal ?
+c347:	bmi $c36a		; ... yes, branch to decimal print routine
 
 
-; Print the 4 byte Word at #52..#55 in Hexadecimal subroutine
+; Print the 4 byte Word at $52..$55 in Hexadecimal subroutine
 ;
-; Prints the word #52(LSB) to #55(MSB) as a 4 byte hex word in field
+; Prints the word $52(LSB) to $55(MSB) as a 4 byte hex word in field
 ; size @ suppressing any leading zeros.
 ; Destroys A,X,Y registers.
 
-c349:	ldx @#0
-c34b:	stx #27			; Clear the negative flag used by the
-                                ; print routine at #C5C8
-c34d:	ldy @#0			; Clear index to the 4-byte word
-c34f:	lda #52,y		; Get the current byte of the word
+c349:	ldx #$0
+c34b:	stx $27			; Clear the negative flag used by the
+                                ; print routine at $C5C8
+c34d:	ldy #$0			; Clear index to the 4-byte word
+c34f:	lda $52,y		; Get the current byte of the word
 c352:	pha			; Save a copy for upper nibble conversion
-c353:	and @#f			; Mask off the upper nibble
-c355:	sta #45,x		; ... and dump the lower nibble to w/s
+c353:	and #$f			; Mask off the upper nibble
+c355:	sta $45,x		; ... and dump the lower nibble to w/s
 c357:	pla			; Restore the copy
 c358:	lsr a )
 c359:	lsr a )
 c35a:	lsr a )
 c35b:	lsr a ) bring
 c35c:	inx			; Increment the w/s pointer
-c35d:	sta #45,x		; ... and dump the converted upper nibble
+c35d:	sta $45,x		; ... and dump the converted upper nibble
 c35f:	inx			; Increment the w/s pointe for the next byte
 c360:	iny			; Point to the next byte of theword
-c361:	cpy @#4			; Done all $ bytes ?
-c363:	bcc #c34f		; ... no, go for the next one
-c365:	jsr #c5c8		; Print the digit stream suppressing leading
+c361:	cpy #$4			; Done all $ bytes ?
+c363:	bcc $c34f		; ... no, go for the next one
+c365:	jsr $c5c8		; Print the digit stream suppressing leading
                                 ; zeros
-c368:	bmi #c337		; Branch ALWAYS to interpret the next item
+c368:	bmi $c337		; Branch ALWAYS to interpret the next item
                                 ; in the print stream
 
 
 ; Decimal print routine
 
-c36a:	jsr #c589		; Print the lowest level of the w/s stack as
+c36a:	jsr $c589		; Print the lowest level of the w/s stack as
                                 ; a signed decimal number in field size @
-c36d:	bmi #c337		; Branch ALWAYS to interpret the next item
+c36d:	bmi $c337		; Branch ALWAYS to interpret the next item
                                 ; in the print stream
 
 
-c36f:	jsr #cd54		; Send <CR><LF> to OSWRCH
-c372:	ldx @#18		; Set the interpreter table pointer to #C???
-c374:	jmp #c27b		; ... and interpret 'O' ??
+c36f:	jsr $cd54		; Send <CR><LF> to OSWRCH
+c372:	ldx #$18		; Set the interpreter table pointer to $C???
+c374:	jmp $c27b		; ... and interpret 'O' ??
 
 
   ??? Print routine ???
   ---------------------
 
-c377:	jsr #ca4c		; Increment COUNT and send the contents of
+c377:	jsr $ca4c		; Increment COUNT and send the contents of
                                 ; the accumulator to OSWRCH
-c37a:	lda (#5),y
+c37a:	lda ($5),y
 c37c:	iny
-c37d:	cmp @#d
-c37f:	beq #c39d
-c381:	sty #3
-c383:	cmp @#22
-c385:	bne #c377
-c387:	lda (#5),y
-c389:	cmp @#22
-c38b:	bne #c372
+c37d:	cmp #$d
+c37f:	beq $c39d
+c381:	sty $3
+c383:	cmp #$22
+c385:	bne $c377
+c387:	lda ($5),y
+c389:	cmp #$22
+c38b:	bne $c372
 c38d:	iny
-c38e:	bcs #c377
-c390:	jsr #c78b
-c393:	jsr #c3cb
-c396:	ora #54
-c398:	ora #53
-c39a:	beq #c3aa
-c39c:	ldy @#0
-c39e:	lda (#52),y
-c3a0:	cmp @#d
-c3a2:	beq #c337
-c3a4:	jsr #ca4c
+c38e:	bcs $c377
+c390:	jsr $c78b
+c393:	jsr $c3cb
+c396:	ora $54
+c398:	ora $53
+c39a:	beq $c3aa
+c39c:	ldy #$0
+c39e:	lda ($52),y
+c3a0:	cmp #$d
+c3a2:	beq $c337
+c3a4:	jsr $ca4c
 c3a7:	iny
-c3a8:	bne #c39e
-c3aa:	lda #52
-c3ac:	jsr #ca4c
-c3af:	jmp #c337
+c3a8:	bne $c39e
+c3aa:	lda $52
+c3ac:	jsr $ca4c
+c3af:	jmp $c337
 
 
 ; Execute the command 'LINK'
 
-c3b2:	jsr #c3c8		; Evaluate an arbitrarily complex function
-                                ; to #52(LSB)..#55(MSB)
-c3b5:	jsr #c4e4		; Do interpreter post-test
-c3b8:	lda #322		; Load accumulator with LSB integer 'A'
-c3bb:	ldx #339		; Load X register with LSB integer 'X'
-c3be:	ldy #33a		; Load Y register with LSB integer 'Y'
-c3c1:	jsr #c2a5		; Indirect jump to (#52)
+c3b2:	jsr $c3c8		; Evaluate an arbitrarily complex function
+                                ; to $52(LSB)..$55(MSB)
+c3b5:	jsr $c4e4		; Do interpreter post-test
+c3b8:	lda $322		; Load accumulator with LSB integer 'A'
+c3bb:	ldx $339		; Load X register with LSB integer 'X'
+c3be:	ldy $33a		; Load Y register with LSB integer 'Y'
+c3c1:	jsr $c2a5		; Indirect jump to ($52)
 c3c4:	cld			; Ensure binary mode after nasty user's prog
-c3c5:	jmp #c55b		; Return to execute the next command whether
+c3c5:	jmp $c55b		; Return to execute the next command whether
                                 ; by program execution or in direct mode
 
 
@@ -508,52 +508,52 @@ c3c5:	jmp #c55b		; Return to execute the next command whether
 ;
 ; Evaluates an arbitrarily complex function pointed to by (5),Y where y=?3
 ; and stores the result on the Workspace Stack pointed to by ?4 and also
-; on the arithmetic workspace stack at #52(LSB)..#55(MSB).
+; on the arithmetic workspace stack at $52(LSB)..$55(MSB).
 ; The (5),Y pointer is consolidated before return, so that (5),0 points to
 ; the last character in the string interpreted.
 ; The workspace stack pointer ?4 is NOT incremented.
 
-c3c8:	jsr #c8bc		; Evaluate an arbitrarily complex numeric
+c3c8:	jsr $c8bc		; Evaluate an arbitrarily complex numeric
                                 ; expression pointed to by (5),Y
 
 
-; Copy Current Level of the Workspace Stack to #52..#55 subroutine
+; Copy Current Level of the Workspace Stack to $52..$55 subroutine
 ;
 ; Enter with the X register pointing to the current level of the workspace
-; stack, so that level (X-1) is copied to #52(LSB)..#55(MSB).
+; stack, so that level (X-1) is copied to $52(LSB)..$55(MSB).
 ; The workspace stack pointer ?4 is updated and decremented.
 
-c3cb:	ldy @#52
+c3cb:	ldy #$52
 
 
 ; Copy Current Level of the Workspace Stack to zero page subroutine
 ;
 ; Enter with the X register pointing to the current level of the workspace
-; stack, so that level (X-1) is copied to #52(LSB)..#55(MSB).
+; stack, so that level (X-1) is copied to $52(LSB)..$55(MSB).
 ; Enter with the Y register pointing to the LSB of the four consecutive
 ; bytes that are the zero page destination.
 ; The workspace stack pointer ?4 is updated and decremented.
 
 c3cd:	dex
-c3ce:	stx #4
+c3ce:	stx $4
 
 
 ; Copy Current Level of the Workspace Stack to zero page subroutine
 ;
 ; Enter with the X register pointing to the level of the workspace stack
-; required to be copied to #52(LSB)..#55(MSB).
+; required to be copied to $52(LSB)..$55(MSB).
 ; Enter with the Y register pointing to the LSB of the four consecutive
 ; bytes that are the zero page destination.
 ; The workspace stack pointer ?4 is NOT TOUCHED !
 
-c3d0:	lda #16,x
-c3d2:	sta #0,y
-c3d5:	lda #25,x
-c3d7:	sta #1,y
-c3da:	lda #34,x
-c3dc:	sta #2,y
-c3df:	lda #43,x
-c3e1:	sta #3,y
+c3d0:	lda $16,x
+c3d2:	sta $0,y
+c3d5:	lda $25,x
+c3d7:	sta $1,y
+c3da:	lda $34,x
+c3dc:	sta $2,y
+c3df:	lda $43,x
+c3e1:	sta $3,y
 c3e4:	rts
 
 
@@ -563,11 +563,11 @@ c3e4:	rts
 ; Enter with the variable number (0=@, 1=A, etc TO 26=Z) in the LSB of
 ; the workspace stack at level (?4-1).
 
-c3e5:	jsr #c4e1		; Evaluate a numerical expression onto the
+c3e5:	jsr $c4e1		; Evaluate a numerical expression onto the
                                 ; w/s stack and do post-test.
-c3e8:	jsr #ca2f		; Assign value on the w/s stack to a variable
+c3e8:	jsr $ca2f		; Assign value on the w/s stack to a variable
                                 ; number on the w/s stack
-c3eb:	jmp #c55b		; Return to execute the next command whether
+c3eb:	jmp $c55b		; Return to execute the next command whether
                                 ; by program execution or in direct mode
 
 
@@ -575,22 +575,22 @@ c3eb:	jmp #c55b		; Return to execute the next command whether
 ;
 ; Sets pre-interpreted vector to an arbitrarily complex expression.
 
-c3ee:	jsr #c8bc		; Evaluate an arbitrarily complex numeric
+c3ee:	jsr $c8bc		; Evaluate an arbitrarily complex numeric
                                 ; expression pointed to by (5),Y
                                 ; which is the ! base address
-c3f1:	jsr #ce93		; Interpret an '=' sign and a numerical
+c3f1:	jsr $ce93		; Interpret an '=' sign and a numerical
                                 ; expression following, and copy the LSB
                                 ; to the base address on stack
-c3f4:	lda #26,x		; Get the second LSB from stack
+c3f4:	lda $26,x		; Get the second LSB from stack
 c3f6:	iny			; Point to the second address
-c3f7:	sta (#52),y		; ... and dump the second LSB
+c3f7:	sta ($52),y		; ... and dump the second LSB
 c3f9:	iny			; Point to the third address
-c3fa:	lda #35,x		; Get the third LSB from stack
-c3fc:	sta (#52),y		; ... and dump the third LSB
+c3fa:	lda $35,x		; Get the third LSB from stack
+c3fc:	sta ($52),y		; ... and dump the third LSB
 c3fe:	iny			; Point to the fourth address
-c3ff:	lda #44,x		; Get the fourth LSB from stack
-c401:	sta (#52),y		; ... and dump the fourth LSB
-c403:	jmp #c55b		; Return to execute the next command whether
+c3ff:	lda $44,x		; Get the fourth LSB from stack
+c401:	sta ($52),y		; ... and dump the fourth LSB
+c403:	jmp $c55b		; Return to execute the next command whether
                                 ; by program execution or in direct mode
 
 
@@ -598,12 +598,12 @@ c403:	jmp #c55b		; Return to execute the next command whether
 ;
 ; Sets pre-interpreted byte to an arbitrarily complex expression.
 
-c406:	jsr #c8bc		; Evaluate an arbitrarily complex numeric
+c406:	jsr $c8bc		; Evaluate an arbitrarily complex numeric
                                 ; expression pointed to by (5),Y
-c409:	jsr #ce93		; Interpret an '=' sign and a numerical
+c409:	jsr $ce93		; Interpret an '=' sign and a numerical
                                 ; expression following, and copy the LSB
                                 ; to the base address on stack
-c40c:	jmp #c55b		; Return to execute the next command whether
+c40c:	jmp $c55b		; Return to execute the next command whether
                                 ; by program execution or in direct mode
 
 
@@ -611,35 +611,35 @@ c40c:	jmp #c55b		; Return to execute the next command whether
 ;
 ; Deals with * prefixed commands.
 ; Copies the string after the '*' prefix pointed to by (5),Y where Y=?3
-; to the Direct Mode buffer at #100 and then calls OSCLI indirected
-; by vector (#206,#207).
+; to the Direct Mode buffer at $100 and then calls OSCLI indirected
+; by vector ($206,$207).
 
-c40f:	ldx @#0			; Initialise the Direct Mode buffer pointer
-c411:	lda (#5),y		; Get character under analysis from text
-c413:	sta #100,x		; ... and copy to the direct mode buffer
-c416:	sty #3			; Update the interpreter pointer
+c40f:	ldx #$0			; Initialise the Direct Mode buffer pointer
+c411:	lda ($5),y		; Get character under analysis from text
+c413:	sta $100,x		; ... and copy to the direct mode buffer
+c416:	sty $3			; Update the interpreter pointer
 c418:	iny			; Point to the next character of text
 c419:	inx			; Point to the next slot in the buffer
-c41a:	cmp @#d			; Was the last character <CR> ?
-c41c:	bne #c411		; ... no, keep copying
-                                ; (defaults to #F8EF)
-c41e:	jsr #fff7		; ... yes, finished, so call OSCLI
-c421:	jmp #c558		; Perform post test, check for <ESC> etc and
+c41a:	cmp #$d			; Was the last character <CR> ?
+c41c:	bne $c411		; ... no, keep copying
+                                ; (defaults to $F8EF)
+c41e:	jsr $fff7		; ... yes, finished, so call OSCLI
+c421:	jmp $c558		; Perform post test, check for <ESC> etc and
                                 ; return to execute the next command whether
                                 ; by program execution or in direct mode
 
 
 ; Floating Point ROM Check subroutine
 ;
-; Returns with Carry set if the FP ROM at #D000 exists.
+; Returns with Carry set if the FP ROM at $D000 exists.
 
-c424:	lda #d000
-c427:	cmp @#aa
-c429:	bne #c463
+c424:	lda $d000
+c427:	cmp #$aa
+c429:	bne $c463
 c42b:	lsr a
-c42c:	cmp #d001
-c42f:	bne #c463
-c431:	ldy #5e
+c42c:	cmp $d001
+c42f:	bne $c463
+c431:	ldy $5e
 c433:	rts
 
 
@@ -660,34 +660,34 @@ c433:	rts
 ;                second character.
 ;                Otherwise return with pointers as above but with Carry clear.
 
-c434:	ldy #3			; Get the interpreter pointer
-c436:	bpl #c43b		; ... branch always
+c434:	ldy $3			; Get the interpreter pointer
+c436:	bpl $c43b		; ... branch always
 
 c438:	iny
-c439:	sty #3
-c43b:	lda (#5),y		; Get the character under interpretation
-c43d:	cmp @#20		; If it's a space...
-c43f:	beq #c438		; ... then skip to the next character
-c441:	cmp @#5b		; Test for valid alphabetic character
-c443:	bcs #c463		; ... invalid
-c445:	sbc @#3f		; Convert to @=0, A=1,...to  Z=26
-c447:	bcc #c464		; ... invalid alphabetic character
-c449:	ldx #4			; Get the workspace pointer
-c44b:	sta #16,x		; Dump the first character on the LSB of
+c439:	sty $3
+c43b:	lda ($5),y		; Get the character under interpretation
+c43d:	cmp #$20		; If it's a space...
+c43f:	beq $c438		; ... then skip to the next character
+c441:	cmp #$5b		; Test for valid alphabetic character
+c443:	bcs $c463		; ... invalid
+c445:	sbc #$3f		; Convert to @=0, A=1,...to  Z=26
+c447:	bcc $c464		; ... invalid alphabetic character
+c449:	ldx $4			; Get the workspace pointer
+c44b:	sta $16,x		; Dump the first character on the LSB of
                                 ; the current workspace slot
 c44d:	iny			; Point to the next character
-c44e:	lda (#5),y		; ... and fetch it
-c450:	cmp @#2e		; Is it '.' ?
-c452:	beq #c463		; ... yes, clear Carry and quit
-c454:	cmp @#5b		; Is it >='[' ?
-c456:	bcs #c45c		; ... yes, set Carry and quit
-c458:	cmp @#40		; Is it <='@' ?
-c45a:	bcs #c463		; ... yes, clear Carry and quit
+c44e:	lda ($5),y		; ... and fetch it
+c450:	cmp #$2e		; Is it '.' ?
+c452:	beq $c463		; ... yes, clear Carry and quit
+c454:	cmp #$5b		; Is it >='[' ?
+c456:	bcs $c45c		; ... yes, set Carry and quit
+c458:	cmp #$40		; Is it <='@' ?
+c45a:	bcs $c463		; ... yes, clear Carry and quit
 
 c45c:	inx			; Increment workspace stack pointer
-c45d:	stx #4			; Update workspace stack pointer
+c45d:	stx $4			; Update workspace stack pointer
 c45f:	sec
-c460:	sty #3			; Interpreter points to second character
+c460:	sty $3			; Interpreter points to second character
 c462:	rts
 
 c463:	clc
@@ -702,79 +702,79 @@ c464:	rts
 ; If the first non-space character is not a number, BRK is executed.
 ; Destroys A,X,Y registers.
 
-c465:	jsr #c434		; If next symbol is a <variable>, BRK
-c468:	bcs #c425
+c465:	jsr $c434		; If next symbol is a <variable>, BRK
+c468:	bcs $c425
                                 ; GET POSITIVE NUMBER
                                 ; (return with Carry clear if no number)
-c46a:	ldx @#0
-c46c:	ldy #3
-c46e:	stx #52
-c470:	stx #53
-c472:	stx #54
-c474:	stx #55
+c46a:	ldx #$0
+c46c:	ldy $3
+c46e:	stx $52
+c470:	stx $53
+c472:	stx $54
+c474:	stx $55
 c476:	dey
 c477:	iny
-c478:	lda (#5),y
+c478:	lda ($5),y
 c47a:	sec
-c47b:	sbc @#30
-c47d:	bmi #c4d3
-c47f:	cmp @#a
-c481:	bcs #c4d3
-c483:	ldx #53
+c47b:	sbc #$30
+c47d:	bmi $c4d3
+c47f:	cmp #$a
+c481:	bcs $c4d3
+c483:	ldx $53
 c485:	pha
-c486:	lda #55
+c486:	lda $55
 c488:	pha
-c489:	lda #54
+c489:	lda $54
 c48b:	pha
-c48c:	lda #52
+c48c:	lda $52
 c48e:	asl a
-c48f:	rol #53
-c491:	rol #54
-c493:	rol #55
-c495:	bmi #c46b
+c48f:	rol $53
+c491:	rol $54
+c493:	rol $55
+c495:	bmi $c46b
 c497:	asl a
-c498:	rol #53
-c49a:	rol #54
-c49c:	rol #55
-c49e:	bmi #c46b
-c4a0:	adc #52
-c4a2:	sta #52
+c498:	rol $53
+c49a:	rol $54
+c49c:	rol $55
+c49e:	bmi $c46b
+c4a0:	adc $52
+c4a2:	sta $52
 c4a4:	txa
-c4a5:	adc #53
-c4a7:	sta #53
+c4a5:	adc $53
+c4a7:	sta $53
 c4a9:	pla
-c4aa:	adc #54
-c4ac:	sta #54
+c4aa:	adc $54
+c4ac:	sta $54
 c4ae:	pla
-c4af:	adc #55
-c4b1:	asl #52
-c4b3:	rol #53
-c4b5:	rol #54
+c4af:	adc $55
+c4b1:	asl $52
+c4b3:	rol $53
+c4b5:	rol $54
 c4b7:	rol a
-c4b8:	bmi #c46b
-c4ba:	sta #55
+c4b8:	bmi $c46b
+c4ba:	sta $55
 c4bc:	pla
-c4bd:	adc #52
-c4bf:	sta #52
-c4c1:	bcc #c4cf
-c4c3:	inc #53
-c4c5:	bne #c4cf
-c4c7:	inc #54
-c4c9:	bne #c4cf
-c4cb:	inc #55
-c4cd:	bmi #c46b
-c4cf:	ldx @#ff
-c4d1:	bne #c477
+c4bd:	adc $52
+c4bf:	sta $52
+c4c1:	bcc $c4cf
+c4c3:	inc $53
+c4c5:	bne $c4cf
+c4c7:	inc $54
+c4c9:	bne $c4cf
+c4cb:	inc $55
+c4cd:	bmi $c46b
+c4cf:	ldx #$ff
+c4d1:	bne $c477
 c4d3:	txa
-c4d4:	beq #c463
+c4d4:	beq $c463
 c4d6:	sec
-c4d7:	sty #3
-c4d9:	ldy @#52
-c4db:	jmp #c99f
+c4d7:	sty $3
+c4d9:	ldy #$52
+c4db:	jmp $c99f
 
 
-c4de:	jsr #c279		; Test for '=', BRK if failure
-c4e1:	jsr #c78b		; Evaluate numerical expression
+c4de:	jsr $c279		; Test for '=', BRK if failure
+c4e1:	jsr $c78b		; Evaluate numerical expression
 
 
 ; Interpreter Post-Test subroutine
@@ -784,16 +784,16 @@ c4e1:	jsr #c78b		; Evaluate numerical expression
 ; If successful, consolidates the (5),Y pointer.
 ; If unsuccessful, BRK if failure.
 
-c4e4:	ldy #3
+c4e4:	ldy $3
 c4e6:	dey
 c4e7:	iny
-c4e8:	lda (#5),y
-c4ea:	cmp @#20
-c4ec:	beq #c4e7
-c4ee:	cmp @#3b
-c4f0:	beq #c4f6
-c4f2:	cmp @#d
-c4f4:	bne #c55c
+c4e8:	lda ($5),y
+c4ea:	cmp #$20
+c4ec:	beq $c4e7
+c4ee:	cmp #$3b
+c4f0:	beq $c4f6
+c4f2:	cmp #$d
+c4f4:	bne $c55c
 
 
 ; Consolidate (5),Y Pointer subroutine
@@ -802,21 +802,21 @@ c4f4:	bne #c55c
 
 c4f6:	clc
 c4f7:	tya
-c4f8:	adc #5
-c4fa:	sta #5
-c4fc:	bcc #c500
-c4fe:	inc #6
-c500:	ldy @#1
-c502:	sty #3
+c4f8:	adc $5
+c4fa:	sta $5
+c4fc:	bcc $c500
+c4fe:	inc $6
+c500:	ldy #$1
+c502:	sty $3
 
 
 ; Check for <ESC> key subroutine
 ;
 ; If <ESC> pressed then RTS, otherwise jumps to the Direct Mode.
 
-c504:	lda #b001
-c507:	and @#20
-c509:	beq #c547
+c504:	lda $b001
+c507:	and #$20
+c509:	beq $c547
 c50b:	rts
 
 
@@ -826,55 +826,55 @@ c50b:	rts
 ; line is labelled.
 ; Sets up the (5),Y text pointer to the start of the statement.
 
-c50c:	jsr #c4e4
+c50c:	jsr $c4e4
 c50f:	dey
-c510:	lda (#5),y
-c512:	cmp @#3b
-c514:	beq #c50b
-c516:	lda #6
-c518:	cmp @#1
-c51a:	beq #c596
+c510:	lda ($5),y
+c512:	cmp #$3b
+c514:	beq $c50b
+c516:	lda $6
+c518:	cmp #$1
+c51a:	beq $c596
 c51c:	iny
-c51d:	lda (#5),y
-c51f:	bmi #c55c
-c521:	sta #2
+c51d:	lda ($5),y
+c51f:	bmi $c55c
+c521:	sta $2
 c523:	iny
-c524:	lda (#5),y
-c526:	sta #1
+c524:	lda ($5),y
+c526:	sta $1
 c528:	iny
-c529:	lda (#5),y
+c529:	lda ($5),y
 c52b:	dey
-c52c:	cmp @#61
-c52e:	bcc #c4f7
-c530:	sbc @#61
-c532:	cmp @#1b
-c534:	bcs #c4f6
+c52c:	cmp #$61
+c52e:	bcc $c4f7
+c530:	sbc #$61
+c532:	cmp #$1b
+c534:	bcs $c4f6
 c536:	iny
 c537:	asl a
 c538:	tax
-c539:	jsr #c4f6
-c53c:	lda #5
-c53e:	sta #38d,x
-c541:	lda #6
-c543:	sta #38e,x
+c539:	jsr $c4f6
+c53c:	lda $5
+c53e:	sta $38d,x
+c541:	lda $6
+c543:	sta $38e,x
 c546:	rts
 
-c547:	jmp #c2cfb5
+c547:	jmp $c2cfb5
 
 
 ; Statement Executer
 ;
 ; Executes a statement pointed to by (5),Y.
-; Jumps indirectly to the FP ROM via (#D002) if the command cannot be
+; Jumps indirectly to the FP ROM via ($D002) if the command cannot be
 ; interpreted.
 
 c54a:	dey
-c54b:	jsr #c4f6
-c54e:	bne #c55b
-c550:	jsr #c424		; Handle unrecognised statement
-c553:	bcc #c558
-c555:	jmp (#d002)
-c558:	jsr #c4e4
+c54b:	jsr $c4f6
+c54e:	bne $c55b
+c550:	jsr $c424		; Handle unrecognised statement
+c553:	bcc $c558
+c555:	jmp ($d002)
+c558:	jsr $c4e4
 
 
 ; Return Routine
@@ -882,115 +882,115 @@ c558:	jsr #c4e4
 ; All routines generally return to BASIC here.
 ; Goes on to interpret the next statement.
 
-c55b:	ldy @#0
-c55d:	lda (#5),y
-c55f:	cmp @#3b
-c561:	bne #c57d
-c563:	jmp #c31b
+c55b:	ldy #$0
+c55d:	lda ($5),y
+c55f:	cmp #$3b
+c561:	bne $c57d
+c563:	jmp $c31b
 
 
 ; Execute the command 'IF'
 ;
-; Puts a zero on the Workspace Stack at #16,X where X=?4 if false.
+; Puts a zero on the Workspace Stack at $16,X where X=?4 if false.
 
-c566:	jsr #c70c
+c566:	jsr $c70c
 c569:	dex
-c56a:	stx #4
-c56c:	lda #16,x
-c56e:	beq #c575
-c570:	ldx @#20
-c572:	jmp #c233
+c56a:	stx $4
+c56c:	lda $16,x
+c56e:	beq $c575
+c570:	ldx #$20
+c572:	jmp $c233
 
 
 ; Execute the command 'REM'
 ;
 ; Increments (5),Y until a <CR> is found.
 
-c575:	lda @#d
+c575:	lda #$d
 c577:	dey
 c578:	iny
-c579:	cmp (#5),y
-c57b:	bne #c578
-c57d:	lda #6
-c57f:	cmp @#1
-c581:	beq #c547
-c583:	jsr #c51c
-c586:	jmp #c31b
+c579:	cmp ($5),y
+c57b:	bne $c578
+c57d:	lda $6
+c57f:	cmp #$1
+c581:	beq $c547
+c583:	jsr $c51c
+c586:	jmp $c31b
 
 
 ; Print Decimal subroutine
 ;
-; Prints the lowest level of the Workspace Stack #16,#25,#34,#43 as a
+; Prints the lowest level of the Workspace Stack $16,$25,$34,$43 as a
 ; signed decimal number in field size set by the LSB of the integer
-; variable '@' #321.
+; variable '@' $321.
 ; Destroys A,X,Y registers.
 
-c589:	lda #43
-c58b:	sta #27
-c58d:	bpl #c593
+c589:	lda $43
+c58b:	sta $27
+c58d:	bpl $c593
 c58f:	inx
-c590:	jsr #c8c4
-c593:	ldx @#9
-c595:	lda @#0
-c597:	sta #45,x
+c590:	jsr $c8c4
+c593:	ldx #$9
+c595:	lda #$0
+c597:	sta $45,x
 c599:	sec
-c59a:	lda #16
-c59c:	sbc #c608,x
+c59a:	lda $16
+c59c:	sbc $c608,x
 c59f:	pha
-c5a0:	lda #25
-c5a2:	sbc #c610,x
+c5a0:	lda $25
+c5a2:	sbc $c610,x
 c5a5:	pha
-c5a6:	lda #34
-c5a8:	sbc #c61a,x
+c5a6:	lda $34
+c5a8:	sbc $c61a,x
 c5ab:	tay
-c5ac:	lda #43
-c5ae:	sbc #c624,x
-c5b1:	bcc #c5c1
-c5b3:	sta #43
-c5b5:	sty #34
+c5ac:	lda $43
+c5ae:	sbc $c624,x
+c5b1:	bcc $c5c1
+c5b3:	sta $43
+c5b5:	sty $34
 c5b7:	pla
-c5b8:	sta #25
+c5b8:	sta $25
 c5ba:	pla
-c5bb:	sta #16
-c5bd:	inc #45,x
-c5bf:	bne #c599
+c5bb:	sta $16
+c5bd:	inc $45,x
+c5bf:	bne $c599
 c5c1:	pla
 c5c2:	pla
 c5c3:	dex
-c5c4:	bpl #c595
-c5c6:	ldx @#a
+c5c4:	bpl $c595
+c5c6:	ldx #$a
 c5c8:	dex
-c5c9:	beq #c5cf
-c5cb:	lda #45,x
-c5cd:	beq #c5c8
-c5cf:	stx #52
-c5d1:	bit #27
-c5d3:	bpl #c5d7
-c5d5:	inc #52
+c5c9:	beq $c5cf
+c5cb:	lda $45,x
+c5cd:	beq $c5c8
+c5cf:	stx $52
+c5d1:	bit $27
+c5d3:	bpl $c5d7
+c5d5:	inc $52
 c5d7:	sec
-c5d8:	lda #321
-c5db:	beq #c5df
-c5dd:	sbc @#1
-c5df:	sbc #52
-c5e1:	beq #c5ee
-c5e3:	bcc #c5ee
+c5d8:	lda $321
+c5db:	beq $c5df
+c5dd:	sbc #$1
+c5df:	sbc $52
+c5e1:	beq $c5ee
+c5e3:	bcc $c5ee
 c5e5:	tay
-c5e6:	lda @#20
-c5e8:	jsr #ca4c
+c5e6:	lda #$20
+c5e8:	jsr $ca4c
 c5eb:	dey
-c5ec:	bne #c5e6
-c5ee:	bit #27
-c5f0:	bpl #c5f7
-c5f2:	lda @#2d
-c5f4:	jsr #ca4c
-c5f7:	lda #45,x
-c5f9:	cmp @#a
-c5fb:	bcc #c5ff
-c5fd:	adc @#6
-c5ff:	adc @#30
-c601:	jsr #ca4c
+c5ec:	bne $c5e6
+c5ee:	bit $27
+c5f0:	bpl $c5f7
+c5f2:	lda #$2d
+c5f4:	jsr $ca4c
+c5f7:	lda $45,x
+c5f9:	cmp #$a
+c5fb:	bcc $c5ff
+c5fd:	adc #$6
+c5ff:	adc #$30
+c601:	jsr $ca4c
 c604:	dex
-c605:	bpl #c5f7
+c605:	bpl $c5f7
 c607:	rts
 
 
@@ -1010,54 +1010,54 @@ c620:	.text $0f, $98, $f5, $9a, $00, $00, $00, $00, $00, $00, $00, $00, $05, $3b
 ; and Carry clear.
 ; Failure indicated by Carry set.
 
-c62e:	dec #4
-c630:	ldx #4
-c632:	ldy @#0
-c634:	sty #58
-c636:	lda #12
-c638:	sta #59
+c62e:	dec $4
+c630:	ldx $4
+c632:	ldy #$0
+c634:	sty $58
+c636:	lda $12
+c638:	sta $59
 c63a:	dey
-c63b:	lda @#d
+c63b:	lda #$d
 c63d:	iny
-c63e:	cmp (#58),y
-c640:	bne #c63d
-c642:	jsr #cea1
-c645:	lda (#58),y
+c63e:	cmp ($58),y
+c640:	bne $c63d
+c642:	jsr $cea1
+c645:	lda ($58),y
 c647:	iny
-c648:	cmp #25,x
-c64a:	bcc #c63b
-c64c:	bne #c660
-c64e:	lda (#58),y
-c650:	cmp #16,x
-c652:	bcc #c63b
-c654:	bne #c660
-c656:	sta #1
-c658:	lda #25,x
-c65a:	sta #2
-c65c:	jsr #cea1
+c648:	cmp $25,x
+c64a:	bcc $c63b
+c64c:	bne $c660
+c64e:	lda ($58),y
+c650:	cmp $16,x
+c652:	bcc $c63b
+c654:	bne $c660
+c656:	sta $1
+c658:	lda $25,x
+c65a:	sta $2
+c65c:	jsr $cea1
 c65f:	clc
 c660:	rts
 
 
 ; Set up Miscellaneous Workspace for Multiply or Divide subroutine
 
-c661:	jsr #c8bc
-c664:	lda #42,x
-c666:	eor #41,x
-c668:	sta #52
-c66a:	jsr #c905
-c66d:	ldy @#53
-c66f:	jsr #c3cd
-c672:	lda #42,x
-c674:	sta #43,x
-c676:	jsr #c907
-c679:	ldy @#57
-c67b:	jsr #c3cd
-c67e:	ldy @#0
-c680:	sty #5b
-c682:	sty #5c
-c684:	sty #5d
-c686:	sty #5e
+c661:	jsr $c8bc
+c664:	lda $42,x
+c666:	eor $41,x
+c668:	sta $52
+c66a:	jsr $c905
+c66d:	ldy #$53
+c66f:	jsr $c3cd
+c672:	lda $42,x
+c674:	sta $43,x
+c676:	jsr $c907
+c679:	ldy #$57
+c67b:	jsr $c3cd
+c67e:	ldy #$0
+c680:	sty $5b
+c682:	sty $5c
+c684:	sty $5d
+c686:	sty $5e
 c688:	rts
 
 
@@ -1065,80 +1065,80 @@ c688:	rts
 ;
 ; Do division in miscellaneous workspace.
 
-c689:	jsr #c661
-c68c:	lda #54
-c68e:	jsr #c705
-c691:	beq #c67f
-c693:	ldy @#20
+c689:	jsr $c661
+c68c:	lda $54
+c68e:	jsr $c705
+c691:	beq $c67f
+c693:	ldy #$20
 c695:	dey
-c696:	beq #c6d9
-c698:	asl #57
-c69a:	rol #58
-c69c:	rol #59
-c69e:	rol #5a
-c6a0:	bpl #c695
-c6a2:	rol #57
-c6a4:	rol #58
-c6a6:	rol #59
-c6a8:	rol #5a
-c6aa:	rol #5b
-c6ac:	rol #5c
-c6ae:	rol #5d
-c6b0:	rol #5e
+c696:	beq $c6d9
+c698:	asl $57
+c69a:	rol $58
+c69c:	rol $59
+c69e:	rol $5a
+c6a0:	bpl $c695
+c6a2:	rol $57
+c6a4:	rol $58
+c6a6:	rol $59
+c6a8:	rol $5a
+c6aa:	rol $5b
+c6ac:	rol $5c
+c6ae:	rol $5d
+c6b0:	rol $5e
 c6b2:	sec
-c6b3:	lda #5b
-c6b5:	sbc #53
+c6b3:	lda $5b
+c6b5:	sbc $53
 c6b7:	pha
-c6b8:	lda #5c
-c6ba:	sbc #54
+c6b8:	lda $5c
+c6ba:	sbc $54
 c6bc:	pha
-c6bd:	lda #5d
-c6bf:	sbc #55
+c6bd:	lda $5d
+c6bf:	sbc $55
 c6c1:	tax
-c6c2:	lda #5e
-c6c4:	sbc #56
-c6c6:	bcc #c6d4
-c6c8:	sta #5e
-c6ca:	stx #5d
+c6c2:	lda $5e
+c6c4:	sbc $56
+c6c6:	bcc $c6d4
+c6c8:	sta $5e
+c6ca:	stx $5d
 c6cc:	pla
-c6cd:	sta #5c
+c6cd:	sta $5c
 c6cf:	pla
-c6d0:	sta #5b
-c6d2:	bcs #c6d6
+c6d0:	sta $5b
+c6d2:	bcs $c6d6
 c6d4:	pla
 c6d5:	pla
 c6d6:	dey
-c6d7:	bne #c6a2
+c6d7:	bne $c6a2
 c6d9:	rts
 
 
 ; Relational Test subroutine
 
-c6da:	jsr #c78b
+c6da:	jsr $c78b
 c6dd:	dex
-c6de:	stx #4
-c6e0:	lda #42,x
-c6e2:	eor @#80
-c6e4:	sta #52
-c6e6:	lda #43,x
-c6e8:	eor @#80
-c6ea:	sta #54
-c6ec:	ldy @#0
+c6de:	stx $4
+c6e0:	lda $42,x
+c6e2:	eor #$80
+c6e4:	sta $52
+c6e6:	lda $43,x
+c6e8:	eor #$80
+c6ea:	sta $54
+c6ec:	ldy #$0
 c6ee:	sec
-c6ef:	lda #15,x
-c6f1:	sbc #16,x
-c6f3:	sta #53
-c6f5:	lda #24,x
-c6f7:	sbc #25,x
-c6f9:	sta #55
-c6fb:	lda #33,x
-c6fd:	sbc #34,x
-c6ff:	sta #56
-c701:	lda #52
-c703:	sbc #54
-c705:	ora #53
-c707:	ora #55
-c709:	ora #56
+c6ef:	lda $15,x
+c6f1:	sbc $16,x
+c6f3:	sta $53
+c6f5:	lda $24,x
+c6f7:	sbc $25,x
+c6f9:	sta $55
+c6fb:	lda $33,x
+c6fd:	sbc $34,x
+c6ff:	sta $56
+c701:	lda $52
+c703:	sbc $54
+c705:	ora $53
+c707:	ora $55
+c709:	ora $56
 c70b:	rts
 
 
@@ -1148,303 +1148,303 @@ c70b:	rts
 ; Y=?3 and places a zero on the Workspace Stack at 16,X where X=?4.
 ; Used by IF and UNTIL commands.
 
-c70c:	jsr #c72c
-c70f:	ldx @#43
-c711:	jmp #c233
+c70c:	jsr $c72c
+c70f:	ldx #$43
+c711:	jmp $c233
 
 
 ; Logical AND Truth Test
 
-c714:	jsr #c72c
-c717:	lda #14,x
-c719:	and #15,x
-c71b:	sta #14,x
-c71d:	dec #4
-c71f:	jmp #c70f
+c714:	jsr $c72c
+c717:	lda $14,x
+c719:	and $15,x
+c71b:	sta $14,x
+c71d:	dec $4
+c71f:	jmp $c70f
 
 
 ; Logical OR Truth Test
 
-c722:	jsr #c72c
-c725:	lda #14,x
-c727:	ora #15,x
-c729:	jmp #c71b
+c722:	jsr $c72c
+c725:	lda $14,x
+c727:	ora $15,x
+c729:	jmp $c71b
 
-c72c:	ldx @#46
-c72e:	jmp #c233
+c72c:	ldx #$46
+c72e:	jmp $c233
 
 
 ; '$' String Comparison Test
 
-c731:	jsr #c78b
-c734:	jsr #ceae
-c737:	lda #15,x
-c739:	sta #54
-c73b:	lda #24,x
-c73d:	sta #55
-c73f:	ldy @#ff
+c731:	jsr $c78b
+c734:	jsr $ceae
+c737:	lda $15,x
+c739:	sta $54
+c73b:	lda $24,x
+c73d:	sta $55
+c73f:	ldy #$ff
 c741:	iny
-c742:	lda (#54),y
-c744:	cmp (#52),y
-c746:	bne #c74f
-c748:	eor @#d
-c74a:	bne #c741
+c742:	lda ($54),y
+c744:	cmp ($52),y
+c746:	bne $c74f
+c748:	eor #$d
+c74a:	bne $c741
 c74c:	tay
-c74d:	beq #c760
-c74f:	ldy @#0
-c751:	beq #c761
+c74d:	beq $c760
+c74f:	ldy #$0
+c751:	beq $c761
 
 
-c753:	jsr #c78b
-c756:	ldx @#0
-c758:	jmp #c233
+c753:	jsr $c78b
+c756:	ldx #$0
+c758:	jmp $c233
 
 
 ; Test <expression> = <expression>
 
-c75b:	jsr #c6da
-c75e:	bne #c761
+c75b:	jsr $c6da
+c75e:	bne $c761
 c760:	iny
-c761:	sty #15,x
+c761:	sty $15,x
 c763:	rts
 
 
 ; Test <expression> <= <expression>
 
-c764:	jsr #c6da
-c767:	beq #c760
-c769:	bcc #c760
-c76b:	bcs #c761
+c764:	jsr $c6da
+c767:	beq $c760
+c769:	bcc $c760
+c76b:	bcs $c761
 
 
 ; Test <expression> <> <expression>
 
-c76d:	jsr #c6da
-c770:	bne #c760
-c772:	beq #c761
+c76d:	jsr $c6da
+c770:	bne $c760
+c772:	beq $c761
 
 
 ; Test <expression> < <expression>
 
-c774:	jsr #c6da
-c777:	bcc #c760
-c779:	bcs #c761
+c774:	jsr $c6da
+c777:	bcc $c760
+c779:	bcs $c761
 
 
 ; Test <expression> >= <expression>
 
-c77b:	jsr #c6da
-c77e:	bcs #c760
-c780:	bcc #c761
+c77b:	jsr $c6da
+c77e:	bcs $c760
+c780:	bcc $c761
 
 
 ; Test <expression> > <expression>
 
-c782:	jsr #c6da
-c785:	beq #c761
-c787:	bcs #c760
-c789:	bcc #c761
+c782:	jsr $c6da
+c785:	beq $c761
+c787:	bcs $c760
+c789:	bcc $c761
 
 
 ; <expression>
 
-c78b:	jsr #c80b
-c78e:	jmp #c795
+c78b:	jsr $c80b
+c78e:	jmp $c795
 
-c791:	sta #41,x
-c793:	dec #4
-c795:	ldx @#0
-c797:	jmp #c27b
+c791:	sta $41,x
+c793:	dec $4
+c795:	ldx #$0
+c797:	jmp $c27b
 
 
 ; Add 2 Numbers on the Workspace Stack
 ;
 ; {14,X 23,X 32,X 41,X} = {14,X 23,X 32,X 41,X} + {15,X 24,X 33,X 42,X}
 
-c79a:	jsr #c80b
+c79a:	jsr $c80b
 c79d:	clc
-c79e:	lda #14,x
-c7a0:	adc #15,x
-c7a2:	sta #14,x
-c7a4:	lda #23,x
-c7a6:	adc #24,x
-c7a8:	sta #23,x
-c7aa:	lda #32,x
-c7ac:	adc #33,x
-c7ae:	sta #32,x
-c7b0:	lda #41,x
-c7b2:	adc #42,x
-c7b4:	jmp #c791
+c79e:	lda $14,x
+c7a0:	adc $15,x
+c7a2:	sta $14,x
+c7a4:	lda $23,x
+c7a6:	adc $24,x
+c7a8:	sta $23,x
+c7aa:	lda $32,x
+c7ac:	adc $33,x
+c7ae:	sta $32,x
+c7b0:	lda $41,x
+c7b2:	adc $42,x
+c7b4:	jmp $c791
 
 
 ; Subtract 2 Numbers on the Workspace Stack
 ;
 ; {14,X 23,X 32,X 41,X} = {14,X 23,X 32,X 41,X} - {15,X 24,X 33,X 42,X}
 
-c7b7:	jsr #c80b
-c7ba:	lda #14,x
-c7bc:	sbc #15,x
-c7be:	sta #14,x
-c7c0:	lda #23,x
-c7c2:	sbc #24,x
-c7c4:	sta #23,x
-c7c6:	lda #32,x
-c7c8:	sbc #33,x
-c7ca:	sta #32,x
-c7cc:	lda #41,x
-c7ce:	sbc #42,x
-c7d0:	jmp #c791
+c7b7:	jsr $c80b
+c7ba:	lda $14,x
+c7bc:	sbc $15,x
+c7be:	sta $14,x
+c7c0:	lda $23,x
+c7c2:	sbc $24,x
+c7c4:	sta $23,x
+c7c6:	lda $32,x
+c7c8:	sbc $33,x
+c7ca:	sta $32,x
+c7cc:	lda $41,x
+c7ce:	sbc $42,x
+c7d0:	jmp $c791
 
 
 ; Logically OR 2 Numbers on the Workspace Stack
 ;
 ; {14,X 23,X 32,X 41,X} = {14,X 23,X 32,X 41,X} OR {15,X 24,X 33,X 42,X}
 
-c7d3:	jsr #c80b
-c7d6:	lda #14,x
-c7d8:	ora #15,x
-c7da:	sta #14,x
-c7dc:	lda #23,x
-c7de:	ora #24,x
-c7e0:	sta #23,x
-c7e2:	lda #32,x
-c7e4:	ora #33,x
-c7e6:	sta #32,x
-c7e8:	ldaa#41,x
-c7ea:	ora #42,x
-c7ec:	jmp #c791
+c7d3:	jsr $c80b
+c7d6:	lda $14,x
+c7d8:	ora $15,x
+c7da:	sta $14,x
+c7dc:	lda $23,x
+c7de:	ora $24,x
+c7e0:	sta $23,x
+c7e2:	lda $32,x
+c7e4:	ora $33,x
+c7e6:	sta $32,x
+c7e8:	ldaa$41,x
+c7ea:	ora $42,x
+c7ec:	jmp $c791
 
 
 ; Logically EOR 2 Numbers on the Workspace Stack
 ;
 ; {14,X 23,X 32,X 41,X} = {14,X 23,X 32,X 41,X} EOR {15,X 24,X 33,X 42,X}
 
-c7ef:	jsr #c80b
-c7f2:	lda #14,x
-c7f4:	eor #15,x
-c7f6:	sta #14,x
-c7f8:	lda #23,x
-c7fa:	eor #24,x
-c7fc:	sta #23,x
-c7fe:	lda #32,x
-c800:	eor #33,x
-c802:	sta #32,x
-c804:	lda #41,x
-c806:	eor #42,x
-c808:	jmp #c791
+c7ef:	jsr $c80b
+c7f2:	lda $14,x
+c7f4:	eor $15,x
+c7f6:	sta $14,x
+c7f8:	lda $23,x
+c7fa:	eor $24,x
+c7fc:	sta $23,x
+c7fe:	lda $32,x
+c800:	eor $33,x
+c802:	sta $32,x
+c804:	lda $41,x
+c806:	eor $42,x
+c808:	jmp $c791
 
 
 ; <term>
 
-c80b:	jsr #c8bc
-c80e:	ldx @#5
-c810:	jmp #c27b
+c80b:	jsr $c8bc
+c80e:	ldx #$5
+c810:	jmp $c27b
 
 
 ; <factor> * <factor>
 
-c813:	jsr #c661
-c816:	lsr #5a
-c818:	ror #59
-c81a:	ror #58
-c81c:	ror #57
-c81e:	bcc #c839
+c813:	jsr $c661
+c816:	lsr $5a
+c818:	ror $59
+c81a:	ror $58
+c81c:	ror $57
+c81e:	bcc $c839
 c820:	clc
 c821:	tya
-c822:	adc #53
+c822:	adc $53
 c824:	tay
-c825:	lda #5c
-c827:	adc #54
-c829:	sta #5c
-c82b:	lda #5d
-c82d:	adc #55
-c82f:	sta #5d
-c831:	lda #5e
-c833:	adc #56
-c835:	and @#7f
-c837:	sta #5e
-c839:	asl #53
-c83b:	rol #54
-c83d:	rol #55
-c83f:	rol #56
-c841:	lda #57
-c843:	ora #58
-c845:	ora #59
-c847:	ora #5a
-c849:	bne #c816
-c84b:	sty #5b
-c84d:	lda #52
+c825:	lda $5c
+c827:	adc $54
+c829:	sta $5c
+c82b:	lda $5d
+c82d:	adc $55
+c82f:	sta $5d
+c831:	lda $5e
+c833:	adc $56
+c835:	and #$7f
+c837:	sta $5e
+c839:	asl $53
+c83b:	rol $54
+c83d:	rol $55
+c83f:	rol $56
+c841:	lda $57
+c843:	ora $58
+c845:	ora $59
+c847:	ora $5a
+c849:	bne $c816
+c84b:	sty $5b
+c84d:	lda $52
 c84f:	php
-c850:	ldy @#5b
-c852:	jsr #c99f
+c850:	ldy #$5b
+c852:	jsr $c99f
 c855:	plp
-c856:	bpl #c85b
-c858:	jsr #c8c4
-c85b:	jmp #c80e
+c856:	bpl $c85b
+c858:	jsr $c8c4
+c85b:	jmp $c80e
 
 
 ; <factor> / <factor>
 
-c85e:	jsr #c689
-c861:	rol #57
-c863:	rol #58
-c865:	rol #59
-c867:	rol #5a
-c869:	bit #52
+c85e:	jsr $c689
+c861:	rol $57
+c863:	rol $58
+c865:	rol $59
+c867:	rol $5a
+c869:	bit $52
 c86b:	php
-c86c:	ldy @#57
-c86e:	bne #c852
+c86c:	ldy #$57
+c86e:	bne $c852
 
 
 ; <factor> % <factor>
 
-c870:	jsr #c689
-c873:	ldx #4
-c875:	lda #44,x
+c870:	jsr $c689
+c873:	ldx $4
+c875:	lda $44,x
 c877:	php
-c878:	jmp #c850
+c878:	jmp $c850
 
 
 ; <factor> & <factor>
 
-c87b:	jsr #c8bc
+c87b:	jsr $c8bc
 c87e:	dex
-c87f:	stx #4
-c881:	lda #15,x
-c883:	and #16,x
-c885:	sta #15,x
-c887:	lda #24,x
-c889:	and #25,x
-c88b:	sta #24,x
-c88d:	lda #33,x
-c88f:	and #34,x
-c891:	sta #33,x
-c893:	lda #42,x
-c895:	and #43,x
-c897:	sta #42,x
-c899:	jmp #c80e
+c87f:	stx $4
+c881:	lda $15,x
+c883:	and $16,x
+c885:	sta $15,x
+c887:	lda $24,x
+c889:	and $25,x
+c88b:	sta $24,x
+c88d:	lda $33,x
+c88f:	and $34,x
+c891:	sta $33,x
+c893:	lda $42,x
+c895:	and $43,x
+c897:	sta $42,x
+c899:	jmp $c80e
 
 
 ; <factor> ? <factor>
 
-c89c:	jsr #c8a2
-c89f:	jmp #c80e
-c8a2:	jsr #c8bc
+c89c:	jsr $c8a2
+c89f:	jmp $c80e
+c8a2:	jsr $c8bc
 c8a5:	clc
-c8a6:	lda #15,x
-c8a8:	adc #14,x
+c8a6:	lda $15,x
+c8a8:	adc $14,x
 c8aa:	tay
-c8ab:	lda #24,x
-c8ad:	adc #23,x
+c8ab:	lda $24,x
+c8ad:	adc $23,x
 c8af:	dex
-c8b0:	jmp #c953
+c8b0:	jmp $c953
 
 
 ; <factor> ! <factor>
 
-c8b3:	jsr #c8a2
-c8b6:	jsr #c962
-c8b9:	jmp #c80e
+c8b3:	jsr $c8a2
+c8b6:	jsr $c962
+c8b9:	jmp $c80e
 
 
 ; Function Interpreter subroutine
@@ -1455,15 +1455,15 @@ c8b9:	jmp #c80e
 ; the last character in the string interpreted.
 ; The Workspace Stack pointer ?4 is incremented.
 
-c8bc:	ldx @#4
-c8be:	jmp #c233
+c8bc:	ldx #$4
+c8be:	jmp $c233
 
 
 ; Negate Current Slot of Workspace Stack
 ;
 ; {15,X 24,X 33,X 42,X} = 0 - {15,X 24,X 33,X 42,X}
 
-c8c1:	jsr #c8dc
+c8c1:	jsr $c8dc
 
 
 ; Negate Current Slot of Workspace Stack subroutine
@@ -1472,27 +1472,27 @@ c8c1:	jsr #c8dc
 ; Destroys accumulator.
 
 c8c4:	sec
-c8c5:	lda @#0
+c8c5:	lda #$0
 c8c7:	tay
-c8c8:	sbc #15,x
-c8ca:	sta #15,x
+c8c8:	sbc $15,x
+c8ca:	sta $15,x
 c8cc:	tya
-c8cd:	sbc #24,x
-c8cf:	sta #24,x
+c8cd:	sbc $24,x
+c8cf:	sta $24,x
 c8d1:	tya
-c8d2:	sbc #33,x
-c8d4:	sta #33,x
+c8d2:	sbc $33,x
+c8d4:	sta $33,x
 c8d6:	tya
-c8d7:	sbc #42,x
-c8d9:	sta #42,x
+c8d7:	sbc $42,x
+c8d9:	sta $42,x
 c8db:	rts
 
 
 ; Variable Assignment to Workspace
 
-c8dc:	jsr #c434
-c8df:	bcc #c8f8
-c8e1:	ldy #15,x
+c8dc:	jsr $c434
+c8df:	bcc $c8f8
+c8e1:	ldy $15,x
 
 
 ; Variable Assignment to Workspace Stack subroutine
@@ -1501,23 +1501,23 @@ c8e1:	ldy #15,x
 ; to the current slot of the Workspace Stack pointed to by ?4.
 ; Destroys accumulator.
 
-c8e3:	lda #321,y
-c8e6:	sta #15,x
-c8e8:	lda #357,y
-c8eb:	sta #33,x
-c8ed:	lda #33c,y
-c8f0:	sta #24,x
-c8f2:	lda #372,y
-c8f5:	sta #42,x
+c8e3:	lda $321,y
+c8e6:	sta $15,x
+c8e8:	lda $357,y
+c8eb:	sta $33,x
+c8ed:	lda $33c,y
+c8f0:	sta $24,x
+c8f2:	lda $372,y
+c8f5:	sta $42,x
 c8f7:	rts
 
 
 ; Do Numerical Assignments
 
-c8f8:	jsr #c46a
-c8fb:	bcs #c8f7
-c8fd:	ldx @#7
-c8ff:	jmp #c233
+c8f8:	jsr $c46a
+c8fb:	bcs $c8f7
+c8fd:	ldx #$7
+c8ff:	jmp $c233
 
 
 ; Execute the Function 'ABS'
@@ -1525,189 +1525,189 @@ c8ff:	jmp #c233
 ; Performs ABS of function pointed to by (5),Y and places the result on
 ; the Workspace Stack.
 
-c902:	jsr #c8bc
-c905:	lda #42,x
-c907:	bmi #c8c4
+c902:	jsr $c8bc
+c905:	lda $42,x
+c907:	bmi $c8c4
 c909:	rts
 
 
 ; Deal with '#'
 
-c90a:	ldx @#0
-c90c:	stx #52
-c90e:	stx #53
-c910:	stx #54
-c912:	stx #55
+c90a:	ldx #$0
+c90c:	stx $52
+c90e:	stx $53
+c910:	stx $54
+c912:	stx $55
 c914:	dey
 c915:	iny
-c916:	lda (#5),y
-c918:	cmp @#30
-c91a:	bcc #c93e
-c91c:	cmp @#3a
-c91e:	bcc #c92a
-c920:	sbc @#37
-c922:	cmp @#a
-c924:	bcc #c93e
-c926:	cmp @#10
-c928:	bcs #c93e
+c916:	lda ($5),y
+c918:	cmp #$30
+c91a:	bcc $c93e
+c91c:	cmp #$3a
+c91e:	bcc $c92a
+c920:	sbc #$37
+c922:	cmp #$a
+c924:	bcc $c93e
+c926:	cmp #$10
+c928:	bcs $c93e
 c92a:	asl a
 c92b:	asl a
 c92c:	asl a
 c92d:	asl a
-c92e:	ldx @#3
+c92e:	ldx #$3
 c930:	asl a
-c931:	rol #52
-c933:	rol #53
-c935:	rol #54
-c937:	rol #55
+c931:	rol $52
+c933:	rol $53
+c935:	rol $54
+c937:	rol $55
 c939:	dex
-c93a:	bpl #c930
-c93c:	bmi #c915
+c93a:	bpl $c930
+c93c:	bmi $c915
 c93e:	txa
-c93f:	bpl #c959
-c941:	jmp #c4d6
+c93f:	bpl $c959
+c941:	jmp $c4d6
 
 
 ; Deal with '('
 
-c944:	jsr #c70c
-c947:	ldx @#c
-c949:	jmp #c27b
-c94c:	jsr #c8bc
+c944:	jsr $c70c
+c947:	ldx #$c
+c949:	jmp $c27b
+c94c:	jsr $c8bc
 
 
 ; Deal with '?'
 
-c94f:	ldy #15,x
-c951:	lda #24,x
-c953:	sta #53
-c955:	sty #52
+c94f:	ldy $15,x
+c951:	lda $24,x
+c953:	sta $53
+c955:	sty $52
 c957:	dex
-c958:	ldy @#0
-c95a:	lda (#52),y
-c95c:	jmp #c97c
+c958:	ldy #$0
+c95a:	lda ($52),y
+c95c:	jmp $c97c
 
 
 ; Deal with '!'
 
-c95f:	jsr #c94c
-c962:	ldy @#1
-c964:	lda (#52),y
-c966:	sta #24,x
+c95f:	jsr $c94c
+c962:	ldy #$1
+c964:	lda ($52),y
+c966:	sta $24,x
 c968:	iny
-c969:	lda (#52),y
-c96b:	sta #33,x
+c969:	lda ($52),y
+c96b:	sta $33,x
 c96d:	iny
-c96e:	lda (#52),y
-c970:	sta #42,x
+c96e:	lda ($52),y
+c970:	sta $42,x
 c972:	rts
 
 
 ; Read TOP onto Workspace Stack subroutine
 ;
-; Reads the TOP value at #D,#E onto the current workspace slot.
+; Reads the TOP value at $D,$E onto the current workspace slot.
 ; The Workspace Stack pointer ?4 is incremented.
 
-c973:	ldy @#d
-c975:	jsr #c9a1
-c978:	beq #c981
+c973:	ldy #$d
+c975:	jsr $c9a1
+c978:	beq $c981
 
 
 ; Read COUNT onto Workspace Stack subroutine
 ;
 ; Reads the COUNT value at ?7 onto the current workspace slot
 
-c97a:	lda #7
-c97c:	jsr #c9b3
-c97f:	sta #24,x
-c981:	sta #33,x
-c983:	sta #42,x
+c97a:	lda $7
+c97c:	jsr $c9b3
+c97f:	sta $24,x
+c981:	sta $33,x
+c983:	sta $42,x
 c985:	rts
 
 
 ; Execute the Function 'RND' subroutine
 ;
-; Generates a new random number at #8,#9,#A,#B,#C and copies it to the
+; Generates a new random number at $8,$9,$A,$B,$C and copies it to the
 ; current slot of the Workspace Stack pointed to by ?4.
 ; The Workspace Stack pointer ?4 is incremented.
 
-c986:	ldy @#20
-c988:	lda #a
+c986:	ldy #$20
+c988:	lda $a
 c98a:	lsr a
 c98b:	lsr a
 c98c:	lsr a
-c98d:	eor #c
+c98d:	eor $c
 c98f:	ror a
-c990:	rol #8
-c992:	rol #9
-c994:	rol #a
-c996:	rol #b
-c998:	rol #c
+c990:	rol $8
+c992:	rol $9
+c994:	rol $a
+c996:	rol $b
+c998:	rol $c
 c99a:	dey
-c99b:	bne #c988
-c99d:	ldy @#8
-c99f:	ldx #4
-c9a1:	lda #1,y
-c9a4:	sta #25,x
-c9a6:	lda #2,y
-c9a9:	sta #34,x
-c9ab:	lda #3,y
-c9ae:	sta #43,x
-c9b0:	lda #0,y
-c9b3:	sta #16,x
+c99b:	bne $c988
+c99d:	ldy #$8
+c99f:	ldx $4
+c9a1:	lda $1,y
+c9a4:	sta $25,x
+c9a6:	lda $2,y
+c9a9:	sta $34,x
+c9ab:	lda $3,y
+c9ae:	sta $43,x
+c9b0:	lda $0,y
+c9b3:	sta $16,x
 c9b5:	inx
-c9b6:	stx #4
-c9b8:	ldy #3
-c9ba:	lda @#0
+c9b6:	stx $4
+c9b8:	ldy $3
+c9ba:	lda #$0
 c9bc:	rts
 
 
 ; Execute the Function 'LEN'
 
-c9bd:	jsr #c8bc
-c9c0:	jsr #c3cb
-c9c3:	ldy @#0
-c9c5:	lda @#d
-c9c7:	cmp (#52),y
-c9c9:	beq #c9ce
+c9bd:	jsr $c8bc
+c9c0:	jsr $c3cb
+c9c3:	ldy #$0
+c9c5:	lda #$d
+c9c7:	cmp ($52),y
+c9c9:	beq $c9ce
 c9cb:	iny
-c9cc:	bne #c9c7
+c9cc:	bne $c9c7
 c9ce:	tya
-c9cf:	jmp #c97c
+c9cf:	jmp $c97c
 
 
 ; Deal with the 'CH' operator
 
-c9d2:	jsr #ceb1
-c9d5:	jmp #c958
+c9d2:	jsr $ceb1
+c9d5:	jmp $c958
 
 
 ; BRK Handler
 ;
-; Points the BASIC interpreter at the vector (#10,#11) which is normally
-; set to point to #C9E7.
+; Points the BASIC interpreter at the vector ($10,$11) which is normally
+; set to point to $C9E7.
 ; Exits to the Diect Mode.
 
 c9d8:	pla
 c9d9:	pla
-c9da:	sta #0
-c9dc:	lda #10
-c9de:	sta #5
-c9e0:	lda #11
-c9e2:	sta #6
-c9e4:	jmp #c2f2
+c9da:	sta $0
+c9dc:	lda $10
+c9de:	sta $5
+c9e0:	lda $11
+c9e2:	sta $6
+c9e4:	jmp $c2f2
 
 
-c9e7:	.text "@=1;P.$6$7'"ERROR "?0;@=8;IF?1|?2P." LINE"!1& #FFFF", $0d, $00, $00, "P.';E.", $0d
+c9e7:	.text "@=1;P.$6$7'"ERROR "?0;@=8;IF?1|?2P." LINE"!1& $FFFF", $0d, $00, $00, "P.';E.", $0d
 
 
 ; Handle Unrecognised Command
 ;
-; Jumps indirectly to (#D002) if the FP ROM exists, otherwise executes BRK.
+; Jumps indirectly to ($D002) if the FP ROM exists, otherwise executes BRK.
 
-ca24:	jsr #c424
-ca27:	bcc #ca1b
-ca29:	jmp (#d004)
+ca24:	jsr $c424
+ca27:	bcc $ca1b
+ca29:	jmp ($d004)
 
 
 ; Assign Integer Variable
@@ -1716,12 +1716,12 @@ ca29:	jmp (#d004)
 ; pointed to by Y (where 0=@, 1=A, etc to 26=Z).
 ; Workspace Stack pointer is decremented TWICE.
 
-ca2c:	jsr #c78b
-ca2f:	ldx #4
+ca2c:	jsr $c78b
+ca2f:	ldx $4
 ca31:	dex
 ca32:	dex
-ca33:	stx #4
-ca35:	ldy #16,x
+ca33:	stx $4
+ca35:	ldy $16,x
 
 
 ; Assign Integer Variable subroutine
@@ -1730,14 +1730,14 @@ ca35:	ldy #16,x
 ; variable pointed to by Y (where 0=@, 1=A, etc to 26=Z).
 ; Destroys accumulator.
 
-ca37:	lda #17,x
-ca39:	sta #321,y
-ca3c:	lda #26,x
-ca3e:	sta #33c,y
-ca41:	lda #35,x
-ca43:	sta #357,y
-ca46:	lda #44,x
-ca48:	sta #372,y
+ca37:	lda $17,x
+ca39:	sta $321,y
+ca3c:	lda $26,x
+ca3e:	sta $33c,y
+ca41:	lda $35,x
+ca43:	sta $357,y
+ca46:	lda $44,x
+ca48:	sta $372,y
 ca4b:	rts
 
 
@@ -1745,8 +1745,8 @@ ca4b:	rts
 ;
 ; Increments COUNT at ?7 and the prints the contents of the accumulator.
 
-ca4c:	inc #7
-ca4e:	jmp (#208)
+ca4c:	inc $7
+ca4e:	jmp ($208)
 
 
 ; Execute the Command 'LIST'
@@ -1754,241 +1754,241 @@ ca4e:	jmp (#208)
 ; X register must be zero on entry.
 ; Exits to the Direct Mode.
 
-ca51:	lda @#0
-ca53:	jsr #c97c
-ca56:	lda @#ff
-ca58:	jsr #c97c
-ca5b:	sta #4
-ca5d:	ldy @#7f
-ca5f:	sty #26
-ca61:	jsr #c465
-ca64:	bcc #cab8
-ca66:	jsr #c231
-ca69:	bcs #cac3
-ca6b:	jsr #c465
-ca6e:	ldx @#1
-ca70:	stx #4
-ca72:	jsr #c4e4
-ca75:	jsr #c62e
-ca78:	bcc #caaa
+ca51:	lda #$0
+ca53:	jsr $c97c
+ca56:	lda #$ff
+ca58:	jsr $c97c
+ca5b:	sta $4
+ca5d:	ldy #$7f
+ca5f:	sty $26
+ca61:	jsr $c465
+ca64:	bcc $cab8
+ca66:	jsr $c231
+ca69:	bcs $cac3
+ca6b:	jsr $c465
+ca6e:	ldx #$1
+ca70:	stx $4
+ca72:	jsr $c4e4
+ca75:	jsr $c62e
+ca78:	bcc $caaa
 ca7a:	dey
-ca7b:	bcs #ca9e
-ca7d:	lda @#5
-ca7f:	sta #321
-ca82:	jsr #c589
-ca85:	lda @#8
-ca87:	sta #321
-ca8a:	ldy #3
-ca8c:	lda (#58),y
-ca8e:	cmp @#d
-ca90:	beq #ca98
-ca92:	jsr #ca4c
+ca7b:	bcs $ca9e
+ca7d:	lda #$5
+ca7f:	sta $321
+ca82:	jsr $c589
+ca85:	lda #$8
+ca87:	sta $321
+ca8a:	ldy $3
+ca8c:	lda ($58),y
+ca8e:	cmp #$d
+ca90:	beq $ca98
+ca92:	jsr $ca4c
 ca95:	iny
-ca96:	bne #ca8c
-ca98:	jsr #cd54
-ca9b:	jsr #cea1
-ca9e:	lda (#58),y
-caa0:	sta #25
+ca96:	bne $ca8c
+ca98:	jsr $cd54
+ca9b:	jsr $cea1
+ca9e:	lda ($58),y
+caa0:	sta $25
 caa2:	iny
-caa3:	lda (#58),y
-caa5:	sta #16
+caa3:	lda ($58),y
+caa5:	sta $16
 caa7:	iny
-caa8:	sty #3
-caaa:	lda #16
+caa8:	sty $3
+caaa:	lda $16
 caac:	clc
-caad:	sbc #17
-caaf:	lda #25
-cab1:	sbc #26
-cab3:	bcc #ca7d
-cab5:	jmp #c2cf
-cab8:	jsr #c231
-cabb:	inc #4
-cabd:	jsr #c465
-cac0:	jmp #ca6e
-cac3:	lda #16
-cac5:	ldy #25
-cac7:	sta #17
-cac9:	sty #26
-cacb:	bcs #ca6e
+caad:	sbc $17
+caaf:	lda $25
+cab1:	sbc $26
+cab3:	bcc $ca7d
+cab5:	jmp $c2cf
+cab8:	jsr $c231
+cabb:	inc $4
+cabd:	jsr $c465
+cac0:	jmp $ca6e
+cac3:	lda $16
+cac5:	ldy $25
+cac7:	sta $17
+cac9:	sty $26
+cacb:	bcs $ca6e
 
 
 ; Execute the Command 'NEXT'
 
-cacd:	jsr #c434
-cad0:	ldy #15
-cad2:	beq #cae4
-cad4:	bcc #cae5
-cad6:	dec #4
-cad8:	lda #15,x
-cada:	cmp #23f,y
-cadd:	beq #cae5
+cacd:	jsr $c434
+cad0:	ldy $15
+cad2:	beq $cae4
+cad4:	bcc $cae5
+cad6:	dec $4
+cad8:	lda $15,x
+cada:	cmp $23f,y
+cadd:	beq $cae5
 cadf:	dey
-cae0:	sty #15
-cae2:	bne #cada
+cae0:	sty $15
+cae2:	bne $cada
 cae4:	brk
-cae5:	ldx #23f,y
+cae5:	ldx $23f,y
 cae8:	clc
-cae9:	lda #321,x
-caec:	adc #24a,y
-caef:	sta #321,x
-caf2:	sta #52
-caf4:	lda #33c,x
-caf7:	adc #255,y
-cafa:	sta #33c,x
-cafd:	sta #53
-caff:	lda #357,x
-cb02:	adc #260,y
-cb05:	sta #357,x
-cb08:	sta #54
-cb0a:	lda #372,x
-cb0d:	adc #26b,y
-cb10:	sta #372,x
+cae9:	lda $321,x
+caec:	adc $24a,y
+caef:	sta $321,x
+caf2:	sta $52
+caf4:	lda $33c,x
+caf7:	adc $255,y
+cafa:	sta $33c,x
+cafd:	sta $53
+caff:	lda $357,x
+cb02:	adc $260,y
+cb05:	sta $357,x
+cb08:	sta $54
+cb0a:	lda $372,x
+cb0d:	adc $26b,y
+cb10:	sta $372,x
 cb13:	tax
-cb14:	lda #52
+cb14:	lda $52
 cb16:	sec
-cb17:	sbc #276,y
-cb1a:	sta #52
-cb1c:	lda #53
-cb1e:	sbc #281,y
-cb21:	sta #53
-cb23:	lda #54
-cb25:	sbc #28c,y
-cb28:	sta #54
+cb17:	sbc $276,y
+cb1a:	sta $52
+cb1c:	lda $53
+cb1e:	sbc $281,y
+cb21:	sta $53
+cb23:	lda $54
+cb25:	sbc $28c,y
+cb28:	sta $54
 cb2a:	txa
-cb2b:	sbc #297,y
-cb2e:	ora #52
-cb30:	ora #53
-cb32:	ora #54
-cb34:	beq #cb45
+cb2b:	sbc $297,y
+cb2e:	ora $52
+cb30:	ora $53
+cb32:	ora $54
+cb34:	beq $cb45
 cb36:	txa
-cb37:	eor #26b,y
-cb3a:	eor #297,y
-cb3d:	bpl #cb43
-cb3f:	bcs #cb45
-cb41:	bcc #cb52
-cb43:	bcs #cb52
-cb45:	lda #2a2,y
-cb48:	sta #5
-cb4a:	lda #2ad,y
-cb4d:	sta #6
-cb4f:	jmp #cbff
+cb37:	eor $26b,y
+cb3a:	eor $297,y
+cb3d:	bpl $cb43
+cb3f:	bcs $cb45
+cb41:	bcc $cb52
+cb43:	bcs $cb52
+cb45:	lda $2a2,y
+cb48:	sta $5
+cb4a:	lda $2ad,y
+cb4d:	sta $6
+cb4f:	jmp $cbff
 
-cb52:	dec #15
-cb54:	jmp #c558
+cb52:	dec $15
+cb54:	jmp $c558
 
 
 ; Execute the Command 'FOR'
 
-cb57:	jsr #c434
-cb5a:	bcc #cb6d
-cb5c:	jsr #c279
-cb5f:	jsr #ca2c
+cb57:	jsr $c434
+cb5a:	bcc $cb6d
+cb5c:	jsr $c279
+cb5f:	jsr $ca2c
 cb62:	tya
-cb63:	ldy #15
-cb65:	cpy @#b
-cb67:	bcs #cb6d
-cb69:	sta #240,y
-cb6c:	lda @#0
-cb6e:	sta #26c,y
-cb71:	sta #261,y
-cb74:	sta #256,y
-cb77:	lda @#1
-cb79:	sta #24b,y
-cb7c:	ldx @#16
-cb7e:	jmp #c233
+cb63:	ldy $15
+cb65:	cpy #$b
+cb67:	bcs $cb6d
+cb69:	sta $240,y
+cb6c:	lda #$0
+cb6e:	sta $26c,y
+cb71:	sta $261,y
+cb74:	sta $256,y
+cb77:	lda #$1
+cb79:	sta $24b,y
+cb7c:	ldx #$16
+cb7e:	jmp $c233
 
 
 ; Execute the Command 'TO'
 
-cb81:	jsr #c78b
-cb84:	ldy #15
+cb81:	jsr $c78b
+cb84:	ldy $15
 cb86:	dex
-cb87:	stx #4
-cb89:	lda #16,x
-cb8b:	sta #277,y
-cb8e:	lda #25,x
-cb90:	sta #282,y
-cb93:	lda #34,x
-cb95:	sta #28d,y
-cb98:	lda #43,x
-cb9a:	sta #298,y
-cb9d:	ldx @#1a
-cb9f:	jmp #c233
+cb87:	stx $4
+cb89:	lda $16,x
+cb8b:	sta $277,y
+cb8e:	lda $25,x
+cb90:	sta $282,y
+cb93:	lda $34,x
+cb95:	sta $28d,y
+cb98:	lda $43,x
+cb9a:	sta $298,y
+cb9d:	ldx #$1a
+cb9f:	jmp $c233
 
 
 ; Execute the Command 'STEP'
 
-cba2:	jsr #c78b
-cba5:	ldy #15
+cba2:	jsr $c78b
+cba5:	ldy $15
 cba7:	dex
-cba8:	stx #4
-cbaa:	lda #16,x
-cbac:	sta #24b,y
-cbaf:	lda #25,x
-cbb1:	sta #256,y
-cbb4:	lda #34,x
+cba8:	stx $4
+cbaa:	lda $16,x
+cbac:	sta $24b,y
+cbaf:	lda $25,x
+cbb1:	sta $256,y
+cbb4:	lda $34,x
 
-cbb6:	sta #261,y
-cbb9:	lda #43,x
-cbbb:	sta #26c,y
+cbb6:	sta $261,y
+cbb9:	lda $43,x
+cbbb:	sta $26c,y
 
 			; CONFLICT: some ROM binaries say:
-			; CBB6  99 62 02  STA #262,Y	; 62 not 61
-			; CBB9  B5 43     LDA #43,X
-			; CBBB  99 6d 02  STA #26D,Y	; 6D not 6C
+			; CBB6  99 62 02  STA $262,Y	; 62 not 61
+			; CBB9  B5 43     LDA $43,X
+			; CBBB  99 6d 02  STA $26D,Y	; 6D not 6C
 
 
-cbbe:	jsr #c50c
-cbc1:	ldy #15
-cbc3:	lda #5
-cbc5:	sta #2a3,y
-cbc8:	lda #6
-cbca:	sta #2ae,y
-cbcd:	inc #15
-cbcf:	jmp #c31b
+cbbe:	jsr $c50c
+cbc1:	ldy $15
+cbc3:	lda $5
+cbc5:	sta $2a3,y
+cbc8:	lda $6
+cbca:	sta $2ae,y
+cbcd:	inc $15
+cbcf:	jmp $c31b
 
 
 ; Execute the Command 'GOSUB'
 
-cbd2:	jsr #cc1f
-cbd5:	jsr #c50c
-cbd8:	ldy #14
-cbda:	cpy @#e
-cbdc:	bcs #cc00
-cbde:	lda #5
-cbe0:	sta #2cf,y
-cbe3:	lda #6
-cbe5:	sta #2dd,y
-cbe8:	inc #14
-cbea:	bcc #cc0b
+cbd2:	jsr $cc1f
+cbd5:	jsr $c50c
+cbd8:	ldy $14
+cbda:	cpy #$e
+cbdc:	bcs $cc00
+cbde:	lda $5
+cbe0:	sta $2cf,y
+cbe3:	lda $6
+cbe5:	sta $2dd,y
+cbe8:	inc $14
+cbea:	bcc $cc0b
 
 
 ; Execute the Command 'RETURN'
 
-cbec:	jsr #c4e4
-cbef:	ldy #14
-cbf1:	beq #cc1d
-cbf3:	dec #14
-cbf5:	lda #2ce,y
-cbf8:	sta #5
-cbfa:	lda #2dc,y
-cbfd:	sta #6
-cbff:	jsr #c500
-cc02:	jmp #c31b
+cbec:	jsr $c4e4
+cbef:	ldy $14
+cbf1:	beq $cc1d
+cbf3:	dec $14
+cbf5:	lda $2ce,y
+cbf8:	sta $5
+cbfa:	lda $2dc,y
+cbfd:	sta $6
+cbff:	jsr $c500
+cc02:	jmp $c31b
 
 
 ; Execute the Command 'GOTO'
 
-cc05:	jsr #cc1f
-cc08:	jsr #c4e4
-cc0b:	lda #57
-cc0d:	bne #cc14
-cc0f:	jsr #c62e
-cc12:	bcs #cc7d
-cc14:	ldy #58
-cc16:	lda #59
-cc18:	sty #5
-cc1a:	jmp #cbfd
+cc05:	jsr $cc1f
+cc08:	jsr $c4e4
+cc0b:	lda $57
+cc0d:	bne $cc14
+cc0f:	jsr $c62e
+cc12:	bcs $cc7d
+cc14:	ldy $58
+cc16:	lda $59
+cc18:	sty $5
+cc1a:	jmp $cbfd
 
 cc1d:	brk
 
@@ -1996,207 +1996,207 @@ cc1d:	brk
 ; Line Number/Label Text Search subroutine
 ;
 ; Used by 'GOTO' and 'GOSUB' routines.
-; Line number copied to #1,#2 if the search is successful.
-; If the label address is known, it is copied to #58,#59.
+; Line number copied to $1,$2 if the search is successful.
+; If the label address is known, it is copied to $58,$59.
 ; If the label address is not known, it is searched for and copied to the
-; label store as well as to #58,#59.
+; label store as well as to $58,$59.
 
 cc1e:	iny
-cc1f:	lda (#5),y
-cc21:	cmp @#20
-cc23:	beq #cc1e
-cc25:	cmp @#61
-cc27:	bcc #cc79
-cc29:	sta #57
-cc2b:	sbc @#61
-cc2d:	cmp @#1b
-cc2f:	bcs #cc79
+cc1f:	lda ($5),y
+cc21:	cmp #$20
+cc23:	beq $cc1e
+cc25:	cmp #$61
+cc27:	bcc $cc79
+cc29:	sta $57
+cc2b:	sbc #$61
+cc2d:	cmp #$1b
+cc2f:	bcs $cc79
 cc31:	asl a
 cc32:	tax
-cc33:	lda #38d,x
-cc36:	sta #58
-cc38:	jsr #c4f6
-cc3b:	lda #38e,x
-cc3e:	sta #59
-cc40:	ora #58
-cc42:	bne #cc78
+cc33:	lda $38d,x
+cc36:	sta $58
+cc38:	jsr $c4f6
+cc3b:	lda $38e,x
+cc3e:	sta $59
+cc40:	ora $58
+cc42:	bne $cc78
 cc44:	tay
-cc45:	lda #12
-cc47:	sta #59
+cc45:	lda $12
+cc47:	sta $59
 cc49:	dey
-cc4a:	lda @#d
+cc4a:	lda #$d
 cc4c:	iny
-cc4d:	cmp (#58),y
-cc4f:	bne #cc4c
+cc4d:	cmp ($58),y
+cc4f:	bne $cc4c
 cc51:	iny
-cc52:	lda (#58),y
-cc54:	bmi #cc9b
-cc56:	sta #2
+cc52:	lda ($58),y
+cc54:	bmi $cc9b
+cc56:	sta $2
 cc58:	iny
-cc59:	lda (#58),y
-cc5b:	sta #1
+cc59:	lda ($58),y
+cc5b:	sta $1
 cc5d:	iny
-cc5e:	lda (#58),y
+cc5e:	lda ($58),y
 cc60:	dey
-cc61:	cmp #57
-cc63:	beq #cc6b
-cc65:	jsr #cea1
-cc68:	jmp #cc4a
+cc61:	cmp $57
+cc63:	beq $cc6b
+cc65:	jsr $cea1
+cc68:	jmp $cc4a
 
-cc6b:	jsr #cea2
-cc6e:	lda #58
-cc70:	sta #38d,x
-cc73:	lda #59
-cc75:	sta #38e,x
+cc6b:	jsr $cea2
+cc6e:	lda $58
+cc70:	sta $38d,x
+cc73:	lda $59
+cc75:	sta $38e,x
 cc78:	rts
 
 
-cc79:	jsr #c8bc
-cc7c:	lda @#0
-cc7e:	sta #57
+cc79:	jsr $c8bc
+cc7c:	lda #$0
+cc7e:	sta $57
 cc80:	rts
 
 
 ; Execute the Command 'INPUT'
 
-cc81:	jsr #c372
-cc84:	jsr #c434
-cc87:	bcs #cc8e
-cc89:	ldx @#2b
-cc8b:	jmp #c233
+cc81:	jsr $c372
+cc84:	jsr $c434
+cc87:	bcs $cc8e
+cc89:	ldx #$2b
+cc8b:	jmp $c233
 
 
 ; Numerical Variable Input
 
-cc8e:	jsr #cd09
-cc91:	lda #5
+cc8e:	jsr $cd09
+cc91:	lda $5
 cc93:	pha
-cc94:	lda #6
+cc94:	lda $6
 cc96:	pha
-cc97:	lda #3
+cc97:	lda $3
 cc99:	pha
-cc9a:	ldy @#0
-cc9c:	sty #3
+cc9a:	ldy #$0
+cc9c:	sty $3
 cc9e:	iny
-cc9f:	sty #6
-cca1:	ldy @#40
-cca3:	sty #5
-cca5:	jsr #ca2c
+cc9f:	sty $6
+cca1:	ldy #$40
+cca3:	sty $5
+cca5:	jsr $ca2c
 cca8:	pla
-cca9:	sta #3
+cca9:	sta $3
 ccab:	pla
-ccac:	sta #6
+ccac:	sta $6
 ccae:	pla
-ccaf:	sta #5
-ccb1:	ldx @#2c
-ccb3:	jmp #c233
+ccaf:	sta $5
+ccb1:	ldx #$2c
+ccb3:	jmp $c233
 
 
 ; String Variable Input
 
-ccb6:	jsr #c78b
-ccb9:	ldy @#54
-ccbb:	jsr #c3cd
-ccbe:	jsr #cd09
-ccc1:	ldx @#40
-ccc3:	ldy @#0
-ccc5:	lda #100,x
-ccc8:	sta (#54),y
-ccca:	cmp @#d
-cccc:	beq #cc81
+ccb6:	jsr $c78b
+ccb9:	ldy #$54
+ccbb:	jsr $c3cd
+ccbe:	jsr $cd09
+ccc1:	ldx #$40
+ccc3:	ldy #$0
+ccc5:	lda $100,x
+ccc8:	sta ($54),y
+ccca:	cmp #$d
+cccc:	beq $cc81
 ccce:	inx
 cccf:	iny
-ccd0:	bne #ccc5
+ccd0:	bne $ccc5
 
 
 ; Execute the Command 'UNTIL'
 
-ccd2:	jsr #c70c
-ccd5:	ldy #13
-ccd7:	beq #ccc4
+ccd2:	jsr $c70c
+ccd5:	ldy $13
+ccd7:	beq $ccc4
 ccd9:	dex
-ccda:	stx #4
-ccdc:	lda #16,x
-ccde:	beq #cce5
-cce0:	dec #13
+ccda:	stx $4
+ccdc:	lda $16,x
+ccde:	beq $cce5
+cce0:	dec $13
 cce2:	jmp $c558
 
-cce5:	lda #2b8,y
-cce8:	sta #5
-ccea:	lda #2c3,y
-cced:	jmp #cbfd
+cce5:	lda $2b8,y
+cce8:	sta $5
+ccea:	lda $2c3,y
+cced:	jmp $cbfd
 
 
 ; Execute the Command 'DO'
 
-ccf0:	ldx #13
-ccf2:	cpx @#b
-ccf4:	bcs #cd10
+ccf0:	ldx $13
+ccf2:	cpx #$b
+ccf4:	bcs $cd10
 ccf6:	dey
-ccf7:	jsr #c4f6
-ccfa:	lda #5
-ccfc:	sta #2b9,x
-ccff:	lda #6
-cd01:	sta #2c4,x
-cd04:	inc #13
-cd06:	jmp #c31b
+ccf7:	jsr $c4f6
+ccfa:	lda $5
+ccfc:	sta $2b9,x
+ccff:	lda $6
+cd01:	sta $2c4,x
+cd04:	inc $13
+cd06:	jmp $c31b
 
 
 ; Input to String Input Buffer subroutine
 ;
-; Prints a '?' prompt and stores subsequent keypresses in the #140 string
+; Prints a '?' prompt and stores subsequent keypresses in the $140 string
 ; input buffer.
 ; Returns when <CR> pressed with Y register pointing to the last character
 ; entered.
 ; COUNT is set to zero on return.
 
-cd09:	lda @#3f
-cd0b:	ldy @#40
-cd0d:	bne #cd11
+cd09:	lda #$3f
+cd0b:	ldy #$40
+cd0d:	bne $cd11
 
 
 ; Input a Line to Direct Mode Input Buffer subroutine
 ;
 ; Prints the contents of the accumulator and stores subsequent keypresses
-; in the #100 Direct Mode input buffer.
+; in the $100 Direct Mode input buffer.
 ; Returns when <CR> pressed with Y register pointing to the last character
 ; entered.
 ; COUNT is set to zero on return.
 
-cd0f:	ldy @#0
-cd11:	jsr #ca4c
-cd14:	sty #52
-cd16:	ldy #52
-cd18:	jsr #ffe6
-cd1b:	cmp @#7f
-cd1d:	bne #cd26
+cd0f:	ldy #$0
+cd11:	jsr $ca4c
+cd14:	sty $52
+cd16:	ldy $52
+cd18:	jsr $ffe6
+cd1b:	cmp #$7f
+cd1d:	bne $cd26
 cd1f:	dey
-cd20:	cpy #52
-cd22:	bpl #cd18
-cd24:	bmi #cd16
-cd26:	cmp @#18
-cd28:	bne #cd30
-cd2a:	jsr #cd54
-cd2d:	jmp #cd16
+cd20:	cpy $52
+cd22:	bpl $cd18
+cd24:	bmi $cd16
+cd26:	cmp #$18
+cd28:	bne $cd30
+cd2a:	jsr $cd54
+cd2d:	jmp $cd16
 
-cd30:	cmp @#1b
-cd32:	bne #cd37
-cd34:	jmp #c2cf
+cd30:	cmp #$1b
+cd32:	bne $cd37
+cd34:	jmp $c2cf
 
-cd37:	sta #100,y
-cd3a:	cmp @#d
-cd3c:	beq #cd57
+cd37:	sta $100,y
+cd3a:	cmp #$d
+cd3c:	beq $cd57
 cd3e:	iny
 cd3f:	tya
 cd40:	sec
-cd41:	sbc #52
-cd43:	cmp @#40
-cd45:	bcc #cd18
-cd47:	jsr #ffe3
-cd4a:	cmp @#7f
-cd4c:	bne #cd47
-cd4e:	jsr #fff4
-cd51:	jmp #cd1f
+cd41:	sbc $52
+cd43:	cmp #$40
+cd45:	bcc $cd18
+cd47:	jsr $ffe3
+cd4a:	cmp #$7f
+cd4c:	bne $cd47
+cd4e:	jsr $fff4
+cd51:	jmp $cd1f
 
 
 ; Print a <CR><LF> subroutine
@@ -2204,79 +2204,79 @@ cd51:	jmp #cd1f
 ; Sends a <CR><LF> to WRCHAR, and resets COUNT at ?7 to zero.
 ; Destroys accumulator.
 
-cd54:	jsr #ffed
-cd57:	lda @#0
-cd59:	sta #7
+cd54:	jsr $ffed
+cd57:	lda #$0
+cd59:	sta $7
 cd5b:	rts
 
 
 ; Assign '$' String Variable
 
-cd5c:	jsr #c78b
-cd5f:	jsr #ceae
-cd62:	ldy @#54
-cd64:	jsr #c3cd
-cd67:	ldy @#ff
+cd5c:	jsr $c78b
+cd5f:	jsr $ceae
+cd62:	ldy #$54
+cd64:	jsr $c3cd
+cd67:	ldy #$ff
 cd69:	iny
-cd6a:	lda (#52),y
-cd6c:	sta (#54),y
-cd6e:	cmp @#d
-cd70:	bne #cd69
-cd72:	jmp #c558
+cd6a:	lda ($52),y
+cd6c:	sta ($54),y
+cd6e:	cmp #$d
+cd70:	bne $cd69
+cd72:	jmp $c558
 
 
 ; Assign !<variable>
 
-cd75:	jsr #cd81
-cd78:	jmp #c3f1
+cd75:	jsr $cd81
+cd78:	jmp $c3f1
 
 
 ; Assign ?<variable>
 
-cd7b:	jsr #cd81
-cd7e:	jmp #c409
+cd7b:	jsr $cd81
+cd7e:	jmp $c409
 
 
 ; Assignment subroutine
 
-cd81:	jsr #c8e1
-cd84:	jsr #c8bc
+cd81:	jsr $c8e1
+cd84:	jsr $c8bc
 cd87:	dex
 cd88:	clc
-cd89:	lda #16,x
-cd8b:	adc #15,x
-cd8d:	sta #15,x
-cd8f:	lda #25,x
-cd91:	adc #24,x
-cd93:	sta #24,x
-cd95:	stx #4
+cd89:	lda $16,x
+cd8b:	adc $15,x
+cd8d:	sta $15,x
+cd8f:	lda $25,x
+cd91:	adc $24,x
+cd93:	sta $24,x
+cd95:	stx $4
 cd97:	rts
 
 
 ; Execute the Command 'END'
 ;
-; Finds the end of the current text space, starting at page ?#12, and
-; sets the TOP vector #D, #E.
+; Finds the end of the current text space, starting at page ?$12, and
+; sets the TOP vector $D, $E.
 ; Exits to Direct Mode.
 
-cd98:	jsr #c4e4
-cd9b:	lda #12
-cd9d:	sta #e
-cd9f:	ldy @#0
-cda1:	sty #d
+cd98:	jsr $c4e4
+cd9b:	lda $12
+cd9d:	sta $e
+cd9f:	ldy #$0
+cda1:	sty $d
 cda3:	dey
 cda4:	iny
-cda5:	lda (#d),y
-cda7:	cmp @#d
-cda9:	bne #cda4
-cdab:	jsr #cdbc
-cdae:	lda (#d),y
-cdb0:	bmi #cdb5
+cda5:	lda ($d),y
+cda7:	cmp #$d
+cda9:	bne $cda4
+cdab:	jsr $cdbc
+cdae:	lda ($d),y
+cdb0:	bmi $cdb5
 cdb2:	iny
-cdb3:	bne #cda4
+cdb3:	bne $cda4
 cdb5:	iny
-cdb6:	jsr #cdbc
-cdb9:	jmp #c2cf
+cdb6:	jsr $cdbc
+cdb9:	jmp $c2cf
 
 
 ; END subroutine
@@ -2285,164 +2285,164 @@ cdb9:	jmp #c2cf
 
 cdbc:	clc
 cdbd:	tya
-cdbe:	adc #d
-cdc0:	sta #d
-cdc2:	bcc #cdc6
-cdc4:	inc #e
-cdc6:	ldy @#1
+cdbe:	adc $d
+cdc0:	sta $d
+cdc2:	bcc $cdc6
+cdc4:	inc $e
+cdc6:	ldy #$1
 cdc8:	rts
 
 
 ; Text Line Insertion and Removal
 ;
-; On entry #16, #17 contain the line number to be entered.
+; On entry $16, $17 contain the line number to be entered.
 
-cdc9:	sty #56
-cdcb:	jsr #c62e
-cdce:	bcs #ce18
-cdd0:	lda #58
-cdd2:	sta #52
-cdd4:	sbc @#1
-cdd6:	sta #58
-cdd8:	sta #d
-cdda:	lda #59
-cddc:	sta #53
-cdde:	sbc @#0
-cde0:	sta #e
-cde2:	sta #59
-cde4:	lda @#d
+cdc9:	sty $56
+cdcb:	jsr $c62e
+cdce:	bcs $ce18
+cdd0:	lda $58
+cdd2:	sta $52
+cdd4:	sbc #$1
+cdd6:	sta $58
+cdd8:	sta $d
+cdda:	lda $59
+cddc:	sta $53
+cdde:	sbc #$0
+cde0:	sta $e
+cde2:	sta $59
+cde4:	lda #$d
 cde6:	iny
-cde7:	cmp (#52),y
-cde9:	bne #cde6
+cde7:	cmp ($52),y
+cde9:	bne $cde6
 cdeb:	clc
 cdec:	tya
-cded:	adc #52
-cdef:	sta #52
-cdf1:	bcc #cdf5
-cdf3:	inc #53
-cdf5:	ldy @#0
-cdf7:	lda (#52),y
-cdf9:	sta (#d),y
-cdfb:	cmp @#d
-cdfd:	beq #ce08
+cded:	adc $52
+cdef:	sta $52
+cdf1:	bcc $cdf5
+cdf3:	inc $53
+cdf5:	ldy #$0
+cdf7:	lda ($52),y
+cdf9:	sta ($d),y
+cdfb:	cmp #$d
+cdfd:	beq $ce08
 cdff:	iny
-ce00:	bne #cdf7
-ce02:	inc #53
-ce04:	inc #e
-ce06:	bne #cdf7
+ce00:	bne $cdf7
+ce02:	inc $53
+ce04:	inc $e
+ce06:	bne $cdf7
 ce08:	iny
-ce09:	bne #ce0f
-ce0b:	inc #53
-ce0d:	inc #e
-ce0f:	lda (#52),y
-ce11:	sta (#d),y
-ce13:	bpl #cdff
-ce15:	jsr #cdbd
-ce18:	ldy @#1
-ce1a:	sty #57
+ce09:	bne $ce0f
+ce0b:	inc $53
+ce0d:	inc $e
+ce0f:	lda ($52),y
+ce11:	sta ($d),y
+ce13:	bpl $cdff
+ce15:	jsr $cdbd
+ce18:	ldy #$1
+ce1a:	sty $57
 ce1c:	dey
-ce1d:	lda @#d
-ce1f:	cmp (#56),y
-ce21:	beq #ce80
+ce1d:	lda #$d
+ce1f:	cmp ($56),y
+ce21:	beq $ce80
 ce23:	iny
-ce24:	cmp (#56),y
-ce26:	bne #ce23
+ce24:	cmp ($56),y
+ce26:	bne $ce23
 ce28:	iny
 ce29:	iny
-ce2a:	lda #d
-ce2c:	sta #54
-ce2e:	lda #e
-ce30:	sta #55
-ce32:	jsr #cdbd
-ce35:	sta #52
-ce37:	lda #e
-ce39:	sta #53
+ce2a:	lda $d
+ce2c:	sta $54
+ce2e:	lda $e
+ce30:	sta $55
+ce32:	jsr $cdbd
+ce35:	sta $52
+ce37:	lda $e
+ce39:	sta $53
 ce3b:	dey
-ce3c:	lda @#55
-ce3e:	sta (#d),y
-ce40:	cmp (#d),y
-ce42:	bne #cdf6
+ce3c:	lda #$55
+ce3e:	sta ($d),y
+ce40:	cmp ($d),y
+ce42:	bne $cdf6
 ce44:	asl a
-ce45:	sta (#d),y
-ce47:	cmp (#d),y
-ce49:	bne #cdf6
-ce4b:	lda (#54),y
-ce4d:	sta (#52),y
+ce45:	sta ($d),y
+ce47:	cmp ($d),y
+ce49:	bne $cdf6
+ce4b:	lda ($54),y
+ce4d:	sta ($52),y
 ce4f:	tya
-ce50:	bne #ce56
-ce52:	dec #55
-ce54:	dec #53
+ce50:	bne $ce56
+ce52:	dec $55
+ce54:	dec $53
 ce56:	dey
 ce57:	tya
-ce58:	adc #54
-ce5a:	ldx #55
-ce5c:	bcc #ce5f
+ce58:	adc $54
+ce5a:	ldx $55
+ce5c:	bcc $ce5f
 ce5e:	inx
-ce5f:	cmp #58
+ce5f:	cmp $58
 ce61:	txa
-ce62:	sbc #59
-ce64:	bcs #ce4b
-ce66:	ldy @#1
-ce68:	lda #25
-ce6a:	sta (#58),y
+ce62:	sbc $59
+ce64:	bcs $ce4b
+ce66:	ldy #$1
+ce68:	lda $25
+ce6a:	sta ($58),y
 ce6c:	iny
-ce6d:	lda #16
-ce6f:	sta (#58),y
+ce6d:	lda $16
+ce6f:	sta ($58),y
 ce71:	sec
-ce72:	jsr #cea2
-ce75:	ldy @#ff
+ce72:	jsr $cea2
+ce75:	ldy #$ff
 ce77:	iny
-ce78:	lda (#56),y
-ce7a:	sta (#58),y
-ce7c:	cmp @#d
-ce7e:	bne #ce77
-ce80:	jmp #c2cf
+ce78:	lda ($56),y
+ce7a:	sta ($58),y
+ce7c:	cmp #$d
+ce7e:	bne $ce77
+ce80:	jmp $c2cf
 
 
 ; Continuation of Execution of the Command 'RUN'
 ;
-; Continuation from #F141.
+; Continuation from $F141.
 ; Sets the Text Pointer at ?5,?6 to the start of text, and then jumps to
 ; the interpreter.
 
-ce83:	jsr #c4e4
-ce86:	ldy @#0
-ce88:	sty #5
-ce8a:	sty #3
-ce8c:	lda #12
-ce8e:	sta #6
-ce90:	jmp #c55b
+ce83:	jsr $c4e4
+ce86:	ldy #$0
+ce88:	sty $5
+ce8a:	sty $3
+ce8c:	lda $12
+ce8e:	sta $6
+ce90:	jmp $c55b
 
 
 ; !<factor> and ?<factor> subroutine
 
-ce93:	jsr #c4de
+ce93:	jsr $c4de
 ce96:	dex
-ce97:	jsr #c3cb
-ce9a:	ldy @#0
-ce9c:	lda #17,x
-ce9e:	sta (#52),y
+ce97:	jsr $c3cb
+ce9a:	ldy #$0
+ce9c:	lda $17,x
+ce9e:	sta ($52),y
 cea0:	rts
 
 
-; Update #58, #59 Pointer subroutine
+; Update $58, $59 Pointer subroutine
 ;
-; Sets (#58)=(#58)+Y and Y=1, ?3=1.
+; Sets ($58)=($58)+Y and Y=1, ?3=1.
 ; Checks the <ESC> key before return.
 ; Destroys accumulator.
 
 cea1:	clc
 cea2:	tya
-cea3:	adc #58
-cea5:	sta #58
-cea7:	bcc #ceab
-cea9:	inc #59
-ceab:	jmp #c500
+cea3:	adc $58
+cea5:	sta $58
+cea7:	bcc $ceab
+cea9:	inc $59
+ceab:	jmp $c500
 
 
 ; Set up String Ready for Assignment
 
-ceae:	jsr #c279
+ceae:	jsr $c279
 
 
 ; Check for Valid String subroutine
@@ -2451,128 +2451,128 @@ ceae:	jsr #c279
 ; If successful, returns with (5),?3 pointimg to the character following,
 ; otherwise executes BRK.
 
-ceb1:	ldx @#26
-ceb3:	jmp #c233
+ceb1:	ldx #$26
+ceb3:	jmp $c233
 
 
 ; Set up $ String Ready for Asssignment
 
-ceb6:	jsr #c78b
-ceb9:	jsr #c3cb
-cebc:	ldy #3
+ceb6:	jsr $c78b
+ceb9:	jsr $c3cb
+cebc:	ldy $3
 cebe:	rts
 
 
 ; Set up "string" Ready for Asssignment
 
-cebf:	jsr #c4f6
+cebf:	jsr $c4f6
 
 
 ; Copy Quoted String to String Input Buffer subroutine
 ;
 ; Copies a string in quotes pointed to by (5),Y to the string input buffer
-; at #140.
+; at $140.
 ; Quotation marks are removed.
 
-cec2:	sty #53
+cec2:	sty $53
 cec4:	dey
-cec5:	ldx @#0
-cec7:	lda (#5),y
-cec9:	cmp @#d
-cecb:	beq #cec6
-cecd:	sta #140,x
+cec5:	ldx #$0
+cec7:	lda ($5),y
+cec9:	cmp #$d
+cecb:	beq $cec6
+cecd:	sta $140,x
 ced0:	inx
 ced1:	iny
-ced2:	cmp @#22
-ced4:	bne #cec7
-ced6:	lda (#5),y
-ced8:	cmp @#22
-ceda:	beq #ceea
-cedc:	lda @#d
-cede:	sta #13f,x
-cee1:	sty #3
-cee3:	lda @#40
-cee5:	sta #52
-cee7:	ldx #4
+ced2:	cmp #$22
+ced4:	bne $cec7
+ced6:	lda ($5),y
+ced8:	cmp #$22
+ceda:	beq $ceea
+cedc:	lda #$d
+cede:	sta $13f,x
+cee1:	sty $3
+cee3:	lda #$40
+cee5:	sta $52
+cee7:	ldx $4
 cee9:	rts
 
 ceea:	iny
-ceeb:	bcs #cec7
+ceeb:	bcs $cec7
 
 
 ; 'LOAD' File
 
-ceed:	jsr #cefa
+ceed:	jsr $cefa
 cef0:	dey
-cef1:	sty #56
+cef1:	sty $56
 cef3:	sec
-cef4:	jsr #ffe0
-cef7:	jmp #cd9b
+cef4:	jsr $ffe0
+cef7:	jmp $cd9b
 
 
 ; Load and Save Setup subroutine
 ;
-; Reads the file title into the String Input buffer at #140, and sets
-; the vector #54, #55 to the start of text.
+; Reads the file title into the String Input buffer at $140, and sets
+; the vector $54, $55 to the start of text.
 
-cefa:	jsr #ceb1
-cefd:	jsr #c4e4
+cefa:	jsr $ceb1
+cefd:	jsr $c4e4
 cf00:	dey
-cf01:	sty #54
-cf03:	lda #12
-cf05:	sta #55
-cf07:	ldx @#52
+cf01:	sty $54
+cf03:	lda $12
+cf05:	sta $55
+cf07:	ldx #$52
 cf09:	rts
 
 
 ; Execute the Command 'SAVE'
 
-cf0a:	jsr #cefa
-cf0d:	sty #58
-cf0f:	sta #59
-cf11:	lda #d
-cf13:	sta #5a
-cf15:	lda #e
-cf17:	sta #5b
-cf19:	lda @#b2
-cf1b:	sta #56
-cf1d:	lda @#c2
-cf1f:	sta #57
+cf0a:	jsr $cefa
+cf0d:	sty $58
+cf0f:	sta $59
+cf11:	lda $d
+cf13:	sta $5a
+cf15:	lda $e
+cf17:	sta $5b
+cf19:	lda #$b2
+cf1b:	sta $56
+cf1d:	lda #$c2
+cf1f:	sta $57
 cf21:	clc
-cf22:	jsr #ffdd
-cf25:	jmp #c55b
+cf22:	jsr $ffdd
+cf25:	jmp $c55b
 
 
 cf28:	sec
-cf29:	lda @#0
+cf29:	lda #$0
 cf2b:	rol a
 cf2c:	pha
-cf2d:	jsr #cf3e
-cf30:	ldx @#52
+cf2d:	jsr $cf3e
+cf30:	ldx #$52
 cf32:	pla
-cf33:	jsr #ffda
-cf36:	ldy @#52
-cf38:	jsr #c99f
-cf3b:	sta #42,x
+cf33:	jsr $ffda
+cf36:	ldy #$52
+cf38:	jsr $c99f
+cf3b:	sta $42,x
 cf3d:	rts
 
 
 ; Get <factor> into Y Register subroutine
 
-cf3e:	jsr #c8bc
-cf41:	ldy #15,x
+cf3e:	jsr $c8bc
+cf41:	ldy $15,x
 cf43:	dex
-cf44:	stx #4
+cf44:	stx $4
 cf46:	rts
 
 
-cf47:	jsr #c8bc
-cf4a:	jsr #c4de
-cf4d:	jsr #c3cb
-cf50:	jsr #cf41
-cf53:	ldx @#52
-cf55:	jsr #ffd7
-cf58:	jmp #c55b
+cf47:	jsr $c8bc
+cf4a:	jsr $c4de
+cf4d:	jsr $c3cb
+cf50:	jsr $cf41
+cf53:	ldx #$52
+cf55:	jsr $ffd7
+cf58:	jmp $c55b
 
 
 ; Execute 'BGET' subroutine
@@ -2580,100 +2580,100 @@ cf58:	jmp #c55b
 ; Reads 1 byte from OSBGET into the workspace stack and sets the other
 ; 3 bytes to zero.
 
-cf5b:	jsr #cf3e
-cf5e:	sty #52
-cf60:	jsr #ffd4
-cf63:	jmp #c97c
+cf5b:	jsr $cf3e
+cf5e:	sty $52
+cf60:	jsr $ffd4
+cf63:	jmp $c97c
 
 
 ; Execute 'GET' subroutine
 ;
 ; Reads 4 bytes from OSBGET into the workspace stack.
 
-cf66:	jsr #cf5b
-cf69:	ldy #52
-cf6b:	jsr #ffd4
-cf6e:	sta #24,x
-cf70:	jsr #ffd4
-cf73:	sta #33,x
-cf75:	jsr #ffd4
-cf78:	sta #42,x
+cf66:	jsr $cf5b
+cf69:	ldy $52
+cf6b:	jsr $ffd4
+cf6e:	sta $24,x
+cf70:	jsr $ffd4
+cf73:	sta $33,x
+cf75:	jsr $ffd4
+cf78:	sta $42,x
 cf7a:	rts
 
 
-cf7b:	jsr #c8bc
-cf7e:	jsr #c231
-cf81:	jsr #c4e1
-cf84:	jsr #c3cb
-cf87:	jsr #cf41
-cf8a:	lda #52
-cf8c:	jmp (#216)
+cf7b:	jsr $c8bc
+cf7e:	jsr $c231
+cf81:	jsr $c4e1
+cf84:	jsr $c3cb
+cf87:	jsr $cf41
+cf8a:	lda $52
+cf8c:	jmp ($216)
 
 
 ; Execute the Command 'BPUT'
 
-cf8f:	jsr #cf7b
-cf92:	jmp #c55b
+cf8f:	jsr $cf7b
+cf92:	jmp $c55b
 
 
 ; Execute 'PUT' subroutine
 
-cf95:	jsr #cf7b
-cf98:	ldx @#1
-cf9a:	lda #52,x
-cf9c:	jsr #ffd1
+cf95:	jsr $cf7b
+cf98:	ldx #$1
+cf9a:	lda $52,x
+cf9c:	jsr $ffd1
 cf9f:	inx
-cfa0:	cpx @#4
-cfa2:	bcc #cf9a
-cfa4:	bcs #cf92
+cfa0:	cpx #$4
+cfa2:	bcc $cf9a
+cfa4:	bcs $cf92
 cfa6:	sec
 cfa7:	php
-cfa8:	jsr #ceb1
-cfab:	ldx @#52
+cfa8:	jsr $ceb1
+cfab:	ldx #$52
 cfad:	plp
-cfae:	jsr #ffce
-cfb1:	ldx #4
-cfb3:	jmp #c97c
+cfae:	jsr $ffce
+cfb1:	ldx $4
+cfb3:	jmp $c97c
 
 
-cfb6:	jsr #c8bc
-cfb9:	jsr #c4e4
-cfbc:	jsr #cf41
-cfbf:	jsr #ffcb
-cfc2:	jmp #c55b
+cfb6:	jsr $c8bc
+cfb9:	jsr $c4e4
+cfbc:	jsr $cf41
+cfbf:	jsr $ffcb
+cfc2:	jmp $c55b
 
 
 ; Execute the Command 'SPUT'
 
-cfc5:	jsr #c22c
-cfc8:	jsr #ceb1
-cfcb:	jsr #c4e4
+cfc5:	jsr $c22c
+cfc8:	jsr $ceb1
+cfcb:	jsr $c4e4
 cfce:	dey
-cfcf:	lda (#52),y
-cfd1:	sty #55
-cfd3:	ldy #f
+cfcf:	lda ($52),y
+cfd1:	sty $55
+cfd3:	ldy $f
 cfd5:	pha
-cfd6:	jsr #ffd1
+cfd6:	jsr $ffd1
 cfd9:	pla
-cfda:	cmp @#d
-cfdc:	beq #cfc2
-cfde:	ldy #55
+cfda:	cmp #$d
+cfdc:	beq $cfc2
+cfde:	ldy $55
 cfe0:	iny
-cfe1:	bne #cfcf
+cfe1:	bne $cfcf
 
 
 ; Execute the Command 'SGET'
 
-cfe3:	jsr #c22c
-cfe6:	jsr #c4e1
-cfe9:	jsr #c3cb
-cfec:	ldy @#0
-cfee:	sty #55
-cff0:	ldy #f
-cff2:	jsr #ffd4
-cff5:	ldy #55
-cff7:	sta (#52),y
+cfe3:	jsr $c22c
+cfe6:	jsr $c4e1
+cfe9:	jsr $c3cb
+cfec:	ldy #$0
+cfee:	sty $55
+cff0:	ldy $f
+cff2:	jsr $ffd4
+cff5:	ldy $55
+cff7:	sta ($52),y
 cff9:	iny
-cffa:	cmp @#d
-cffc:	bne #cfee
-cffe:	beq #cfc2
+cffa:	cmp #$d
+cffc:	bne $cfee
+cffe:	beq $cfc2
