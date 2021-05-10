@@ -212,2130 +212,1725 @@ c276:	ldx #4
 c279:	ldx #$e			; Point to '=' at $c1eb
 
 
-  Single Byte Command Interpreter
-  -------------------------------
+; Single Byte Command Interpreter
+;
+; Interpretes the single byte symbols at #C1DD.
+; Enter with X register pointing to the symbol table to be used.
 
-- Interpretes the single byte symbols at #C1DD.
-- Enter with X register pointing to the symbol table to be used.
-C27B  A4 03     LDY #3          Get the interpreter pointer
-C27D  88        DEY
-C27E  C8        INY
-C27F  B1 05     LDA (#5),Y      Get the next character from text
-C281  C9 20     CMP @#20        Is it <spc> ?
-C283  F0 F9     BEQ #C27E       ..yes, skip preceding spaces
-C285  DD DD C1  CMP #C1DD,X     Is it this single byte symbol ?
-C288  F0 0C     BEQ #C296       ..yes, go fetch its jump address
-C28A  85 52     STA #52         ..no, save the character under analysis
-C28C  E8        INX             Point to the next table symbol
-C28D  BD DD C1  LDA #C1DD,X     ..and fetch it
-C290  30 16     BMI #C2A8       ..a negative byte means the end of table
-                                termination byte has been reached
-C292  C5 52     CMP #52         Does this symbol match the text ?
-C294  D0 F6     BNE #C28C       ..no, try the next symbol
+c27b:	ldy #3			; Get the interpreter pointer
+c27d:	dey
+c27e:	iny
+c27f:	lda (#5),y		; Get the next character from text
+c281:	cmp @#20		; Is it <spc> ?
+c283:	beq #c27e		; ... yes, skip preceding spaces
+c285:	cmp #c1dd,x		; Is it this single byte symbol ?
+c288:	beq #c296		; ... yes, go fetch its jump address
+c28a:	sta #52			; ... no, save the character under analysis
+c28c:	inx			; Point to the next table symbol
+c28d:	lda #c1dd,x		; ... and fetch it
+c290:	bmi #c2a8		; ... a negative byte means the end of table
+                                ; termination byte has been reached
+c292:	cmp #52			; Does this symbol match the text ?
+c294:	bne #c28c		; ... no, try the next symbol
 
-                                MATCHED SYMBOL - FETCH JUMP ADDRESS
+                                ; MATCHED SYMBOL - FETCH JUMP ADDRESS
 
-C296  BD 12 C2  LDA #C212,X     Get the MSB jump address
-C299  85 53     STA #53         ..into workspace
-C29B  BD F8 C1  LDA #C1F8,X     Get the LSB jump address
-C29E  C8        INY             Increment the text pointer past the
-                                character just successfully interpreted
-C29F  85 52     STA #52         Dump the MSB jump address to workspace
-C2A1  84 03     STY #3          Update the interpreter pointer
-C2A3  A6 04     LDX #4          Get the current workspace pointer
-C2A5  6C 52 00  JMP (#52)       ..and jump
+c296:	lda #c212,x		; Get the MSB jump address
+c299:	sta #53			; ... into workspace
+c29b:	lda #c1f8,x		; Get the LSB jump address
+c29e:	iny			; Increment the text pointer past the
+                                ; character just successfully interpreted
+c29f:	sta #52			; Dump the MSB jump address to workspace
+c2a1:	sty #3			; Update the interpreter pointer
+c2a3:	ldx #4			; Get the current workspace pointer
+c2a5:	jmp (#52)		; ... and jump
 
-                                END OF TABLE ACTION
+                                ; END OF TABLE ACTION
 
-C2A8  C9 FE     CMP @#FE        Non-destructive failure ?
-C2AA  F0 CA     BEQ #C276       ..yes, load workspace pointer and return
-C2AC  00        BRK             ..no, error 174
-
-
-  Execute the command 'NEW'
-  -------------------------
-
-- Resets the print field length LSB variable '@' to the default of 8.
-- Exits back to direct mode.
-
-C2AD  20 E4 C4  JSR #C4E4       Perform the interpreter post test
-C2B0  D0 04     BNE #C2B6
+c2a8:	cmp @#fe		; Non-destructive failure ?
+c2aa:	beq #c276		; ..yes, load workspace pointer and return
+c2ac:	brk			; ..no, error 174
 
 
-  'Cold Start' routine - Text at #2900
-  ------------------------------------
+; Execute the command 'NEW'
+;
+; Resets the print field length LSB variable '@' to the default of 8.
+; Exits back to direct mode.
 
-- Comes from BREAK routine  at #FF94.
-- Points the text pointer ?#12 at #2900 and performs a 'NEW'.
-
-C2B2  A9 29     LDA @#29
-C2B4  85 12     STA #12         Set text pointer to page #29
-
-
-  'Cold Start' routine - unspecified text Space
-  ---------------------------------------------
-
-- If coming from the BREAK routine at #FF97, the text space is #8200.
-- Performs an 'NEW' at the current text space.
-
-C2B6  A9 0D     LDA @#D
-C2B8  A4 12     LDY #12         Get the text page
-C2BA  84 0E     STY #E          Set MSB TOP to the start of text
-C2BC  A0 00     LDY @#0
-C2BE  84 0D     STY #D          Set LSB TOP to the start of text
-C2C0  91 0D     STA (#D),Y      First byte of text is #D
-C2C2  A9 FF     LDA @#FF        Get a text terminator
-C2C4  C8        INY             Point to the second byte of text
-C2C5  91 0D     STA (#D),Y      ..and dump the terminator
-C2C7  C8        INY             Point to the third byte of text
-C2C8  84 0D     STY #D          ..and set LSB TOP
-C2CA  A9 08     LDA @#8         Get the default print length
-C2CC  8D 21 03  STA #321        ..and set LSB integer variable '@'
+c2ad:	jsr #c4e4		; Perform the interpreter post test
+c2b0:	bne #c2b6
 
 
-  Direct Command Handler
-  ----------------------
+; 'Cold Start' routine - Text at #2900
+;
+; Comes from BREAK routine  at #FF94.
+; Points the text pointer ?#12 at #2900 and performs a 'NEW'.
 
-- Entered after a command execution or at the end of a program.
+c2b2:	lda @#29
+c2b4:	sta #12			; Set text pointer to page #29
 
-C2CF  A9 3E     LDA @#3E        Get '>'
-C2D1  D8        CLD
-C2D2  20 0F CD  JSR #CD0F       Print the contents of the accumulator and
-                                get a line of text terminated by <CR> from
-                                the keyboard into the #100 buffer
 
-                                INITIALISE THE (5),Y TEXT POINTER TO THE
-                                START OF THE #100 BUFFER
+; 'Cold Start' routine - unspecified text Space
+;
+; If coming from the BREAK routine at #FF97, the text space is #8200.
+; Performs an 'NEW' at the current text space.
 
-C2D5  A2 01     LDX @#1
-C2D7  86 06     STX #6
-C2D9  CA        DEX
-C2DA  86 05     STX #5
-                                CLEAR LINE NUMBER TO ZERO - DIRECT MODE
+c2b6:	lda @#d
+c2b8:	ldy #12			; Get the text page
+c2ba:	sty #e			; Set MSB TOP to the start of text
+c2bc:	ldy @#0
+c2be:	sty #d			; Set LSB TOP to the start of text
+c2c0:	sta (#d),y		; First byte of text is #D
+c2c2:	lda @#ff		; Get a text terminator
+c2c4:	iny			; Point to the second byte of text
+c2c5:	sta (#d),y		; ..and dump the terminator
+c2c7:	iny			; Point to the third byte of text
+c2c8:	sty #d			; ..and set LSB TOP
+c2ca:	lda @#8			; Get the default print length
+c2cc:	sta #321		; ..and set LSB integer variable '@'
 
-C2DC  86 01     STX #1          Clear the MSB line number
-C2DE  86 02     STX #2          Clear the LSB line number
 
-                                SET BRKVEC TO THE DEFAULT ROUTINE AT #C9D8
+; Direct Command Handler
+;
+; Entered after a command execution or at the end of a program.
 
-C2E0  A9 D8     LDA @#D8
-C2E2  8D 02 02  STA #202
-C2E5  A9 C9     LDA @#C9
-C2E7  8D 03 02  STA #203
+c2cf:	lda @#3e		; Get '>'
+c2d1:	cld
+c2d2:	jsr #cd0f		; Print the contents of the accumulator and
+                                ; get a line of text terminated by <CR> from
+                                ; the keyboard into the #100 buffer
 
-                                SET THE BASIC ERROR HANDLER TO THE
-                                DEFAULT TEXT AT #C9E7
+                                ; INITIALISE THE (5),Y TEXT POINTER TO THE
+                                ; START OF THE #100 BUFFER
 
-C2EA  A9 E7     LDA @#E7
-C2EC  85 10     STA #10
-C2EE  A9 C9     LDA @#C9
-C2F0  85 11     STA #11
+c2d5:	ldx @#1
+c2d7:	stx #6
+c2d9:	dex
+c2da:	stx #5
+                                ; CLEAR LINE NUMBER TO ZERO - DIRECT MODE
 
-                                EXECUTE THE TEXT POINTED BTO BY (5),Y
+c2dc:	stx #1			; Clear the MSB line number
+c2de:	stx #2			; Clear the LSB line number
 
-C2F2  A2 FF     LDX @#FF
-C2F4  9A        TXS             Reset the stack poimter
-C2F5  A9 00     LDA @#0
-C2F7  85 04     STA #4          Reset the workspace stack poimter
-C2F9  85 03     STA #3          Reset the interpreter index
-C2FB  85 15     STA #15         Reset the FOR..NEXT stack poimter
-C2FD  85 13     STA #13         Reset the GOSUB..RETURN stack poimter
-C2FF  85 14     STA #14         Reset the DO..UNTIL stack poimter
-C301  A2 34     LDX @#34
+                                ; SET BRKVEC TO THE DEFAULT ROUTINE AT #C9D8
+
+c2e0:	lda @#d8
+c2e2:	sta #202
+c2e5:	lda @#c9
+c2e7:	sta #203
+
+                                ; SET THE BASIC ERROR HANDLER TO THE
+                                ; DEFAULT TEXT AT #C9E7
+
+c2ea:	lda @#e7
+c2ec:	sta #10
+c2ee:	lda @#c9
+c2f0:	sta #11
+
+                                ; EXECUTE THE TEXT POINTED BTO BY (5),Y
+
+c2f2:	ldx @#ff
+c2f4:	txs			; Reset the stack poimter
+c2f5:	lda @#0
+c2f7:	sta #4			; Reset the workspace stack poimter
+c2f9:	sta #3			; Reset the interpreter index
+c2fb:	sta #15			; Reset the FOR...NEXT stack poimter
+c2fd:	sta #13			; Reset the GOSUB..RETURN stack poimter
+c2ff:	sta #14			; Reset the DO...UNTIL stack poimter
+c301:	ldx @#34
 
                                 CLEAR THE LABEL (@ to z) ADDRESS STACK
 
-C303  9D 8C 03  STA #38C,X
-C306  CA        DEX
-C307  D0 FA     BNE #C303
+c303:	sta #38c,x
+c306:	dex
+c307:	bne #c303
 
-C309  20 34 C4  JSR #C434       If the first non space character is
-                                alphabetic and the the subsequent
-                                is not (but is not '.')
-C30C  B0 21     BCS #C32F       ..then interpret a simple integer variable
-                                definition
+c309:	jsr #c434		; If the first non space character is
+                                ; alphabetic and the the subsequent
+                                ; is not (but is not '.')
+c30c:	bcs #c32f		; ..then interpret a simple integer variable
+                                ; definition
 
-                                CHECK FOR TEXT LINE ENTRY OR DELETION
+                                ; CHECK FOR TEXT LINE ENTRY OR DELETION
 
-C30E  20 6A C4  JSR #C46A       interpret a decimal string as a number
-                                into the w/s stack, and increment ?4
-C311  90 03     BCC #C316       ..invalid number
-C313  4C C9 CD  JMP #CDC9       Deal with line insertion and removal
+c30e:	jsr #c46a		; interpret a decimal string as a number
+                                ; into the w/s stack, and increment ?4
+c311:	bcc #c316		; ... nvalid number
+c313:	jmp #cdc9		; Deal with line insertion and removal
 
-                                EXECUTE A DIRECT COMMAND AT #100
+                                ; EXECUTE A DIRECT COMMAND AT #100
 
-C316  A2 7D     LDX @#7D        Set the interpreter table pointer to #C???
-C318  4C 33 C2  JMP #C233       ..and interpret & execute the command
-
-
-  Execute the command 'THEN'
-  --------------------------
-
-C31B  20 34 C4  JSR #C434       If the first non space character is
-                                alphabetic and the the subsequent
-                                is not (but is not '.')
-C31E  B0 0F     BCS #C32F       ..then treat this as an integer variable
-                                assignment
-C320  A2 7F     LDX @#7F        Set the interpreter table pointer to #C???
-C322  4C 33 C2  JMP #C233       ..and interpret & execute the command
+c316:	ldx @#7d		; Set the interpreter table pointer to #C???
+c318:	jmp #c233		; ..and interpret & execute the command
 
 
-  Execute the command 'LET'
-  -------------------------
+; Execute the command 'THEN'
 
-C325  20 34 C4  JSR #C434       If the first non space character is
-                                alphabetic and the the subsequent
-                                is not (but is not '.')
-C328  B0 05     BCS #C32F       ..then interpret a simple integer variable
-C32A  A2 10     LDX @#10        Otherwise set the table pointer
-C32C  4C 7B C2  JMP #C27B       ..and interpret a ?, ! or $ definition
-
-                                EXECUTE {simple integer variable} =, ? OR
-                                ! ASSIGNMENT
-
-C32F  A2 14     LDX @#14        Set table pointer to
-C331  4C 7B C2  JMP #C27B       Search for & execute '=', '?' or '!'
+c31b:	jsr #c434		; If the first non space character is
+                                ; alphabetic and the the subsequent
+                                ; is not (but is not '.')
+c31e:	bcs #c32f		; ..then treat this as an integer variable
+                                ; assignment
+c320:	ldx @#7f		; Set the interpreter table pointer to #C???
+c322:	jmp #c233		; ..and interpret & execute the command
 
 
-  Execute the command 'PRINT'
-  ---------------------------
+; Execute the command 'LET'
 
-C334  38        SEC
-C335  66 0F     ROR #F          Set bit 7 of the hex print flag to get
-                                the default decimal print mode
-C337  20 72 C3  JSR #C372
-C33A  A2 2E     LDX @#2E        Set the interpreter table pointer to #C???
-C33C  4C 33 C2  JMP #C233       ..and interpret & execute '=', '?' or '!'
+c325:	jsr #c434		; If the first non space character is
+                                ; alphabetic and the the subsequent
+                                ; is not (but is not '.')
+c328:	bcs #c32f		; ..then interpret a simple integer variable
+c32a:	ldx @#10		; Otherwise set the table pointer
+c32c:	jmp #c27b		; ..and interpret a ?, ! or $ definition
 
+                                ; EXECUTE {simple integer variable} =, ? OR
+                                ; ! ASSIGNMENT
 
-  Execute and Print an Arbitrarily Complex Expression
-  ---------------------------------------------------
-
-C33F  20 8B C7  JSR #C78B       Evaluate an arbitrarily complex
-                                expression, followed by a single byte
-                                symbol, followed by '<', '=' or '>'
-C342  20 CB C3  JSR #C3CB       Copy the last level of the w/s stack to
-                                #52(LSB)..#55(MSB) & increment w/s pointer
-C345  A5 0F     LDA #F          Print in decimal ?
-C347  30 21     BMI #C36A       ..yes, branch to decimal print routine
+c32f:	ldx @#14		; Set table pointer to
+c331:	jmp #c27b		; Search for & execute '=', '?' or '!'
 
 
-  Print the 4 byte Word at #52..#55 in Hexadecimal subroutine
-  -----------------------------------------------------------
+; Execute the command 'PRINT'
 
-  - Prints the word #52(LSB) to #55(MSB) as a 4 byte hex word in field
-    size @ suppressing any leading zeros.
-  - Destroys A,X,Y registers.
-
-C349  A2 00     LDX @#0
-C34B  86 27     STX #27         Clear the negative flag used by the
-                                print routine at #C5C8
-C34D  A0 00     LDY @#0         Clear index to the 4-byte word
-C34F  B9 52 00  LDA #52,Y       Get the current byte of the word
-C352  48        PHA             Save a copy for upper nibble conversion
-C353  29 0F     AND @#F         Mask off the upper nibble
-C355  95 45     STA #45,X       ..and dump the lower nibble to w/s
-C357  68        PLA             Restore the copy
-C358  4A        LSR A )
-C359  4A        LSR A )
-C35A  4A        LSR A )
-C35B  4A        LSR A ) Bring the upper nibble down to the lower nibble
-C35C  E8        INX             Increment the w/s pointer
-C35D  95 45     STA #45,X       ..and dump the converted upper nibble
-C35F  E8        INX             Increment the w/s pointe for the next byte
-C360  C8        INY             Point to the next byte of theword
-C361  C0 04     CPY @#4         Done all $ bytes ?
-C363  90 EA     BCC #C34F       ..no, go for the next one
-C365  20 C8 C5  JSR #C5C8       Print the digit stream suppressing leading
-                                zeros
-C368  30 CD     BMI #C337       Branch ALWAYS to interpret the next item
-                                in the print stream
+c334:	sec
+c335:	ror #f			; Set bit 7 of the hex print flag to get
+                                ; the default decimal print mode
+c337:	jsr #c372
+c33a:	ldx @#2e		; Set the interpreter table pointer to #C???
+c33c:	jmp #c233		; ..and interpret & execute '=', '?' or '!'
 
 
-  Decimal print routine
-  ---------------------
+; Execute and Print an Arbitrarily Complex Expression
 
-C36A  20 89 C5  JSR #C589       Print the lowest level of the w/s stack as
-                                a signed decimal number in field size @
-C36D  30 C8     BMI #C337       Branch ALWAYS to interpret the next item
-                                in the print stream
+c33f:	jsr #c78b		; Evaluate an arbitrarily complex
+                                ; expression, followed by a single byte
+                                ; symbol, followed by '<', '=' or '>'
+c342:	jsr #c3cb		; Copy the last level of the w/s stack to
+                                ; #52(LSB)..#55(MSB) & increment w/s pointer
+c345:	lda #f			; Print in decimal ?
+c347:	bmi #c36a		; ... yes, branch to decimal print routine
 
 
-C36F  20 54 CD  JSR #CD54       Send <CR><LF> to OSWRCH
-C372  A2 18     LDX @#18        Set the interpreter table pointer to #C???
-C374  4C 7B C2  JMP #C27B       ..and interpret 'O' ??
+; Print the 4 byte Word at #52..#55 in Hexadecimal subroutine
+;
+; Prints the word #52(LSB) to #55(MSB) as a 4 byte hex word in field
+; size @ suppressing any leading zeros.
+; Destroys A,X,Y registers.
+
+c349:	ldx @#0
+c34b:	stx #27			; Clear the negative flag used by the
+                                ; print routine at #C5C8
+c34d:	ldy @#0			; Clear index to the 4-byte word
+c34f:	lda #52,y		; Get the current byte of the word
+c352:	pha			; Save a copy for upper nibble conversion
+c353:	and @#f			; Mask off the upper nibble
+c355:	sta #45,x		; ... and dump the lower nibble to w/s
+c357:	pla			; Restore the copy
+c358:	lsr a )
+c359:	lsr a )
+c35a:	lsr a )
+c35b:	lsr a ) bring
+c35c:	inx			; Increment the w/s pointer
+c35d:	sta #45,x		; ... and dump the converted upper nibble
+c35f:	inx			; Increment the w/s pointe for the next byte
+c360:	iny			; Point to the next byte of theword
+c361:	cpy @#4			; Done all $ bytes ?
+c363:	bcc #c34f		; ... no, go for the next one
+c365:	jsr #c5c8		; Print the digit stream suppressing leading
+                                ; zeros
+c368:	bmi #c337		; Branch ALWAYS to interpret the next item
+                                ; in the print stream
+
+
+; Decimal print routine
+
+c36a:	jsr #c589		; Print the lowest level of the w/s stack as
+                                ; a signed decimal number in field size @
+c36d:	bmi #c337		; Branch ALWAYS to interpret the next item
+                                ; in the print stream
+
+
+c36f:	jsr #cd54		; Send <CR><LF> to OSWRCH
+c372:	ldx @#18		; Set the interpreter table pointer to #C???
+c374:	jmp #c27b		; ... and interpret 'O' ??
 
 
   ??? Print routine ???
   ---------------------
 
-C377  20 4C CA  JSR #CA4C       Increment COUNT and send the contents of
-                                the accumulator to OSWRCH
-C37A  B1 05     LDA (#5),Y
-C37C  C8        INY
-C37D  C9 0D     CMP @#D
-C37F  F0 1C     BEQ #C39D
-C381  84 03     STY #3
-C383  C9 22     CMP @#22
-C385  D0 F0     BNE #C377
-C387  B1 05     LDA (#5),Y
-C389  C9 22     CMP @#22
-C38B  D0 E5     BNE #C372
-C38D  C8        INY
-C38E  B0 E7     BCS #C377
-C390  20 8B C7  JSR #C78B
-C393  20 CB C3  JSR #C3CB
-C396  05 54     ORA #54
-C398  05 53     ORA #53
-C39A  F0 0E     BEQ #C3AA
-C39C  A0 00     LDY @#0
-C39E  B1 52     LDA (#52),Y
-C3A0  C9 0D     CMP @#D
-C3A2  F0 93     BEQ #C337
-C3A4  20 4C CA  JSR #CA4C
-C3A7  C8        INY
-C3A8  D0 F4     BNE #C39E
-C3AA  A5 52     LDA #52
-C3AC  20 4C CA  JSR #CA4C
-C3AF  4C 37 C3  JMP #C337
-
-
-  Execute the command 'LINK'
-  --------------------------
-
-C3B2  20 C8 C3  JSR #C3C8       Evaluate an arbitrarily complex function
-                                to #52(LSB)..#55(MSB)
-C3B5  20 E4 C4  JSR #C4E4       Do interpreter post-test
-C3B8  AD 22 03  LDA #322        Load accumulator with LSB integer 'A'
-C3BB  AE 39 03  LDX #339        Load X register with LSB integer 'X'
-C3BE  AC 3A 03  LDY #33A        Load Y register with LSB integer 'Y'
-C3C1  20 A5 C2  JSR #C2A5       Indirect jump to (#52)
-C3C4  D8        CLD             Ensure binary mode after nasty user's prog
-C3C5  4C 5B C5  JMP #C55B       Return to execute the next command whether
-                                by program execution or in direct mode
-
-
-  Function Interpreter subroutine
-  -------------------------------
-
-- Evaluates an arbitrarily complex function pointed to by (5),Y where y=?3
-  and stores the result on the Workspace Stack pointed to by ?4 and also
-  on the arithmetic workspace stack at #52(LSB)..#55(MSB).
-- The (5),Y pointer is consolidated before return, so that (5),0 points to
-  the last character in the string interpreted.
-- The workspace stack pointer ?4 is NOT incremented.
-
-C3C8  20 BC C8  JSR #C8BC       Evaluate an arbitrarily complex numeric
-                                expression pointed to by (5),Y
-
-
-  Copy Current Level of the Workspace Stack to #52..#55 subroutine
-  ----------------------------------------------------------------
-
-- Enter with the X register pointing to the current level of the workspace
-  stack, so that level (X-1) is copied to #52(LSB)..#55(MSB).
-- The workspace stack pointer ?4 is updated and decremented.
-
-C3CB  A0 52     LDY @#52
-
-
-  Copy Current Level of the Workspace Stack to zero page subroutine
-  -----------------------------------------------------------------
-
-- Enter with the X register pointing to the current level of the workspace
-  stack, so that level (X-1) is copied to #52(LSB)..#55(MSB).
-- Enter with the Y register pointing to the LSB of the four consecutive
-  bytes that are the zero page destination.
-- The workspace stack pointer ?4 is updated and decremented.
-
-C3CD  CA        DEX
-C3CE  86 04     STX #4
-
-
-  Copy Current Level of the Workspace Stack to zero page subroutine
-  -----------------------------------------------------------------
-
-- Enter with the X register pointing to the level of the workspace stack
-  required to be copied to #52(LSB)..#55(MSB).
-- Enter with the Y register pointing to the LSB of the four consecutive
-  bytes that are the zero page destination.
-- The workspace stack pointer ?4 is NOT TOUCHED !
-
-C3D0  B5 16     LDA #16,X
-C3D2  99 00 00  STA #0,Y
-C3D5  B5 25     LDA #25,X
-C3D7  99 01 00  STA #1,Y
-C3DA  B5 34     LDA #34,X
-C3DC  99 02 00  STA #2,Y
-C3DF  B5 43     LDA #43,X
-C3E1  99 03 00  STA #3,Y
-C3E4  60        RTS
-
-
-  Deals with Numerical Assignments
-  --------------------------------
-
-- Sets pre-interpreted variable to an arbitrarily complex expression.
-- Enter with the variable number (0=@, 1=A, etc TO 26=Z) in the LSB of
-  the workspace stack at level (?4-1).
-
-C3E5  20 E1 C4  JSR #C4E1       Evaluate a numerical expression onto the
-                                w/s stack and do post-test.
-C3E8  20 2F CA  JSR #CA2F       Assign value on the w/s stack to a variable
-                                number on the w/s stack
-C3EB  4C 5B C5  JMP #C55B       Return to execute the next command whether
-                                by program execution or in direct mode
-
-
-  Execute the command '!'
-  -----------------------
-
-- Sets pre-interpreted vector to an arbitrarily complex expression.
-
-C3EE  20 BC C8  JSR #C8BC       Evaluate an arbitrarily complex numeric
-                                expression pointed to by (5),Y
-                                which is the ! base address
-C3F1  20 93 CE  JSR #CE93       Interpret an '=' sign and a numerical
-                                expression following, and copy the LSB
-                                to the base address on stack
-C3F4  B5 26     LDA #26,X       Get the second LSB from stack
-C3F6  C8        INY             Point to the second address
-C3F7  91 52     STA (#52),Y     ..and dump the second LSB
-C3F9  C8        INY             Point to the third address
-C3FA  B5 35     LDA #35,X       Get the third LSB from stack
-C3FC  91 52     STA (#52),Y     ..and dump the third LSB
-C3FE  C8        INY             Point to the fourth address
-C3FF  B5 44     LDA #44,X       Get the fourth LSB from stack
-C401  91 52     STA (#52),Y     ..and dump the fourth LSB
-C403  4C 5B C5  JMP #C55B       Return to execute the next command whether
-                                by program execution or in direct mode
-
-
-  Execute the command '?'
-  -----------------------
-
-- Sets pre-interpreted byte to an arbitrarily complex expression.
-
-C406  20 BC C8  JSR #C8BC       Evaluate an arbitrarily complex numeric
-                                expression pointed to by (5),Y
-C409  20 93 CE  JSR #CE93       Interpret an '=' sign and a numerical
-                                expression following, and copy the LSB
-                                to the base address on stack
-C40C  4C 5B C5  JMP #C55B       Return to execute the next command whether
-                                by program execution or in direct mode
-
-
-  Execute COS commands
-  --------------------
-
-- Deals with * prefixed commands.
-- Copies the string after the '*' prefix pointed to by (5),Y where Y=?3
-  to the Direct Mode buffer at #100 and then calls OSCLI indirected
-  by vector (#206,#207).
-
-C40F  A2 00     LDX @#0         Initialise the Direct Mode buffer pointer
-C411  B1 05     LDA (#5),Y      Get character under analysis from text
-C413  9D 00 01  STA #100,X      ..and copy to the direct mode buffer
-C416  84 03     STY #3          Update the interpreter pointer
-C418  C8        INY             Point to the next character of text
-C419  E8        INX             Point to the next slot in the buffer
-C41A  C9 0D     CMP @#D         Was the last character <CR> ?
-C41C  D0 F3     BNE #C411       ..no, keep copying
-                                (defaults to #F8EF)
-C41E  20 F7 FF  JSR #FFF7       ..yes, finished, so call OSCLI
-C421  4C 58 C5  JMP #C558       Perform post test, check for <ESC> etc and
-                                return to execute the next command whether
-                                by program execution or in direct mode
-
-
-  Floating Point ROM Check subroutine
-  -----------------------------------
-
-- Returns with Carry set if the FP ROM at #D000 exists.
-
-C424  AD 00 D0  LDA #D000
-C427  C9 AA     CMP @#AA
-C429  D0 38     BNE #C463
-C42B  4A        LSR A
-C42C  CD 01 D0  CMP #D001
-C42F  D0 32     BNE #C463
-C431  A4 5E     LDY #5E
-C433  60        RTS
-
-
-  Interpreter Alphabetic Pre-Test subroutine
-  ------------------------------------------
-
-- Reads the first non-space character pointed to by (5),Y where y=?3
-  and tests it and the following character.
-  1st character: If it is alphabetic (@ to Z), the character number
-                 (where @=0, A=1 to Z=26) is stored in the LSB of the
-                 current level of the workspace stack, pointed to by ?4,
-                 and the second character is tested.
-                 However if it is not alphabetic, the routine is exited
-                 with Carry clear and the interpreter pointer Y=?3
-                 pointing to the second character.
-  2nd character: If it is not alphabetic and also not '.', the workspace
-                 pointer X=?4 is incremented before return with Carry set
-                 and the interpreter pointer Y=?3 pointing to this
-                 second character.
-                 Otherwise return with pointers as above but with Carry clear.
-
-C434  A4 03     LDY #3          Get the interpreter pointer
-C436  10 03     BPL #C43B       ..branch always
-
-C438  C8        INY
-C439  84 03     STY #3
-C43B  B1 05     LDA (#5),Y      Get the character under interpretation
-C43D  C9 20     CMP @#20        If it's a space..
-C43F  F0 F7     BEQ #C438       ..then skip to the next character
-C441  C9 5B     CMP @#5B        Test for valid alphabetic character
-C443  B0 1E     BCS #C463       ..invalid
-C445  E9 3F     SBC @#3F        Convert to @=0, A=1,...to  Z=26
-C447  90 1B     BCC #C464       ..invalid alphabetic character
-C449  A6 04     LDX #4          Get the workspace pointer
-C44B  95 16     STA #16,X       Dump the first character on the LSB of
-                                the current workspace slot
-C44D  C8        INY             Point to the next character
-C44E  B1 05     LDA (#5),Y      ..and fetch it
-C450  C9 2E     CMP @#2E        Is it '.' ?
-C452  F0 0F     BEQ #C463       ..yes, clear Carry and quit
-C454  C9 5B     CMP @#5B        Is it >='[' ?
-C456  B0 04     BCS #C45C       ..yes, set Carry and quit
-C458  C9 40     CMP @#40        Is it <='@' ?
-C45A  B0 07     BCS #C463       ..yes, clear Carry and quit
-
-C45C  E8        INX             Increment workspace stack pointer
-C45D  86 04     STX #4          Update workspace stack pointer
-C45F  38        SEC
-C460  84 03     STY #3          Interpreter points to second character
-C462  60        RTS
-
-C463  18        CLC
-C464  60        RTS
-ÿ
-
-  Read Decimal String subroutine
-  ------------------------------
-
-- Reads string pointed to by (5),Y where Y=?3 as ASCII decimal characters,
-  stores the binary result in the Workspace Stack at 16,X where X=?4
-  and increments the Workspace Stack pointer ?4.
-- If the first non-space character is not a number, BRK is executed.
-- Destroys A,X,Y registers.
-
-C465  20 34 C4  JSR #C434       If next symbol is a <variable>, BRK
-C468  B0 BB     BCS #C425
-                                GET POSITIVE NUMBER
-                                (return with Carry clear if no number)
-C46A  A2 00     LDX @#0
-C46C  A4 03     LDY #3
-C46E  86 52     STX #52
-C470  86 53     STX #53
-C472  86 54     STX #54
-C474  86 55     STX #55
-C476  88        DEY
-C477  C8        INY
-C478  B1 05     LDA (#5),Y
-C47A  38        SEC
-C47B  E9 30     SBC @#30
-C47D  30 54     BMI #C4D3
-C47F  C9 0A     CMP @#A
-C481  B0 50     BCS #C4D3
-C483  A6 53     LDX #53
-C485  48        PHA
-C486  A5 55     LDA #55
-C488  48        PHA
-C489  A5 54     LDA #54
-C48B  48        PHA
-C48C  A5 52     LDA #52
-C48E  0A        ASL A
-C48F  26 53     ROL #53
-C491  26 54     ROL #54
-C493  26 55     ROL #55
-C495  30 D4     BMI #C46B
-C497  0A        ASL A
-C498  26 53     ROL #53
-C49A  26 54     ROL #54
-C49C  26 55     ROL #55
-C49E  30 CB     BMI #C46B
-C4A0  65 52     ADC #52
-C4A2  85 52     STA #52
-C4A4  8A        TXA
-C4A5  65 53     ADC #53
-C4A7  85 53     STA #53
-C4A9  68        PLA
-C4AA  65 54     ADC #54
-C4AC  85 54     STA #54
-C4AE  68        PLA
-C4AF  65 55     ADC #55
-C4B1  06 52     ASL #52
-C4B3  26 53     ROL #53
-C4B5  26 54     ROL #54
-C4B7  2A        ROL A
-C4B8  30 B1     BMI #C46B
-C4BA  85 55     STA #55
-C4BC  68        PLA
-C4BD  65 52     ADC #52
-C4BF  85 52     STA #52
-C4C1  90 0C     BCC #C4CF
-C4C3  E6 53     INC #53
-C4C5  D0 08     BNE #C4CF
-C4C7  E6 54     INC #54
-C4C9  D0 04     BNE #C4CF
-C4CB  E6 55     INC #55
-C4CD  30 9C     BMI #C46B
-C4CF  A2 FF     LDX @#FF
-C4D1  D0 A4     BNE #C477
-C4D3  8A        TXA
-C4D4  F0 8D     BEQ #C463
-C4D6  38        SEC
-C4D7  84 03     STY #3
-C4D9  A0 52     LDY @#52
-C4DB  4C 9F C9  JMP #C99F
-
-
-C4DE  20 79 C2  JSR #C279       Test for '=', BRK if failure
-C4E1  20 8B C7  JSR #C78B       Evaluate numerical expression
-
-
- Interpreter Post-Test subroutine
- --------------------------------
-
-- Checks that (5),Y where y=?3 points to a statement delimiter ';' or <CR>
- or spaces leading thereto.
-- If successful, consolidates the (5),Y pointer.
-- If unsuccessful, BRK if failure.
-
-C4E4  A4 03     LDY #3
-C4E6  88        DEY
-C4E7  C8        INY
-C4E8  B1 05     LDA (#5),Y
-C4EA  C9 20     CMP @#20
-C4EC  F0 F9     BEQ #C4E7
-C4EE  C9 3B     CMP @#3B
-C4F0  F0 04     BEQ #C4F6
-C4F2  C9 0D     CMP @#D
-C4F4  D0 66     BNE #C55C
-
-
-  Consolidate (5),Y Pointer subroutine
-  ------------------------------------
-
-- Resets the text pointer by setting (5)=(5)+Y and Y=1 where Y=?3.
-
-C4F6  18        CLC
-C4F7  98        TYA
-C4F8  65 05     ADC #5
-C4FA  85 05     STA #5
-C4FC  90 02     BCC #C500
-C4FE  E6 06     INC #6
-C500  A0 01     LDY @#1
-C502  84 03     STY #3
-
-
-  Check for <ESC> key subroutine
-  ------------------------------
-
-- If <ESC> pressed then RTS, otherwise jumps to the Direct Mode.
-
-C504  AD 01 B0  LDA #B001
-C507  29 20     AND @#20
-C509  F0 3C     BEQ #C547
-C50B  60        RTS
-
-
-  Get Current Text Line Number subroutine
-  ---------------------------------------
-
-- Copies the new line number to 1,2 and updates the label address if the
-  line is labelled.
-- Sets up the (5),Y text pointer to the start of the statement.
-
-C50C  20 E4 C4  JSR #C4E4
-C50F  88        DEY
-C510  B1 05     LDA (#5),Y
-C512  C9 3B     CMP @#3B
-C514  F0 F5     BEQ #C50B
-C516  A5 06     LDA #6
-C518  C9 01     CMP @#1
-C51A  F0 7A     BEQ #C596
-C51C  C8        INY
-C51D  B1 05     LDA (#5),Y
-C51F  30 3B     BMI #C55C
-C521  85 02     STA #2
-C523  C8        INY
-C524  B1 05     LDA (#5),Y
-C526  85 01     STA #1
-C528  C8        INY
-C529  B1 05     LDA (#5),Y
-C52B  88        DEY
-C52C  C9 61     CMP @#61
-C52E  90 C7     BCC #C4F7
-C530  E9 61     SBC @#61
-C532  C9 1B     CMP @#1B
-C534  B0 C0     BCS #C4F6
-C536  C8        INY
-C537  0A        ASL A
-C538  AA        TAX
-C539  20 F6 C4  JSR #C4F6
-C53C  A5 05     LDA #5
-C53E  9D 8D 03  STA #38D,X
-C541  A5 06     LDA #6
-C543  9D 8E 03  STA #38E,X
-C546  60        RTS
-
-
-C547  4C CF C2  JMP #C2CFB5  20 E4 C4  JSR #C4E4
-C3B8  AD 22 03  LDA #322
-C3BB  AE 39 03  LDX #339
-C3BE  AC 3A 03  LDY #33A
-C3C1  20 A5 C2  JSR #C2A5
-C3C4  D8        CLD
-C3C5  4C 5B C5  JMP #C55B
-
-
-  Function Interpreter subroutine
-  -------------------------------
-
-- Evaluates an arbitrarily complex function pointed to by (5),Y where y=?3
-  and stores the result on the Workspace Stack pointed to by ?5 and also
-  on the arithmetic Workspace Stack at #52 (LSB),#53,#54,#55 (MSB).
-- The (5),Y pointer is consolidated before return, so that (5),0 points to
-  the last character in the string interpreted.
-
-C3C8  20 BC C8  JSR #C8BC
-C3CB  A0 52     LDY @#52
-C3CD  CA        DEX
-C3CE  86 04     STX #4
-C3D0  B5 16     LDA #16,X
-C3D2  99 00 00  STA #0,Y
-C3D5  B5 25     LDA #25,X
-C3D7  99 01 00  STA #1,Y
-C3DA  B5 34     LDA #34,X
-C3DC  99 02 00  STA #2,Y
-C3DF  B5 43     LDA #43,X
-C3E1  99 03 00  STA #3,Y
-C3E4  60        RTS
-
-
-  Deals with Numerical Assignments
-  --------------------------------
-
-- Sets pre-interpreted variable to an arbitrarily complex expression.
-
-C3E5  20 E1 C4  JSR #C4E1
-C3E8  20 2F CA  JSR #CA2F
-C3EB  4C 5B C5  JMP #C55B
-
-
-  Execute the command '!'
-  -----------------------
-
-- Sets pre-interpreted vector to an arbitrarily complex expression.
-
-C3EE  20 BC C8  JSR #C8BC
-C3F1  20 93 CE  JSR #CE93
-C3F4  B5 26     LDA #26,X
-C3F6  C8        INY
-C3F7  91 52     STA (#52),Y
-C3F9  C8        INY
-C3FA  B5 35     LDA #35,X
-C3FC  91 52     STA (#52),Y
-C3FE  C8        INY
-C3FF  B5 44     LDA #44,X
-C401  91 52     STA (#52),Y
-C403  4C 5B C5  JMP #C55B
-
-
-  Execute the command '?'
-  -----------------------
-
-- Sets pre-interpreted byte to an arbitrarily complex expression.
-
-C406  20 BC C8  JSR #C8BC
-C409  20 93 CE  JSR #CE93
-C40C  4C 5B C5  JMP #C55B
-
-
-  Execute COS commands
-  --------------------
-
-- Deals with * prefixed commands.
-- Copies the string after the '*' prefix pointed to by (5),Y where Y=?3
-  to the Direct Mode buffer at #100 and then calls OSCLI indirected
-  by vector (#206,#207).
-
-C40F  A2 00     LDX @#0
-C411  B1 05     LDA (#5),Y
-C413  9D 00 01  STA #100,X
-C416  84 03     STY #3
-C418  C8        INY
-C419  E8        INX
-C41A  C9 0D     CMP @#D
-C41C  D0 F3     BNE #C411
-C41E  20 F7 FF  JSR #FFF7
-C421  4C 58 C5  JMP #C558
-
-
-  Floating Point ROM Check subroutine
-  -----------------------------------
-
-- Returns with Carry set if the FP ROM at #D000 exists.
-
-C424  AD 00 D0  LDA #D000
-C427  C9 AA     CMP @#AA
-C429  D0 38     BNE #C463
-C42B  4A        LSR A
-C42C  CD 01 D0  CMP #D001
-C42F  D0 32     BNE #C463
-C431  A4 5E     LDY #5E
-C433  60        RTS
-
-
-  Interpreter Pre-Test subroutine
-  -------------------------------
-
-- Reads the character pointed to by (5),Y where y=?3 and returns a
-- character number where @=0, A=1 etc up to Z=26.
-- Returns with Carry set if the following character is alphanumeric too.
-
-C434  A4 03     LDY #3
-C436  10 03     BPL #C43B
-C438  C8        INY
-C439  84 03     STY #3
-C43B  B1 05     LDA (#5),Y
-C43D  C9 20     CMP @#20
-C43F  F0 F7     BEQ #C438
-C441  C9 5B     CMP @#5B
-C443  B0 1E     BCS #C463
-C445  E9 3F     SBC @#3F
-C447  90 1B     BCC #C464
-C449  A6 04     LDX #4
-C44B  95 16     STA #16,X
-C44D  C8        INY
-C44E  B1 05     LDA (#5),Y
-C450  C9 2E     CMP @#2E
-C452  F0 0F     BEQ #C463
-C454  C9 5B     CMP @#5B
-C456  B0 04     BCS #C45C
-C458  C9 40     CMP @#40
-C45A  B0 07     BCS #C463
-C45C  E8        INX
-C45D  86 04     STX #4
-C45F  38        SEC
-C460  84 03     STY #3
-C462  60        RTS
-C463  18        CLC
-C464  60        RTS
-
-
-  Read Decimal String subroutine
-  ------------------------------
-
-- Reads string pointed to by (5),Y where Y=?3 as ASCII decimal characters,
-  stores the binary result in the Workspace Stack at 16,X where X=?4
-  and increments the Workspace Stack pointer ?4.
-- If the first non-space character is not a number, BRK is executed.
-- Destroys A,X,Y registers.
-
-C465  20 34 C4  JSR #C434       If next symbol is a <variable>, BRK
-C468  B0 BB     BCS #C425
-                                GET POSITIVE NUMBER
-                                (return with Carry clear if no number)
-C46A  A2 00     LDX @#0
-C46C  A4 03     LDY #3
-C46E  86 52     STX #52
-C470  86 53     STX #53
-C472  86 54     STX #54
-C474  86 55     STX #55
-C476  88        DEY
-C477  C8        INY
-C478  B1 05     LDA (#5),Y
-C47A  38        SEC
-C47B  E9 30     SBC @#30
-C47D  30 54     BMI #C4D3
-C47F  C9 0A     CMP @#A
-C481  B0 50     BCS #C4D3
-C483  A6 53     LDX #53
-C485  48        PHA
-C486  A5 55     LDA #55
-C488  48        PHA
-C489  A5 54     LDA #54
-C48B  48        PHA
-C48C  A5 52     LDA #52
-C48E  0A        ASL A
-C48F  26 53     ROL #53
-C491  26 54     ROL #54
-C493  26 55     ROL #55
-C495  30 D4     BMI #C46B
-C497  0A        ASL A
-C498  26 53     ROL #53
-C49A  26 54     ROL #54
-C49C  26 55     ROL #55
-C49E  30 CB     BMI #C46B
-C4A0  65 52     ADC #52
-C4A2  85 52     STA #52
-C4A4  8A        TXA
-C4A5  65 53     ADC #53
-C4A7  85 53     STA #53
-C4A9  68        PLA
-C4AA  65 54     ADC #54
-C4AC  85 54     STA #54
-C4AE  68        PLA
-C4AF  65 55     ADC #55
-C4B1  06 52     ASL #52
-C4B3  26 53     ROL #53
-C4B5  26 54     ROL #54
-C4B7  2A        ROL A
-C4B8  30 B1     BMI #C46B
-C4BA  85 55     STA #55
-C4BC  68        PLA
-C4BD  65 52     ADC #52
-C4BF  85 52     STA #52
-C4C1  90 0C     BCC #C4CF
-C4C3  E6 53     INC #53
-C4C5  D0 08     BNE #C4CF
-C4C7  E6 54     INC #54
-C4C9  D0 04     BNE #C4CF
-C4CB  E6 55     INC #55
-C4CD  30 9C     BMI #C46B
-C4CF  A2 FF     LDX @#FF
-C4D1  D0 A4     BNE #C477
-C4D3  8A        TXA
-C4D4  F0 8D     BEQ #C463
-C4D6  38        SEC
-C4D7  84 03     STY #3
-C4D9  A0 52     LDY @#52
-C4DB  4C 9F C9  JMP #C99F
-
-
-C4DE  20 79 C2  JSR #C279       Test for '=', BRK if failure
-C4E1  20 8B C7  JSR #C78B       Evaluate numerical expression
-
-
-  Interpreter Post-Test subroutine
-  --------------------------------
-
-- Checks that (5),Y where y=?3 points to a statement delimiter ';' or <CR>
-  or spaces leading thereto.
-- If successful, consolidates the (5),Y pointer.
-- If unsuccessful, BRK if failure.
-
-C4E4  A4 03     LDY #3
-C4E6  88        DEY
-C4E7  C8        INY
-C4E8  B1 05     LDA (#5),Y
-C4EA  C9 20     CMP @#20
-C4EC  F0 F9     BEQ #C4E7
-C4EE  C9 3B     CMP @#3B
-C4F0  F0 04     BEQ #C4F6
-C4F2  C9 0D     CMP @#D
-C4F4  D0 66     BNE #C55C
-
-
-  Consolidate (5),Y Pointer subroutine
-  ------------------------------------
-
-- Resets the text pointer by setting (5)=(5)+Y and Y=1 where Y=?3.
-
-C4F6  18        CLC
-C4F7  98        TYA
-C4F8  65 05     ADC #5
-C4FA  85 05     STA #5
-C4FC  90 02     BCC #C500
-C4FE  E6 06     INC #6
-C500  A0 01     LDY @#1
-C502  84 03     STY #3
-
-
-  Check for <ESC> key subroutine
-  ------------------------------
-
-- If <ESC> pressed then RTS, otherwise jumps to the Direct Mode.
-
-C504  AD 01 B0  LDA #B001
-C507  29 20     AND @#20
-C509  F0 3C     BEQ #C547
-C50B  60        RTS
-
-
-  Get Current Text Line Number subroutine
-  ---------------------------------------
-
-- Copies the new line number to 1,2 and updates the label address if the
-  line is labelled.
-- Sets up the (5),Y text pointer to the start of the statement.
-
-C50C  20 E4 C4  JSR #C4E4
-C50F  88        DEY
-C510  B1 05     LDA (#5),Y
-C512  C9 3B     CMP @#3B
-C514  F0 F5     BEQ #C50B
-C516  A5 06     LDA #6
-C518  C9 01     CMP @#1
-C51A  F0 7A     BEQ #C596
-C51C  C8        INY
-C51D  B1 05     LDA (#5),Y
-C51F  30 3B     BMI #C55C
-C521  85 02     STA #2
-C523  C8        INY
-C524  B1 05     LDA (#5),Y
-C526  85 01     STA #1
-C528  C8        INY
-C529  B1 05     LDA (#5),Y
-C52B  88        DEY
-C52C  C9 61     CMP @#61
-C52E  90 C7     BCC #C4F7
-C530  E9 61     SBC @#61
-C532  C9 1B     CMP @#1B
-C534  B0 C0     BCS #C4F6
-C536  C8        INY
-C537  0A        ASL A
-C538  AA        TAX
-C539  20 F6 C4  JSR #C4F6
-C53C  A5 05     LDA #5
-C53E  9D 8D 03  STA #38D,X
-C541  A5 06     LDA #6
-C543  9D 8E 03  STA #38E,X
-C546  60        RTS
-
-
-C547  4C CF C2  JMP #C2CF
-ÿ
-
-  Statement Executer
-  ------------------
-
-- Executes a statement pointed to by (5),Y.
-- Jumps indirectly to the FP ROM via (#D002) if the command cannot be
-  interpreted.
-
-C54A  88        DEY
-C54B  20 F6 C4  JSR #C4F6
-C54E  D0 0B     BNE #C55B
-C550  20 24 C4  JSR #C424       Handle unrecognised statement
-C553  90 03     BCC #C558
-C555  6C 02 D0  JMP (#D002)
-C558  20 E4 C4  JSR #C4E4
-
-
-  Return Routine
-  --------------
-
-- All routines generally return to BASIC here.
-- Goes on to interpret the next statement.
-
-C55B  A0 00     LDY @#0
-C55D  B1 05     LDA (#5),Y
-C55F  C9 3B     CMP @#3B
-C561  D0 1A     BNE #C57D
-C563  4C 1B C3  JMP #C31B
-
-
-  Execute the command 'IF'
-  ------------------------
-
-- Puts a zero on the Workspace Stack at #16,X where X=?4 if false.
-
-C566  20 0C C7  JSR #C70C
-C569  CA        DEX
-C56A  86 04     STX #4
-C56C  B5 16     LDA #16,X
-C56E  F0 05     BEQ #C575
-C570  A2 20     LDX @#20
-C572  4C 33 C2  JMP #C233
-
-
-  Execute the command 'REM'
-  -------------------------
-
-- Increments (5),Y until a <CR> is found.
-
-C575  A9 0D     LDA @#D
-C577  88        DEY
-C578  C8        INY
-C579  D1 05     CMP (#5),Y
-C57B  D0 FB     BNE #C578
-C57D  A5 06     LDA #6
-C57F  C9 01     CMP @#1
-C581  F0 C4     BEQ #C547
-C583  20 1C C5  JSR #C51C
-C586  4C 1B C3  JMP #C31B
-
-
-  Print Decimal subroutine
-  ------------------------
-
-- Prints the lowest level of the Workspace Stack #16,#25,#34,#43 as a
-  signed decimal number in field size set by the LSB of the integer
-  variable '@' #321.
-- Destroys A,X,Y registers.
-
-C589  A5 43     LDA #43
-C58B  85 27     STA #27
-C58D  10 04     BPL #C593
-C58F  E8        INX
-C590  20 C4 C8  JSR #C8C4
-C593  A2 09     LDX @#9
-C595  A9 00     LDA @#0
-C597  95 45     STA #45,X
-C599  38        SEC
-C59A  A5 16     LDA #16
-C59C  FD 08 C6  SBC #C608,X
-C59F  48        PHA
-C5A0  A5 25     LDA #25
-C5A2  FD 10 C6  SBC #C610,X
-C5A5  48        PHA
-C5A6  A5 34     LDA #34
-C5A8  FD 1A C6  SBC #C61A,X
-C5AB  A8        TAY
-C5AC  A5 43     LDA #43
-C5AE  FD 24 C6  SBC #C624,X
-C5B1  90 0E     BCC #C5C1
-C5B3  85 43     STA #43
-C5B5  84 34     STY #34
-C5B7  68        PLA
-C5B8  85 25     STA #25
-C5BA  68        PLA
-C5BB  85 16     STA #16
-C5BD  F6 45     INC #45,X
-C5BF  D0 D8     BNE #C599
-C5C1  68        PLA
-C5C2  68        PLA
-C5C3  CA        DEX
-C5C4  10 CF     BPL #C595
-C5C6  A2 0A     LDX @#A
-C5C8  CA        DEX
-C5C9  F0 04     BEQ #C5CF
-C5CB  B5 45     LDA #45,X
-C5CD  F0 F9     BEQ #C5C8
-C5CF  86 52     STX #52
-C5D1  24 27     BIT #27
-C5D3  10 02     BPL #C5D7
-C5D5  E6 52     INC #52
-C5D7  38        SEC
-C5D8  AD 21 03  LDA #321
-C5DB  F0 02     BEQ #C5DF
-C5DD  E9 01     SBC @#1
-C5DF  E5 52     SBC #52
-C5E1  F0 0B     BEQ #C5EE
-C5E3  90 09     BCC #C5EE
-C5E5  A8        TAY
-C5E6  A9 20     LDA @#20
-C5E8  20 4C CA  JSR #CA4C
-C5EB  88        DEY
-C5EC  D0 F8     BNE #C5E6
-C5EE  24 27     BIT #27
-C5F0  10 05     BPL #C5F7
-C5F2  A9 2D     LDA @#2D
-C5F4  20 4C CA  JSR #CA4C
-C5F7  B5 45     LDA #45,X
-C5F9  C9 0A     CMP @#A
-C5FB  90 02     BCC #C5FF
-C5FD  69 06     ADC @#6
-C5FF  69 30     ADC @#30
-C601  20 4C CA  JSR #CA4C
-C604  CA        DEX
-C605  10 F0     BPL #C5F7
-C607  60        RTS
-
-
-  Decimal Print Data Table
-  ------------------------
-
-C608                          01 0A 64 E8 10 A0 40 80
-C610  00 00 00 03 27 86 42 96 E1 CA 00 00 00 00 00 01
-C620  0F 98 F5 9A 00 00 00 00 00 00 00 00 05 3B
-
-
-  Line Number Search subroutine
-  -----------------------------
-
-- Searches text looking for a line number match.
-- Line number searched for is assumed to be on the 16,X Workspace Stack
-  where X=?4-1.
-- Returns with (58),Y pointing to the character following the line number
-  and Carry clear.
-- Failure indicated by Carry set.
-
-C62E  C6 04     DEC #4
-C630  A6 04     LDX #4
-C632  A0 00     LDY @#0
-C634  84 58     STY #58
-C636  A5 12     LDA #12
-C638  85 59     STA #59
-C63A  88        DEY
-C63B  A9 0D     LDA @#D
-C63D  C8        INY
-C63E  D1 58     CMP (#58),Y
-C640  D0 FB     BNE #C63D
-C642  20 A1 CE  JSR #CEA1
-C645  B1 58     LDA (#58),Y
-C647  C8        INY
-C648  D5 25     CMP #25,X
-C64A  90 EF     BCC #C63B
-C64C  D0 12     BNE #C660
-C64E  B1 58     LDA (#58),Y
-C650  D5 16     CMP #16,X
-C652  90 E7     BCC #C63B
-C654  D0 0A     BNE #C660
-C656  85 01     STA #1
-C658  B5 25     LDA #25,X
-C65A  85 02     STA #2
-C65C  20 A1 CE  JSR #CEA1
-C65F  18        CLC
-C660  60        RTS
-
-
-  Set up Miscellaneous Workspace for Multiply or Divide subroutine
-  ----------------------------------------------------------------
-
-C661  20 BC C8  JSR #C8BC
-C664  B5 42     LDA #42,X
-C666  55 41     EOR #41,X
-C668  85 52     STA #52
-C66A  20 05 C9  JSR #C905
-C66D  A0 53     LDY @#53
-C66F  20 CD C3  JSR #C3CD
-C672  B5 42     LDA #42,X
-C674  95 43     STA #43,X
-C676  20 07 C9  JSR #C907
-C679  A0 57     LDY @#57
-C67B  20 CD C3  JSR #C3CD
-C67E  A0 00     LDY @#0
-C680  84 5B     STY #5B
-C682  84 5C     STY #5C
-C684  84 5D     STY #5D
-C686  84 5E     STY #5E
-C688  60        RTS
-
-
-  Division subroutine
-  -------------------
-
-- Do division in miscellaneous workspace.
-
-C689  20 61 C6  JSR #C661
-C68C  A5 54     LDA #54
-C68E  20 05 C7  JSR #C705
-C691  F0 EC     BEQ #C67F
-C693  A0 20     LDY @#20
-C695  88        DEY
-C696  F0 41     BEQ #C6D9
-C698  06 57     ASL #57
-C69A  26 58     ROL #58
-C69C  26 59     ROL #59
-C69E  26 5A     ROL #5A
-C6A0  10 F3     BPL #C695
-C6A2  26 57     ROL #57
-C6A4  26 58     ROL #58
-C6A6  26 59     ROL #59
-C6A8  26 5A     ROL #5A
-C6AA  26 5B     ROL #5B
-C6AC  26 5C     ROL #5C
-C6AE  26 5D     ROL #5D
-C6B0  26 5E     ROL #5E
-C6B2  38        SEC
-C6B3  A5 5B     LDA #5B
-C6B5  E5 53     SBC #53
-C6B7  48        PHA
-C6B8  A5 5C     LDA #5C
-C6BA  E5 54     SBC #54
-C6BC  48        PHA
-C6BD  A5 5D     LDA #5D
-C6BF  E5 55     SBC #55
-C6C1  AA        TAX
-C6C2  A5 5E     LDA #5E
-C6C4  E5 56     SBC #56
-C6C6  90 0C     BCC #C6D4
-C6C8  85 5E     STA #5E
-C6CA  86 5D     STX #5D
-C6CC  68        PLA
-C6CD  85 5C     STA #5C
-C6CF  68        PLA
-C6D0  85 5B     STA #5B
-C6D2  B0 02     BCS #C6D6
-C6D4  68        PLA
-C6D5  68        PLA
-C6D6  88        DEY
-C6D7  D0 C9     BNE #C6A2
-C6D9  60        RTS
-
-
-  Relational Test subroutine
-  --------------------------
-
-C6DA  20 8B C7  JSR #C78B
-C6DD  CA        DEX
-C6DE  86 04     STX #4
-C6E0  B5 42     LDA #42,X
-C6E2  49 80     EOR @#80
-C6E4  85 52     STA #52
-C6E6  B5 43     LDA #43,X
-C6E8  49 80     EOR @#80
-C6EA  85 54     STA #54
-C6EC  A0 00     LDY @#0
-C6EE  38        SEC
-C6EF  B5 15     LDA #15,X
-C6F1  F5 16     SBC #16,X
-C6F3  85 53     STA #53
-C6F5  B5 24     LDA #24,X
-C6F7  F5 25     SBC #25,X
-C6F9  85 55     STA #55
-C6FB  B5 33     LDA #33,X
-C6FD  F5 34     SBC #34,X
-C6FF  85 56     STA #56
-C701  A5 52     LDA #52
-C703  E5 54     SBC #54
-C705  05 53     ORA #53
-C707  05 55     ORA #55
-C709  05 56     ORA #56
-C70B  60        RTS
-
-
-  Truth Test subroutine
-  ---------------------
-
-- Evaluates an arbitrarily complex expression pointed to by (5),Y where
-  Y=?3 and places a zero on the Workspace Stack at 16,X where X=?4.
-- Used by IF and UNTIL commands.
-
-C70C  20 2C C7  JSR #C72C
-C70F  A2 43     LDX @#43
-C711  4C 33 C2  JMP #C233
-
-
-  Logical AND Truth Test
-  ----------------------
-
-C714  20 2C C7  JSR #C72C
-C717  B5 14     LDA #14,X
-C719  35 15     AND #15,X
-C71B  95 14     STA #14,X
-C71D  C6 04     DEC #4
-C71F  4C 0F C7  JMP #C70F
-
-
-  Logical OR Truth Test
-  ---------------------
-
-C722  20 2C C7  JSR #C72C
-C725  B5 14     LDA #14,X
-C727  15 15     ORA #15,X
-C729  4C 1B C7  JMP #C71B
-
-
-C72C  A2 46     LDX @#46
-C72E  4C 33 C2  JMP #C233
-
-
-  '$' String Comparison Test
-  --------------------------
-
-C731  20 8B C7  JSR #C78B
-C734  20 AE CE  JSR #CEAE
-C737  B5 15     LDA #15,X
-C739  85 54     STA #54
-C73B  B5 24     LDA #24,X
-C73D  85 55     STA #55
-C73F  A0 FF     LDY @#FF
-C741  C8        INY
-C742  B1 54     LDA (#54),Y
-C744  D1 52     CMP (#52),Y
-C746  D0 07     BNE #C74F
-C748  49 0D     EOR @#D
-C74A  D0 F5     BNE #C741
-C74C  A8        TAY
-C74D  F0 11     BEQ #C760
-C74F  A0 00     LDY @#0
-C751  F0 0E     BEQ #C761
-
-
-C753  20 8B C7  JSR #C78B
-C756  A2 00     LDX @#0
-C758  4C 33 C2  JMP #C233
-
-
-  Test <expression> = <expression>
-  --------------------------------
-
-C75B  20 DA C6  JSR #C6DA
-C75E  D0 01     BNE #C761
-C760  C8        INY
-C761  94 15     STY #15,X
-C763  60        RTS
-
-
-  Test <expression> <= <expression>
-  ---------------------------------
-
-C764  20 DA C6  JSR #C6DA
-C767  F0 F7     BEQ #C760
-C769  90 F5     BCC #C760
-C76B  B0 F4     BCS #C761
-
-
-  Test <expression> <> <expression>
-  ---------------------------------
-
-C76D  20 DA C6  JSR #C6DA
-C770  D0 EE     BNE #C760
-C772  F0 ED     BEQ #C761
-
-
-  Test <expression> < <expression>
-  --------------------------------
-
-C774  20 DA C6  JSR #C6DA
-C777  90 E7     BCC #C760
-C779  B0 E6     BCS #C761
-
-
-  Test <expression> >= <expression>
-  ---------------------------------
-
-C77B  20 DA C6  JSR #C6DA
-C77E  B0 E0     BCS #C760
-C780  90 DF     BCC #C761
-
-
-  Test <expression> > <expression>
-  --------------------------------
-
-C782  20 DA C6  JSR #C6DA
-C785  F0 DA     BEQ #C761
-C787  B0 D7     BCS #C760
-C789  90 D6     BCC #C761
-
-
-  <expression>
-  ------------
-
-C78B  20 0B C8  JSR #C80B
-C78E  4C 95 C7  JMP #C795
-
-C791  95 41     STA #41,X
-C793  C6 04     DEC #4
-C795  A2 00     LDX @#0
-C797  4C 7B C2  JMP #C27B
-
-
-  Add 2 Numbers on the Workspace Stack
-  ------------------------------------
-
-- {14,X 23,X 32,X 41,X} = {14,X 23,X 32,X 41,X} + {15,X 24,X 33,X 42,X}
-
-C79A  20 0B C8  JSR #C80B
-C79D  18        CLC
-C79E  B5 14     LDA #14,X
-C7A0  75 15     ADC #15,X
-C7A2  95 14     STA #14,X
-C7A4  B5 23     LDA #23,X
-C7A6  75 24     ADC #24,X
-C7A8  95 23     STA #23,X
-C7AA  B5 32     LDA #32,X
-C7AC  75 33     ADC #33,X
-C7AE  95 32     STA #32,X
-C7B0  B5 41     LDA #41,X
-C7B2  75 42     ADC #42,X
-C7B4  4C 91 C7  JMP #C791
-
-
-  Subtract 2 Numbers on the Workspace Stack
-  -----------------------------------------
-
-- {14,X 23,X 32,X 41,X} = {14,X 23,X 32,X 41,X} - {15,X 24,X 33,X 42,X}
-
-C7B7  20 0B C8  JSR #C80B
-C7BA  B5 14     LDA #14,X
-C7BC  F5 15     SBC #15,X
-C7BE  95 14     STA #14,X
-C7C0  B5 23     LDA #23,X
-C7C2  F5 24     SBC #24,X
-C7C4  95 23     STA #23,X
-C7C6  B5 32     LDA #32,X
-C7C8  F5 33     SBC #33,X
-C7CA  95 32     STA #32,X
-C7CC  B5 41     LDA #41,X
-C7CE  F5 42     SBC #42,X
-C7D0  4C 91 C7  JMP #C791
-
-
-  Logically OR 2 Numbers on the Workspace Stack
-  ---------------------------------------------
-
-- {14,X 23,X 32,X 41,X} = {14,X 23,X 32,X 41,X} OR {15,X 24,X 33,X 42,X}
-
-C7D3  20 0B C8  JSR #C80B
-C7D6  B5 14     LDA #14,X
-C7D8  15 15     ORA #15,X
-C7DA  95 14     STA #14,X
-C7DC  B5 23     LDA #23,X
-C7DE  15 24     ORA #24,X
-C7E0  95 23     STA #23,X
-C7E2  B5 32     LDA #32,X
-C7E4  15 33     ORA #33,X
-C7E6  95 32     STA #32,X
-C7E8  B5 41     LDAA#41,X
-C7EA  15 42     ORA #42,X
-C7EC  4C 91 C7  JMP #C791
-
-
-  Logically EOR 2 Numbers on the Workspace Stack
-  ----------------------------------------------
-
-- {14,X 23,X 32,X 41,X} = {14,X 23,X 32,X 41,X} EOR {15,X 24,X 33,X 42,X}
-
-C7EF  20 0B C8  JSR #C80B
-C7F2  B5 14     LDA #14,X
-C7F4  55 15     EOR #15,X
-C7F6  95 14     STA #14,X
-C7F8  B5 23     LDA #23,X
-C7FA  55 24     EOR #24,X
-C7FC  95 23     STA #23,X
-C7FE  B5 32     LDA #32,X
-C800  55 33     EOR #33,X
-C802  95 32     STA #32,X
-C804  B5 41     LDA #41,X
-C806  55 42     EOR #42,X
-C808  4C 91 C7  JMP #C791
-
-
-  <term>
-  ------
-
-C80B  20 BC C8  JSR #C8BC
-C80E  A2 05     LDX @#5
-C810  4C 7B C2  JMP #C27B
-ÿ
-
-  <factor> * <factor>
-  -------------------
-
-C813  20 61 C6  JSR #C661
-C816  46 5A     LSR #5A
-C818  66 59     ROR #59
-C81A  66 58     ROR #58
-C81C  66 57     ROR #57
-C81E  90 19     BCC #C839
-C820  18        CLC
-C821  98        TYA
-C822  65 53     ADC #53
-C824  A8        TAY
-C825  A5 5C     LDA #5C
-C827  65 54     ADC #54
-C829  85 5C     STA #5C
-C82B  A5 5D     LDA #5D
-C82D  65 55     ADC #55
-C82F  85 5D     STA #5D
-C831  A5 5E     LDA #5E
-C833  65 56     ADC #56
-C835  29 7F     AND @#7F
-C837  85 5E     STA #5E
-C839  06 53     ASL #53
-C83B  26 54     ROL #54
-C83D  26 55     ROL #55
-C83F  26 56     ROL #56
-C841  A5 57     LDA #57
-C843  05 58     ORA #58
-C845  05 59     ORA #59
-C847  05 5A     ORA #5A
-C849  D0 CB     BNE #C816
-C84B  84 5B     STY #5B
-C84D  A5 52     LDA #52
-C84F  08        PHP
-C850  A0 5B     LDY @#5B
-C852  20 9F C9  JSR #C99F
-C855  28        PLP
-C856  10 03     BPL #C85B
-C858  20 C4 C8  JSR #C8C4
-C85B  4C 0E C8  JMP #C80E
-
-
-  <factor> / <factor>
-  -------------------
-
-C85E  20 89 C6  JSR #C689
-C861  26 57     ROL #57
-C863  26 58     ROL #58
-C865  26 59     ROL #59
-C867  26 5A     ROL #5A
-C869  24 52     BIT #52
-C86B  08        PHP
-C86C  A0 57     LDY @#57
-C86E  D0 E2     BNE #C852
-
-
-  <factor> % <factor>
-  -------------------
-
-C870  20 89 C6  JSR #C689
-C873  A6 04     LDX #4
-C875  B5 44     LDA #44,X
-C877  08        PHP
-C878  4C 50 C8  JMP #C850
-
-
-  <factor> & <factor>
-  -------------------
-
-C87B  20 BC C8  JSR #C8BC
-C87E  CA        DEX
-C87F  86 04     STX #4
-C881  B5 15     LDA #15,X
-C883  35 16     AND #16,X
-C885  95 15     STA #15,X
-C887  B5 24     LDA #24,X
-C889  35 25     AND #25,X
-C88B  95 24     STA #24,X
-C88D  B5 33     LDA #33,X
-C88F  35 34     AND #34,X
-C891  95 33     STA #33,X
-C893  B5 42     LDA #42,X
-C895  35 43     AND #43,X
-C897  95 42     STA #42,X
-C899  4C 0E C8  JMP #C80E
-
-
-  <factor> ? <factor>
-  -------------------
-
-C89C  20 A2 C8  JSR #C8A2
-C89F  4C 0E C8  JMP #C80E
-C8A2  20 BC C8  JSR #C8BC
-C8A5  18        CLC
-C8A6  B5 15     LDA #15,X
-C8A8  75 14     ADC #14,X
-C8AA  A8        TAY
-C8AB  B5 24     LDA #24,X
-C8AD  75 23     ADC #23,X
-C8AF  CA        DEX
-C8B0  4C 53 C9  JMP #C953
-
-
-  <factor> ! <factor>
-  -------------------
-
-C8B3  20 A2 C8  JSR #C8A2
-C8B6  20 62 C9  JSR #C962
-C8B9  4C 0E C8  JMP #C80E
-
-
-  Function Interpreter subroutine
-  -------------------------------
-
-- Evaluates an arbitrarily complex function pointed to by (5),Y where Y=?3
-  and stores the result on the Workspace Stack pointed to by ?4.
-- The (5),Y pointer is consolidated before return, so that (5),0 points to
-  the last character in the string interpreted.
-- The Workspace Stack pointer ?4 is incremented.
-
-C8BC  A2 04     LDX @#4
-C8BE  4C 33 C2  JMP #C233
-
- Negate Current Slot of Workspace Stack
- --------------------------------------
-
-- {15,X 24,X 33,X 42,X} = 0 - {15,X 24,X 33,X 42,X}
-
-C8C1  20 DC C8  JSR #C8DC
-
-
- Negate Current Slot of Workspace Stack subroutine
- ------------------------------------------------
-
-- {15,X 24,X 33,X 42,X} = 0 - {15,X 24,X 33,X 42,X}
-- Destroys accumulator.
-
-C8C4  38        SEC
-C8C5  A9 00     LDA @#0
-C8C7  A8        TAY
-C8C8  F5 15     SBC #15,X
-C8CA  95 15     STA #15,X
-C8CC  98        TYA
-C8CD  F5 24     SBC #24,X
-C8CF  95 24     STA #24,X
-C8D1  98        TYA
-C8D2  F5 33     SBC #33,X
-C8D4  95 33     STA #33,X
-C8D6  98        TYA
-C8D7  F5 42     SBC #42,X
-C8D9  95 42     STA #42,X
-C8DB  60        RTS
-
-
-  Variable Assignment to Workspace
-  --------------------------------
-
-C8DC  20 34 C4  JSR #C434
-C8DF  90 17     BCC #C8F8
-C8E1  B4 15     LDY #15,X
-
-
-  Variable Assignment to Workspace Stack subroutine
-  -------------------------------------------------
-
-- Copies the simple variable pointed to by Y (where 0=@, 1=A, etc to 26=Z)
-  to the current slot of the Workspace Stack pointed to by ?4.
-- Destroys accumulator.
-
-C8E3  B9 21 03  LDA #321,Y
-C8E6  95 15     STA #15,X
-C8E8  B9 57 03  LDA #357,Y
-C8EB  95 33     STA #33,X
-C8ED  B9 3C 03  LDA #33C,Y
-C8F0  95 24     STA #24,X
-C8F2  B9 72 03  LDA #372,Y
-C8F5  95 42     STA #42,X
-C8F7  60        RTS
-
-
-  Do Numerical Assignments
-  ------------------------
-
-
-C8F8  20 6A C4  JSR #C46A
-C8FB  B0 FA     BCS #C8F7
-C8FD  A2 07     LDX @#7
-C8FF  4C 33 C2  JMP #C233
-
-
-  Execute the Function 'ABS'
-  --------------------------
-
-- Performs ABS of function pointed to by (5),Y and places the result on
-  the Workspace Stack.
-
-C902  20 BC C8  JSR #C8BC
-C905  B5 42     LDA #42,X
-C907  30 BB     BMI #C8C4
-C909  60        RTS
-
-
-  Deal with '#'
-  -------------
-
-C90A  A2 00     LDX @#0
-C90C  86 52     STX #52
-C90E  86 53     STX #53
-C910  86 54     STX #54
-C912  86 55     STX #55
-C914  88        DEY
-C915  C8        INY
-C916  B1 05     LDA (#5),Y
-C918  C9 30     CMP @#30
-C91A  90 22     BCC #C93E
-C91C  C9 3A     CMP @#3A
-C91E  90 0A     BCC #C92A
-C920  E9 37     SBC @#37
-C922  C9 0A     CMP @#A
-C924  90 18     BCC #C93E
-C926  C9 10     CMP @#10
-C928  B0 14     BCS #C93E
-C92A  0A        ASL A
-C92B  0A        ASL A
-C92C  0A        ASL A
-C92D  0A        ASL A
-C92E  A2 03     LDX @#3
-C930  0A        ASL A
-C931  26 52     ROL #52
-C933  26 53     ROL #53
-C935  26 54     ROL #54
-C937  26 55     ROL #55
-C939  CA        DEX
-C93A  10 F4     BPL #C930
-C93C  30 D7     BMI #C915
-C93E  8A        TXA
-C93F  10 18     BPL #C959
-C941  4C D6 C4  JMP #C4D6
-
-
-  Deal with '('
-  -------------
-
-C944  20 0C C7  JSR #C70C
-C947  A2 0C     LDX @#C
-C949  4C 7B C2  JMP #C27B
-C94C  20 BC C8  JSR #C8BC
-
-
-  Deal with '?'
-  -------------
-
-C94F  B4 15     LDY #15,X
-C951  B5 24     LDA #24,X
-C953  85 53     STA #53
-C955  84 52     STY #52
-C957  CA        DEX
-C958  A0 00     LDY @#0
-C95A  B1 52     LDA (#52),Y
-C95C  4C 7C C9  JMP #C97C
-
-
-  Deal with '!'
-  -------------
-
-C95F  20 4C C9  JSR #C94C
-C962  A0 01     LDY @#1
-C964  B1 52     LDA (#52),Y
-C966  95 24     STA #24,X
-C968  C8        INY
-C969  B1 52     LDA (#52),Y
-C96B  95 33     STA #33,X
-C96D  C8        INY
-C96E  B1 52     LDA (#52),Y
-C970  95 42     STA #42,X
-C972  60        RTS
-
-
-  Read TOP onto Workspace Stack subroutine
-  ----------------------------------------
-
-- Reads the TOP value at #D,#E onto the current workspace slot.
-- The Workspace Stack pointer ?4 is incremented.
-
-C973  A0 0D     LDY @#D
-C975  20 A1 C9  JSR #C9A1
-C978  F0 07     BEQ #C981
-
-
-  Read COUNT onto Workspace Stack subroutine
-  ------------------------------------------
-
-- Reads the COUNT value at ?7 onto the current workspace slot
-
-C97A  A5 07     LDA #7
-C97C  20 B3 C9  JSR #C9B3
-C97F  95 24     STA #24,X
-C981  95 33     STA #33,X
-C983  95 42     STA #42,X
-C985  60        RTS
-
-
-  Execute the Function 'RND' subroutine
-  -------------------------------------
-
-- Generates a new random number at #8,#9,#A,#B,#C and copies it to the
-  current slot of the Workspace Stack pointed to by ?4.
-- The Workspace Stack pointer ?4 is incremented.
-
-C986  A0 20     LDY @#20
-C988  A5 0A     LDA #A
-C98A  4A        LSR A
-C98B  4A        LSR A
-C98C  4A        LSR A
-C98D  45 0C     EOR #C
-C98F  6A        ROR A
-C990  26 08     ROL #8
-C992  26 09     ROL #9
-C994  26 0A     ROL #A
-C996  26 0B     ROL #B
-C998  26 0C     ROL #C
-C99A  88        DEY
-C99B  D0 EB     BNE #C988
-C99D  A0 08     LDY @#8
-C99F  A6 04     LDX #4
-C9A1  B9 01 00  LDA #1,Y
-C9A4  95 25     STA #25,X
-C9A6  B9 02 00  LDA #2,Y
-C9A9  95 34     STA #34,X
-C9AB  B9 03 00  LDA #3,Y
-C9AE  95 43     STA #43,X
-C9B0  B9 00 00  LDA #0,Y
-C9B3  95 16     STA #16,X
-C9B5  E8        INX
-C9B6  86 04     STX #4
-C9B8  A4 03     LDY #3
-C9BA  A9 00     LDA @#0
-C9BC  60        RTS
-
-
-  Execute the Function 'LEN'
-  --------------------------
-
-C9BD  20 BC C8  JSR #C8BC
-C9C0  20 CB C3  JSR #C3CB
-C9C3  A0 00     LDY @#0
-C9C5  A9 0D     LDA @#D
-C9C7  D1 52     CMP (#52),Y
-C9C9  F0 03     BEQ #C9CE
-C9CB  C8        INY
-C9CC  D0 F9     BNE #C9C7
-C9CE  98        TYA
-C9CF  4C 7C C9  JMP #C97C
-
-
-  Deal with the 'CH' operator
-  ---------------------------
-
-C9D2  20 B1 CE  JSR #CEB1
-C9D5  4C 58 C9  JMP #C958
-
-
-  BRK Handler
-  -----------
-
-- Points the BASIC interpreter at the vector (#10,#11) which is normally
-  set to point to #C9E7.
-- Exits to the Diect Mode.
-
-C9D8  68        PLA
-C9D9  68        PLA
-C9DA  85 00     STA #0
-C9DC  A5 10     LDA #10
-C9DE  85 05     STA #5
-C9E0  A5 11     LDA #11
-C9E2  85 06     STA #6
-C9E4  4C F2 C2  JMP #C2F2
-
-
-C9E7                       40 3D 31 3B 50 2E 24 36 24  .......@=1;P.$6$
-C9F0  37 27 22 45 52 52 4F 52 20 22 3F 30 3B 40 3D 38  7'"ERROR "?0;@=8
-CA00  3B 49 46 3F 31 7C 3F 32 50 2E 22 20 4C 49 4E 45  ;IF?1|?2P." LINE
-CA10  22 21 31 26 20 23 46 46 46 46 0D 00 00 50 2E 27  "!1& #FFFF...P.'
-CA20  3B 45 2E 0D                                      ;E..
-
-
-  Handle Unrecognised Command
-  ---------------------------
-
-- Jumps indirectly to (#D002) if the FP ROM exists, otherwise executes BRK.
-
-CA24  20 24 C4  JSR #C424
-CA27  90 F2     BCC #CA1B
-CA29  6C 04 D0  JMP (#D004)
-
-
-  Assign Integer Variable
-  -----------------------
-
-- Copies the last value on the Workspace Stack to the integer variable
-  pointed to by Y (where 0=@, 1=A, etc to 26=Z).
-- Workspace Stack pointer is decremented TWICE.
-
-CA2C  20 8B C7  JSR #C78B
-CA2F  A6 04     LDX #4
-CA31  CA        DEX
-CA32  CA        DEX
-CA33  86 04     STX #4
-CA35  B4 16     LDY #16,X
-
-
-  Assign Integer Variable subroutine
-  ----------------------------------
-
-- Copies the value on the Workspace Stack pointed to by X to the integer
-  variable pointed to by Y (where 0=@, 1=A, etc to 26=Z).
-- Destroys accumulator.
-
-CA37  B5 17     LDA #17,X
-CA39  99 21 03  STA #321,Y
-CA3C  B5 26     LDA #26,X
-CA3E  99 3C 03  STA #33C,Y
-CA41  B5 35     LDA #35,X
-CA43  99 57 03  STA #357,Y
-CA46  B5 44     LDA #44,X
-CA48  99 72 03  STA #372,Y
-CA4B  60        RTS
-
-
-  Increment 'COUNT' and Print Character subroutine
-  ------------------------------------------------
-
-- Increments COUNT at ?7 and the prints the contents of the accumulator.
-
-CA4C  E6 07     INC #7
-CA4E  6C 08 02  JMP (#208)
-
-
-  Execute the Command 'LIST'
-  --------------------------
-
-- X register must be zero on entry.
-- Exits to the Direct Mode.
-
-CA51  A9 00     LDA @#0
-CA53  20 7C C9  JSR #C97C
-CA56  A9 FF     LDA @#FF
-CA58  20 7C C9  JSR #C97C
-CA5B  85 04     STA #4
-CA5D  A0 7F     LDY @#7F
-CA5F  84 26     STY #26
-CA61  20 65 C4  JSR #C465
-CA64  90 52     BCC #CAB8
-CA66  20 31 C2  JSR #C231
-CA69  B0 58     BCS #CAC3
-CA6B  20 65 C4  JSR #C465
-CA6E  A2 01     LDX @#1
-CA70  86 04     STX #4
-CA72  20 E4 C4  JSR #C4E4
-CA75  20 2E C6  JSR #C62E
-CA78  90 30     BCC #CAAA
-CA7A  88        DEY
-CA7B  B0 21     BCS #CA9E
-CA7D  A9 05     LDA @#5
-CA7F  8D 21 03  STA #321
-CA82  20 89 C5  JSR #C589
-CA85  A9 08     LDA @#8
-CA87  8D 21 03  STA #321
-CA8A  A4 03     LDY #3
-CA8C  B1 58     LDA (#58),Y
-CA8E  C9 0D     CMP @#D
-CA90  F0 06     BEQ #CA98
-CA92  20 4C CA  JSR #CA4C
-CA95  C8        INY
-CA96  D0 F4     BNE #CA8C
-CA98  20 54 CD  JSR #CD54
-CA9B  20 A1 CE  JSR #CEA1
-CA9E  B1 58     LDA (#58),Y
-CAA0  85 25     STA #25
-CAA2  C8        INY
-CAA3  B1 58     LDA (#58),Y
-CAA5  85 16     STA #16
-CAA7  C8        INY
-CAA8  84 03     STY #3
-CAAA  A5 16     LDA #16
-CAAC  18        CLC
-CAAD  E5 17     SBC #17
-CAAF  A5 25     LDA #25
-CAB1  E5 26     SBC #26
-CAB3  90 C8     BCC #CA7D
-CAB5  4C CF C2  JMP #C2CF
-CAB8  20 31 C2  JSR #C231
-CABB  E6 04     INC #4
-CABD  20 65 C4  JSR #C465
-CAC0  4C 6E CA  JMP #CA6E
-CAC3  A5 16     LDA #16
-CAC5  A4 25     LDY #25
-CAC7  85 17     STA #17
-CAC9  84 26     STY #26
-CACB  B0 A1     BCS #CA6E
-
-
-  Execute the Command 'NEXT'
-  --------------------------
-
-CACD  20 34 C4  JSR #C434
-CAD0  A4 15     LDY #15
-CAD2  F0 10     BEQ #CAE4
-CAD4  90 0F     BCC #CAE5
-CAD6  C6 04     DEC #4
-CAD8  B5 15     LDA #15,X
-CADA  D9 3F 02  CMP #23F,Y
-CADD  F0 06     BEQ #CAE5
-CADF  88        DEY
-CAE0  84 15     STY #15
-CAE2  D0 F6     BNE #CADA
-CAE4  00        BRK
-CAE5  BE 3F 02  LDX #23F,Y
-CAE8  18        CLC
-CAE9  BD 21 03  LDA #321,X
-CAEC  79 4A 02  ADC #24A,Y
-CAEF  9D 21 03  STA #321,X
-CAF2  85 52     STA #52
-CAF4  BD 3C 03  LDA #33C,X
-CAF7  79 55 02  ADC #255,Y
-CAFA  9D 3C 03  STA #33C,X
-CAFD  85 53     STA #53
-CAFF  BD 57 03  LDA #357,X
-CB02  79 60 02  ADC #260,Y
-CB05  9D 57 03  STA #357,X
-CB08  85 54     STA #54
-CB0A  BD 72 03  LDA #372,X
-CB0D  79 6B 02  ADC #26B,Y
-CB10  9D 72 03  STA #372,X
-CB13  AA        TAX
-CB14  A5 52     LDA #52
-CB16  38        SEC
-CB17  F9 76 02  SBC #276,Y
-CB1A  85 52     STA #52
-CB1C  A5 53     LDA #53
-CB1E  F9 81 02  SBC #281,Y
-CB21  85 53     STA #53
-CB23  A5 54     LDA #54
-CB25  F9 8C 02  SBC #28C,Y
-CB28  85 54     STA #54
-CB2A  8A        TXA
-CB2B  F9 97 02  SBC #297,Y
-CB2E  05 52     ORA #52
-CB30  05 53     ORA #53
-CB32  05 54     ORA #54
-CB34  F0 0F     BEQ #CB45
-CB36  8A        TXA
-CB37  59 6B 02  EOR #26B,Y
-CB3A  59 97 02  EOR #297,Y
-CB3D  10 04     BPL #CB43
-CB3F  B0 04     BCS #CB45
-CB41  90 0F     BCC #CB52
-CB43  B0 0D     BCS #CB52
-CB45  B9 A2 02  LDA #2A2,Y
-CB48  85 05     STA #5
-CB4A  B9 AD 02  LDA #2AD,Y
-CB4D  85 06     STA #6
-CB4F  4C FF CB  JMP #CBFF
-
-CB52  C6 15     DEC #15
-CB54  4C 58 C5  JMP #C558
-
-
-  Execute the Command 'FOR'
-  -------------------------
-
-CB57  20 34 C4  JSR #C434
-CB5A  90 11     BCC #CB6D
-CB5C  20 79 C2  JSR #C279
-CB5F  20 2C CA  JSR #CA2C
-CB62  98        TYA
-CB63  A4 15     LDY #15
-CB65  C0 0B     CPY @#B
-CB67  B0 04     BCS #CB6D
-CB69  99 40 02  STA #240,Y
-CB6C  A9 00     LDA @#0
-CB6E  99 6C 02  STA #26C,Y
-CB71  99 61 02  STA #261,Y
-CB74  99 56 02  STA #256,Y
-CB77  A9 01     LDA @#1
-CB79  99 4B 02  STA #24B,Y
-CB7C  A2 16     LDX @#16
-CB7E  4C 33 C2  JMP #C233
-
-
-  Execute the Command 'TO'
-  ------------------------
-
-CB81  20 8B C7  JSR #C78B
-CB84  A4 15     LDY #15
-CB86  CA        DEX
-CB87  86 04     STX #4
-CB89  B5 16     LDA #16,X
-CB8B  99 77 02  STA #277,Y
-CB8E  B5 25     LDA #25,X
-CB90  99 82 02  STA #282,Y
-CB93  B5 34     LDA #34,X
-CB95  99 8D 02  STA #28D,Y
-CB98  B5 43     LDA #43,X
-CB9A  99 98 02  STA #298,Y
-CB9D  A2 1A     LDX @#1A
-CB9F  4C 33 C2  JMP #C233
-
-
-  Execute the Command 'STEP'
-  --------------------------
-
-CBA2  20 8B C7  JSR #C78B
-CBA5  A4 15     LDY #15
-CBA7  CA        DEX
-CBA8  86 04     STX #4
-CBAA  B5 16     LDA #16,X
-CBAC  99 4B 02  STA #24B,Y
-CBAF  B5 25     LDA #25,X
-CBB1  99 56 02  STA #256,Y
-CBB4  B5 34     LDA #34,X
-
-CBB6  99 61 02  STA #261,Y
-CBB9  B5 43     LDA #43,X
-CBBB  99 6C 02  STA #26C,Y
+c377:	jsr #ca4c		; Increment COUNT and send the contents of
+                                ; the accumulator to OSWRCH
+c37a:	lda (#5),y
+c37c:	iny
+c37d:	cmp @#d
+c37f:	beq #c39d
+c381:	sty #3
+c383:	cmp @#22
+c385:	bne #c377
+c387:	lda (#5),y
+c389:	cmp @#22
+c38b:	bne #c372
+c38d:	iny
+c38e:	bcs #c377
+c390:	jsr #c78b
+c393:	jsr #c3cb
+c396:	ora #54
+c398:	ora #53
+c39a:	beq #c3aa
+c39c:	ldy @#0
+c39e:	lda (#52),y
+c3a0:	cmp @#d
+c3a2:	beq #c337
+c3a4:	jsr #ca4c
+c3a7:	iny
+c3a8:	bne #c39e
+c3aa:	lda #52
+c3ac:	jsr #ca4c
+c3af:	jmp #c337
+
+
+; Execute the command 'LINK'
+
+c3b2:	jsr #c3c8		; Evaluate an arbitrarily complex function
+                                ; to #52(LSB)..#55(MSB)
+c3b5:	jsr #c4e4		; Do interpreter post-test
+c3b8:	lda #322		; Load accumulator with LSB integer 'A'
+c3bb:	ldx #339		; Load X register with LSB integer 'X'
+c3be:	ldy #33a		; Load Y register with LSB integer 'Y'
+c3c1:	jsr #c2a5		; Indirect jump to (#52)
+c3c4:	cld			; Ensure binary mode after nasty user's prog
+c3c5:	jmp #c55b		; Return to execute the next command whether
+                                ; by program execution or in direct mode
+
+
+; Function Interpreter subroutine
+;
+; Evaluates an arbitrarily complex function pointed to by (5),Y where y=?3
+; and stores the result on the Workspace Stack pointed to by ?4 and also
+; on the arithmetic workspace stack at #52(LSB)..#55(MSB).
+; The (5),Y pointer is consolidated before return, so that (5),0 points to
+; the last character in the string interpreted.
+; The workspace stack pointer ?4 is NOT incremented.
+
+c3c8:	jsr #c8bc		; Evaluate an arbitrarily complex numeric
+                                ; expression pointed to by (5),Y
+
+
+; Copy Current Level of the Workspace Stack to #52..#55 subroutine
+;
+; Enter with the X register pointing to the current level of the workspace
+; stack, so that level (X-1) is copied to #52(LSB)..#55(MSB).
+; The workspace stack pointer ?4 is updated and decremented.
+
+c3cb:	ldy @#52
+
+
+; Copy Current Level of the Workspace Stack to zero page subroutine
+;
+; Enter with the X register pointing to the current level of the workspace
+; stack, so that level (X-1) is copied to #52(LSB)..#55(MSB).
+; Enter with the Y register pointing to the LSB of the four consecutive
+; bytes that are the zero page destination.
+; The workspace stack pointer ?4 is updated and decremented.
+
+c3cd:	dex
+c3ce:	stx #4
+
+
+; Copy Current Level of the Workspace Stack to zero page subroutine
+;
+; Enter with the X register pointing to the level of the workspace stack
+; required to be copied to #52(LSB)..#55(MSB).
+; Enter with the Y register pointing to the LSB of the four consecutive
+; bytes that are the zero page destination.
+; The workspace stack pointer ?4 is NOT TOUCHED !
+
+c3d0:	lda #16,x
+c3d2:	sta #0,y
+c3d5:	lda #25,x
+c3d7:	sta #1,y
+c3da:	lda #34,x
+c3dc:	sta #2,y
+c3df:	lda #43,x
+c3e1:	sta #3,y
+c3e4:	rts
+
+
+; Deals with Numerical Assignments
+;
+; Sets pre-interpreted variable to an arbitrarily complex expression.
+; Enter with the variable number (0=@, 1=A, etc TO 26=Z) in the LSB of
+; the workspace stack at level (?4-1).
+
+c3e5:	jsr #c4e1		; Evaluate a numerical expression onto the
+                                ; w/s stack and do post-test.
+c3e8:	jsr #ca2f		; Assign value on the w/s stack to a variable
+                                ; number on the w/s stack
+c3eb:	jmp #c55b		; Return to execute the next command whether
+                                ; by program execution or in direct mode
+
+
+; Execute the command '!'
+;
+; Sets pre-interpreted vector to an arbitrarily complex expression.
+
+c3ee:	jsr #c8bc		; Evaluate an arbitrarily complex numeric
+                                ; expression pointed to by (5),Y
+                                ; which is the ! base address
+c3f1:	jsr #ce93		; Interpret an '=' sign and a numerical
+                                ; expression following, and copy the LSB
+                                ; to the base address on stack
+c3f4:	lda #26,x		; Get the second LSB from stack
+c3f6:	iny			; Point to the second address
+c3f7:	sta (#52),y		; ... and dump the second LSB
+c3f9:	iny			; Point to the third address
+c3fa:	lda #35,x		; Get the third LSB from stack
+c3fc:	sta (#52),y		; ... and dump the third LSB
+c3fe:	iny			; Point to the fourth address
+c3ff:	lda #44,x		; Get the fourth LSB from stack
+c401:	sta (#52),y		; ... and dump the fourth LSB
+c403:	jmp #c55b		; Return to execute the next command whether
+                                ; by program execution or in direct mode
+
+
+; Execute the command '?'
+;
+; Sets pre-interpreted byte to an arbitrarily complex expression.
+
+c406:	jsr #c8bc		; Evaluate an arbitrarily complex numeric
+                                ; expression pointed to by (5),Y
+c409:	jsr #ce93		; Interpret an '=' sign and a numerical
+                                ; expression following, and copy the LSB
+                                ; to the base address on stack
+c40c:	jmp #c55b		; Return to execute the next command whether
+                                ; by program execution or in direct mode
+
+
+; Execute OS commands
+;
+; Deals with * prefixed commands.
+; Copies the string after the '*' prefix pointed to by (5),Y where Y=?3
+; to the Direct Mode buffer at #100 and then calls OSCLI indirected
+; by vector (#206,#207).
+
+c40f:	ldx @#0			; Initialise the Direct Mode buffer pointer
+c411:	lda (#5),y		; Get character under analysis from text
+c413:	sta #100,x		; ... and copy to the direct mode buffer
+c416:	sty #3			; Update the interpreter pointer
+c418:	iny			; Point to the next character of text
+c419:	inx			; Point to the next slot in the buffer
+c41a:	cmp @#d			; Was the last character <CR> ?
+c41c:	bne #c411		; ... no, keep copying
+                                ; (defaults to #F8EF)
+c41e:	jsr #fff7		; ... yes, finished, so call OSCLI
+c421:	jmp #c558		; Perform post test, check for <ESC> etc and
+                                ; return to execute the next command whether
+                                ; by program execution or in direct mode
+
+
+; Floating Point ROM Check subroutine
+;
+; Returns with Carry set if the FP ROM at #D000 exists.
+
+c424:	lda #d000
+c427:	cmp @#aa
+c429:	bne #c463
+c42b:	lsr a
+c42c:	cmp #d001
+c42f:	bne #c463
+c431:	ldy #5e
+c433:	rts
+
+
+; Interpreter Alphabetic Pre-Test subroutine
+;
+; Reads the first non-space character pointed to by (5),Y where y=?3
+; and tests it and the following character.
+; 1st character: If it is alphabetic (@ to Z), the character number
+;                (where @=0, A=1 to Z=26) is stored in the LSB of the
+;                current level of the workspace stack, pointed to by ?4,
+;                and the second character is tested.
+;                However if it is not alphabetic, the routine is exited
+;                with Carry clear and the interpreter pointer Y=?3
+;                pointing to the second character.
+; 2nd character: If it is not alphabetic and also not '.', the workspace
+;                pointer X=?4 is incremented before return with Carry set
+;                and the interpreter pointer Y=?3 pointing to this
+;                second character.
+;                Otherwise return with pointers as above but with Carry clear.
+
+c434:	ldy #3			; Get the interpreter pointer
+c436:	bpl #c43b		; ... branch always
+
+c438:	iny
+c439:	sty #3
+c43b:	lda (#5),y		; Get the character under interpretation
+c43d:	cmp @#20		; If it's a space...
+c43f:	beq #c438		; ... then skip to the next character
+c441:	cmp @#5b		; Test for valid alphabetic character
+c443:	bcs #c463		; ... invalid
+c445:	sbc @#3f		; Convert to @=0, A=1,...to  Z=26
+c447:	bcc #c464		; ... invalid alphabetic character
+c449:	ldx #4			; Get the workspace pointer
+c44b:	sta #16,x		; Dump the first character on the LSB of
+                                ; the current workspace slot
+c44d:	iny			; Point to the next character
+c44e:	lda (#5),y		; ... and fetch it
+c450:	cmp @#2e		; Is it '.' ?
+c452:	beq #c463		; ... yes, clear Carry and quit
+c454:	cmp @#5b		; Is it >='[' ?
+c456:	bcs #c45c		; ... yes, set Carry and quit
+c458:	cmp @#40		; Is it <='@' ?
+c45a:	bcs #c463		; ... yes, clear Carry and quit
+
+c45c:	inx			; Increment workspace stack pointer
+c45d:	stx #4			; Update workspace stack pointer
+c45f:	sec
+c460:	sty #3			; Interpreter points to second character
+c462:	rts
+
+c463:	clc
+c464:	rts
+
+
+; Read Decimal String subroutine
+;
+; Reads string pointed to by (5),Y where Y=?3 as ASCII decimal characters,
+; stores the binary result in the Workspace Stack at 16,X where X=?4
+; and increments the Workspace Stack pointer ?4.
+; If the first non-space character is not a number, BRK is executed.
+; Destroys A,X,Y registers.
+
+c465:	jsr #c434		; If next symbol is a <variable>, BRK
+c468:	bcs #c425
+                                ; GET POSITIVE NUMBER
+                                ; (return with Carry clear if no number)
+c46a:	ldx @#0
+c46c:	ldy #3
+c46e:	stx #52
+c470:	stx #53
+c472:	stx #54
+c474:	stx #55
+c476:	dey
+c477:	iny
+c478:	lda (#5),y
+c47a:	sec
+c47b:	sbc @#30
+c47d:	bmi #c4d3
+c47f:	cmp @#a
+c481:	bcs #c4d3
+c483:	ldx #53
+c485:	pha
+c486:	lda #55
+c488:	pha
+c489:	lda #54
+c48b:	pha
+c48c:	lda #52
+c48e:	asl a
+c48f:	rol #53
+c491:	rol #54
+c493:	rol #55
+c495:	bmi #c46b
+c497:	asl a
+c498:	rol #53
+c49a:	rol #54
+c49c:	rol #55
+c49e:	bmi #c46b
+c4a0:	adc #52
+c4a2:	sta #52
+c4a4:	txa
+c4a5:	adc #53
+c4a7:	sta #53
+c4a9:	pla
+c4aa:	adc #54
+c4ac:	sta #54
+c4ae:	pla
+c4af:	adc #55
+c4b1:	asl #52
+c4b3:	rol #53
+c4b5:	rol #54
+c4b7:	rol a
+c4b8:	bmi #c46b
+c4ba:	sta #55
+c4bc:	pla
+c4bd:	adc #52
+c4bf:	sta #52
+c4c1:	bcc #c4cf
+c4c3:	inc #53
+c4c5:	bne #c4cf
+c4c7:	inc #54
+c4c9:	bne #c4cf
+c4cb:	inc #55
+c4cd:	bmi #c46b
+c4cf:	ldx @#ff
+c4d1:	bne #c477
+c4d3:	txa
+c4d4:	beq #c463
+c4d6:	sec
+c4d7:	sty #3
+c4d9:	ldy @#52
+c4db:	jmp #c99f
+
+
+c4de:	jsr #c279		; Test for '=', BRK if failure
+c4e1:	jsr #c78b		; Evaluate numerical expression
+
+
+; Interpreter Post-Test subroutine
+;
+; Checks that (5),Y where y=?3 points to a statement delimiter ';' or <CR>
+; or spaces leading thereto.
+; If successful, consolidates the (5),Y pointer.
+; If unsuccessful, BRK if failure.
+
+c4e4:	ldy #3
+c4e6:	dey
+c4e7:	iny
+c4e8:	lda (#5),y
+c4ea:	cmp @#20
+c4ec:	beq #c4e7
+c4ee:	cmp @#3b
+c4f0:	beq #c4f6
+c4f2:	cmp @#d
+c4f4:	bne #c55c
+
+
+; Consolidate (5),Y Pointer subroutine
+;
+; Resets the text pointer by setting (5)=(5)+Y and Y=1 where Y=?3.
+
+c4f6:	clc
+c4f7:	tya
+c4f8:	adc #5
+c4fa:	sta #5
+c4fc:	bcc #c500
+c4fe:	inc #6
+c500:	ldy @#1
+c502:	sty #3
+
+
+; Check for <ESC> key subroutine
+;
+; If <ESC> pressed then RTS, otherwise jumps to the Direct Mode.
+
+c504:	lda #b001
+c507:	and @#20
+c509:	beq #c547
+c50b:	rts
+
+
+; Get Current Text Line Number subroutine
+;
+; Copies the new line number to 1,2 and updates the label address if the
+; line is labelled.
+; Sets up the (5),Y text pointer to the start of the statement.
+
+c50c:	jsr #c4e4
+c50f:	dey
+c510:	lda (#5),y
+c512:	cmp @#3b
+c514:	beq #c50b
+c516:	lda #6
+c518:	cmp @#1
+c51a:	beq #c596
+c51c:	iny
+c51d:	lda (#5),y
+c51f:	bmi #c55c
+c521:	sta #2
+c523:	iny
+c524:	lda (#5),y
+c526:	sta #1
+c528:	iny
+c529:	lda (#5),y
+c52b:	dey
+c52c:	cmp @#61
+c52e:	bcc #c4f7
+c530:	sbc @#61
+c532:	cmp @#1b
+c534:	bcs #c4f6
+c536:	iny
+c537:	asl a
+c538:	tax
+c539:	jsr #c4f6
+c53c:	lda #5
+c53e:	sta #38d,x
+c541:	lda #6
+c543:	sta #38e,x
+c546:	rts
+
+c547:	jmp #c2cfb5
+
+
+; Statement Executer
+;
+; Executes a statement pointed to by (5),Y.
+; Jumps indirectly to the FP ROM via (#D002) if the command cannot be
+; interpreted.
+
+c54a:	dey
+c54b:	jsr #c4f6
+c54e:	bne #c55b
+c550:	jsr #c424		; Handle unrecognised statement
+c553:	bcc #c558
+c555:	jmp (#d002)
+c558:	jsr #c4e4
+
+
+; Return Routine
+;
+; All routines generally return to BASIC here.
+; Goes on to interpret the next statement.
+
+c55b:	ldy @#0
+c55d:	lda (#5),y
+c55f:	cmp @#3b
+c561:	bne #c57d
+c563:	jmp #c31b
+
+
+; Execute the command 'IF'
+;
+; Puts a zero on the Workspace Stack at #16,X where X=?4 if false.
+
+c566:	jsr #c70c
+c569:	dex
+c56a:	stx #4
+c56c:	lda #16,x
+c56e:	beq #c575
+c570:	ldx @#20
+c572:	jmp #c233
+
+
+; Execute the command 'REM'
+;
+; Increments (5),Y until a <CR> is found.
+
+c575:	lda @#d
+c577:	dey
+c578:	iny
+c579:	cmp (#5),y
+c57b:	bne #c578
+c57d:	lda #6
+c57f:	cmp @#1
+c581:	beq #c547
+c583:	jsr #c51c
+c586:	jmp #c31b
+
+
+; Print Decimal subroutine
+;
+; Prints the lowest level of the Workspace Stack #16,#25,#34,#43 as a
+; signed decimal number in field size set by the LSB of the integer
+; variable '@' #321.
+; Destroys A,X,Y registers.
+
+c589:	lda #43
+c58b:	sta #27
+c58d:	bpl #c593
+c58f:	inx
+c590:	jsr #c8c4
+c593:	ldx @#9
+c595:	lda @#0
+c597:	sta #45,x
+c599:	sec
+c59a:	lda #16
+c59c:	sbc #c608,x
+c59f:	pha
+c5a0:	lda #25
+c5a2:	sbc #c610,x
+c5a5:	pha
+c5a6:	lda #34
+c5a8:	sbc #c61a,x
+c5ab:	tay
+c5ac:	lda #43
+c5ae:	sbc #c624,x
+c5b1:	bcc #c5c1
+c5b3:	sta #43
+c5b5:	sty #34
+c5b7:	pla
+c5b8:	sta #25
+c5ba:	pla
+c5bb:	sta #16
+c5bd:	inc #45,x
+c5bf:	bne #c599
+c5c1:	pla
+c5c2:	pla
+c5c3:	dex
+c5c4:	bpl #c595
+c5c6:	ldx @#a
+c5c8:	dex
+c5c9:	beq #c5cf
+c5cb:	lda #45,x
+c5cd:	beq #c5c8
+c5cf:	stx #52
+c5d1:	bit #27
+c5d3:	bpl #c5d7
+c5d5:	inc #52
+c5d7:	sec
+c5d8:	lda #321
+c5db:	beq #c5df
+c5dd:	sbc @#1
+c5df:	sbc #52
+c5e1:	beq #c5ee
+c5e3:	bcc #c5ee
+c5e5:	tay
+c5e6:	lda @#20
+c5e8:	jsr #ca4c
+c5eb:	dey
+c5ec:	bne #c5e6
+c5ee:	bit #27
+c5f0:	bpl #c5f7
+c5f2:	lda @#2d
+c5f4:	jsr #ca4c
+c5f7:	lda #45,x
+c5f9:	cmp @#a
+c5fb:	bcc #c5ff
+c5fd:	adc @#6
+c5ff:	adc @#30
+c601:	jsr #ca4c
+c604:	dex
+c605:	bpl #c5f7
+c607:	rts
+
+
+; Decimal Print Data Table
+
+c608:	.text $01, $0a, $64, $e8, $10, $a0, $40, $80
+c610:	.text $00, $00, $00, $03, $27, $86, $42, $96, $e1, $ca, $00, $00, $00, $00, $00, $01
+c620:	.text $0f, $98, $f5, $9a, $00, $00, $00, $00, $00, $00, $00, $00, $05, $3b
+
+
+; Line Number Search subroutine
+;
+; Searches text looking for a line number match.
+; Line number searched for is assumed to be on the 16,X Workspace Stack
+; where X=?4-1.
+; Returns with (58),Y pointing to the character following the line number
+; and Carry clear.
+; Failure indicated by Carry set.
+
+c62e:	dec #4
+c630:	ldx #4
+c632:	ldy @#0
+c634:	sty #58
+c636:	lda #12
+c638:	sta #59
+c63a:	dey
+c63b:	lda @#d
+c63d:	iny
+c63e:	cmp (#58),y
+c640:	bne #c63d
+c642:	jsr #cea1
+c645:	lda (#58),y
+c647:	iny
+c648:	cmp #25,x
+c64a:	bcc #c63b
+c64c:	bne #c660
+c64e:	lda (#58),y
+c650:	cmp #16,x
+c652:	bcc #c63b
+c654:	bne #c660
+c656:	sta #1
+c658:	lda #25,x
+c65a:	sta #2
+c65c:	jsr #cea1
+c65f:	clc
+c660:	rts
+
+
+; Set up Miscellaneous Workspace for Multiply or Divide subroutine
+
+c661:	jsr #c8bc
+c664:	lda #42,x
+c666:	eor #41,x
+c668:	sta #52
+c66a:	jsr #c905
+c66d:	ldy @#53
+c66f:	jsr #c3cd
+c672:	lda #42,x
+c674:	sta #43,x
+c676:	jsr #c907
+c679:	ldy @#57
+c67b:	jsr #c3cd
+c67e:	ldy @#0
+c680:	sty #5b
+c682:	sty #5c
+c684:	sty #5d
+c686:	sty #5e
+c688:	rts
+
+
+; Division subroutine
+;
+; Do division in miscellaneous workspace.
+
+c689:	jsr #c661
+c68c:	lda #54
+c68e:	jsr #c705
+c691:	beq #c67f
+c693:	ldy @#20
+c695:	dey
+c696:	beq #c6d9
+c698:	asl #57
+c69a:	rol #58
+c69c:	rol #59
+c69e:	rol #5a
+c6a0:	bpl #c695
+c6a2:	rol #57
+c6a4:	rol #58
+c6a6:	rol #59
+c6a8:	rol #5a
+c6aa:	rol #5b
+c6ac:	rol #5c
+c6ae:	rol #5d
+c6b0:	rol #5e
+c6b2:	sec
+c6b3:	lda #5b
+c6b5:	sbc #53
+c6b7:	pha
+c6b8:	lda #5c
+c6ba:	sbc #54
+c6bc:	pha
+c6bd:	lda #5d
+c6bf:	sbc #55
+c6c1:	tax
+c6c2:	lda #5e
+c6c4:	sbc #56
+c6c6:	bcc #c6d4
+c6c8:	sta #5e
+c6ca:	stx #5d
+c6cc:	pla
+c6cd:	sta #5c
+c6cf:	pla
+c6d0:	sta #5b
+c6d2:	bcs #c6d6
+c6d4:	pla
+c6d5:	pla
+c6d6:	dey
+c6d7:	bne #c6a2
+c6d9:	rts
+
+
+; Relational Test subroutine
+
+c6da:	jsr #c78b
+c6dd:	dex
+c6de:	stx #4
+c6e0:	lda #42,x
+c6e2:	eor @#80
+c6e4:	sta #52
+c6e6:	lda #43,x
+c6e8:	eor @#80
+c6ea:	sta #54
+c6ec:	ldy @#0
+c6ee:	sec
+c6ef:	lda #15,x
+c6f1:	sbc #16,x
+c6f3:	sta #53
+c6f5:	lda #24,x
+c6f7:	sbc #25,x
+c6f9:	sta #55
+c6fb:	lda #33,x
+c6fd:	sbc #34,x
+c6ff:	sta #56
+c701:	lda #52
+c703:	sbc #54
+c705:	ora #53
+c707:	ora #55
+c709:	ora #56
+c70b:	rts
+
+
+; Truth Test subroutine
+;
+; Evaluates an arbitrarily complex expression pointed to by (5),Y where
+; Y=?3 and places a zero on the Workspace Stack at 16,X where X=?4.
+; Used by IF and UNTIL commands.
+
+c70c:	jsr #c72c
+c70f:	ldx @#43
+c711:	jmp #c233
+
+
+; Logical AND Truth Test
+
+c714:	jsr #c72c
+c717:	lda #14,x
+c719:	and #15,x
+c71b:	sta #14,x
+c71d:	dec #4
+c71f:	jmp #c70f
+
+
+; Logical OR Truth Test
+
+c722:	jsr #c72c
+c725:	lda #14,x
+c727:	ora #15,x
+c729:	jmp #c71b
+
+c72c:	ldx @#46
+c72e:	jmp #c233
+
+
+; '$' String Comparison Test
+
+c731:	jsr #c78b
+c734:	jsr #ceae
+c737:	lda #15,x
+c739:	sta #54
+c73b:	lda #24,x
+c73d:	sta #55
+c73f:	ldy @#ff
+c741:	iny
+c742:	lda (#54),y
+c744:	cmp (#52),y
+c746:	bne #c74f
+c748:	eor @#d
+c74a:	bne #c741
+c74c:	tay
+c74d:	beq #c760
+c74f:	ldy @#0
+c751:	beq #c761
+
+
+c753:	jsr #c78b
+c756:	ldx @#0
+c758:	jmp #c233
+
+
+; Test <expression> = <expression>
+
+c75b:	jsr #c6da
+c75e:	bne #c761
+c760:	iny
+c761:	sty #15,x
+c763:	rts
+
+
+; Test <expression> <= <expression>
+
+c764:	jsr #c6da
+c767:	beq #c760
+c769:	bcc #c760
+c76b:	bcs #c761
+
+
+; Test <expression> <> <expression>
+
+c76d:	jsr #c6da
+c770:	bne #c760
+c772:	beq #c761
+
+
+; Test <expression> < <expression>
+
+c774:	jsr #c6da
+c777:	bcc #c760
+c779:	bcs #c761
+
+
+; Test <expression> >= <expression>
+
+c77b:	jsr #c6da
+c77e:	bcs #c760
+c780:	bcc #c761
+
+
+; Test <expression> > <expression>
+
+c782:	jsr #c6da
+c785:	beq #c761
+c787:	bcs #c760
+c789:	bcc #c761
+
+
+; <expression>
+
+c78b:	jsr #c80b
+c78e:	jmp #c795
+
+c791:	sta #41,x
+c793:	dec #4
+c795:	ldx @#0
+c797:	jmp #c27b
+
+
+; Add 2 Numbers on the Workspace Stack
+;
+; {14,X 23,X 32,X 41,X} = {14,X 23,X 32,X 41,X} + {15,X 24,X 33,X 42,X}
+
+c79a:	jsr #c80b
+c79d:	clc
+c79e:	lda #14,x
+c7a0:	adc #15,x
+c7a2:	sta #14,x
+c7a4:	lda #23,x
+c7a6:	adc #24,x
+c7a8:	sta #23,x
+c7aa:	lda #32,x
+c7ac:	adc #33,x
+c7ae:	sta #32,x
+c7b0:	lda #41,x
+c7b2:	adc #42,x
+c7b4:	jmp #c791
+
+
+; Subtract 2 Numbers on the Workspace Stack
+;
+; {14,X 23,X 32,X 41,X} = {14,X 23,X 32,X 41,X} - {15,X 24,X 33,X 42,X}
+
+c7b7:	jsr #c80b
+c7ba:	lda #14,x
+c7bc:	sbc #15,x
+c7be:	sta #14,x
+c7c0:	lda #23,x
+c7c2:	sbc #24,x
+c7c4:	sta #23,x
+c7c6:	lda #32,x
+c7c8:	sbc #33,x
+c7ca:	sta #32,x
+c7cc:	lda #41,x
+c7ce:	sbc #42,x
+c7d0:	jmp #c791
+
+
+; Logically OR 2 Numbers on the Workspace Stack
+;
+; {14,X 23,X 32,X 41,X} = {14,X 23,X 32,X 41,X} OR {15,X 24,X 33,X 42,X}
+
+c7d3:	jsr #c80b
+c7d6:	lda #14,x
+c7d8:	ora #15,x
+c7da:	sta #14,x
+c7dc:	lda #23,x
+c7de:	ora #24,x
+c7e0:	sta #23,x
+c7e2:	lda #32,x
+c7e4:	ora #33,x
+c7e6:	sta #32,x
+c7e8:	ldaa#41,x
+c7ea:	ora #42,x
+c7ec:	jmp #c791
+
+
+; Logically EOR 2 Numbers on the Workspace Stack
+;
+; {14,X 23,X 32,X 41,X} = {14,X 23,X 32,X 41,X} EOR {15,X 24,X 33,X 42,X}
+
+c7ef:	jsr #c80b
+c7f2:	lda #14,x
+c7f4:	eor #15,x
+c7f6:	sta #14,x
+c7f8:	lda #23,x
+c7fa:	eor #24,x
+c7fc:	sta #23,x
+c7fe:	lda #32,x
+c800:	eor #33,x
+c802:	sta #32,x
+c804:	lda #41,x
+c806:	eor #42,x
+c808:	jmp #c791
+
+
+; <term>
+
+c80b:	jsr #c8bc
+c80e:	ldx @#5
+c810:	jmp #c27b
+
+
+; <factor> * <factor>
+
+c813:	jsr #c661
+c816:	lsr #5a
+c818:	ror #59
+c81a:	ror #58
+c81c:	ror #57
+c81e:	bcc #c839
+c820:	clc
+c821:	tya
+c822:	adc #53
+c824:	tay
+c825:	lda #5c
+c827:	adc #54
+c829:	sta #5c
+c82b:	lda #5d
+c82d:	adc #55
+c82f:	sta #5d
+c831:	lda #5e
+c833:	adc #56
+c835:	and @#7f
+c837:	sta #5e
+c839:	asl #53
+c83b:	rol #54
+c83d:	rol #55
+c83f:	rol #56
+c841:	lda #57
+c843:	ora #58
+c845:	ora #59
+c847:	ora #5a
+c849:	bne #c816
+c84b:	sty #5b
+c84d:	lda #52
+c84f:	php
+c850:	ldy @#5b
+c852:	jsr #c99f
+c855:	plp
+c856:	bpl #c85b
+c858:	jsr #c8c4
+c85b:	jmp #c80e
+
+
+; <factor> / <factor>
+
+c85e:	jsr #c689
+c861:	rol #57
+c863:	rol #58
+c865:	rol #59
+c867:	rol #5a
+c869:	bit #52
+c86b:	php
+c86c:	ldy @#57
+c86e:	bne #c852
+
+
+; <factor> % <factor>
+
+c870:	jsr #c689
+c873:	ldx #4
+c875:	lda #44,x
+c877:	php
+c878:	jmp #c850
+
+
+; <factor> & <factor>
+
+c87b:	jsr #c8bc
+c87e:	dex
+c87f:	stx #4
+c881:	lda #15,x
+c883:	and #16,x
+c885:	sta #15,x
+c887:	lda #24,x
+c889:	and #25,x
+c88b:	sta #24,x
+c88d:	lda #33,x
+c88f:	and #34,x
+c891:	sta #33,x
+c893:	lda #42,x
+c895:	and #43,x
+c897:	sta #42,x
+c899:	jmp #c80e
+
+
+; <factor> ? <factor>
+
+c89c:	jsr #c8a2
+c89f:	jmp #c80e
+c8a2:	jsr #c8bc
+c8a5:	clc
+c8a6:	lda #15,x
+c8a8:	adc #14,x
+c8aa:	tay
+c8ab:	lda #24,x
+c8ad:	adc #23,x
+c8af:	dex
+c8b0:	jmp #c953
+
+
+; <factor> ! <factor>
+
+c8b3:	jsr #c8a2
+c8b6:	jsr #c962
+c8b9:	jmp #c80e
+
+
+; Function Interpreter subroutine
+;
+; Evaluates an arbitrarily complex function pointed to by (5),Y where Y=?3
+; and stores the result on the Workspace Stack pointed to by ?4.
+; The (5),Y pointer is consolidated before return, so that (5),0 points to
+; the last character in the string interpreted.
+; The Workspace Stack pointer ?4 is incremented.
+
+c8bc:	ldx @#4
+c8be:	jmp #c233
+
+
+; Negate Current Slot of Workspace Stack
+;
+; {15,X 24,X 33,X 42,X} = 0 - {15,X 24,X 33,X 42,X}
+
+c8c1:	jsr #c8dc
+
+
+; Negate Current Slot of Workspace Stack subroutine
+;
+; {15,X 24,X 33,X 42,X} = 0 - {15,X 24,X 33,X 42,X}
+; Destroys accumulator.
+
+c8c4:	sec
+c8c5:	lda @#0
+c8c7:	tay
+c8c8:	sbc #15,x
+c8ca:	sta #15,x
+c8cc:	tya
+c8cd:	sbc #24,x
+c8cf:	sta #24,x
+c8d1:	tya
+c8d2:	sbc #33,x
+c8d4:	sta #33,x
+c8d6:	tya
+c8d7:	sbc #42,x
+c8d9:	sta #42,x
+c8db:	rts
+
+
+; Variable Assignment to Workspace
+
+c8dc:	jsr #c434
+c8df:	bcc #c8f8
+c8e1:	ldy #15,x
+
+
+; Variable Assignment to Workspace Stack subroutine
+;
+; Copies the simple variable pointed to by Y (where 0=@, 1=A, etc to 26=Z)
+; to the current slot of the Workspace Stack pointed to by ?4.
+; Destroys accumulator.
+
+c8e3:	lda #321,y
+c8e6:	sta #15,x
+c8e8:	lda #357,y
+c8eb:	sta #33,x
+c8ed:	lda #33c,y
+c8f0:	sta #24,x
+c8f2:	lda #372,y
+c8f5:	sta #42,x
+c8f7:	rts
+
+
+; Do Numerical Assignments
+
+c8f8:	jsr #c46a
+c8fb:	bcs #c8f7
+c8fd:	ldx @#7
+c8ff:	jmp #c233
+
+
+; Execute the Function 'ABS'
+;
+; Performs ABS of function pointed to by (5),Y and places the result on
+; the Workspace Stack.
+
+c902:	jsr #c8bc
+c905:	lda #42,x
+c907:	bmi #c8c4
+c909:	rts
+
+
+; Deal with '#'
+
+c90a:	ldx @#0
+c90c:	stx #52
+c90e:	stx #53
+c910:	stx #54
+c912:	stx #55
+c914:	dey
+c915:	iny
+c916:	lda (#5),y
+c918:	cmp @#30
+c91a:	bcc #c93e
+c91c:	cmp @#3a
+c91e:	bcc #c92a
+c920:	sbc @#37
+c922:	cmp @#a
+c924:	bcc #c93e
+c926:	cmp @#10
+c928:	bcs #c93e
+c92a:	asl a
+c92b:	asl a
+c92c:	asl a
+c92d:	asl a
+c92e:	ldx @#3
+c930:	asl a
+c931:	rol #52
+c933:	rol #53
+c935:	rol #54
+c937:	rol #55
+c939:	dex
+c93a:	bpl #c930
+c93c:	bmi #c915
+c93e:	txa
+c93f:	bpl #c959
+c941:	jmp #c4d6
+
+
+; Deal with '('
+
+c944:	jsr #c70c
+c947:	ldx @#c
+c949:	jmp #c27b
+c94c:	jsr #c8bc
+
+
+; Deal with '?'
+
+c94f:	ldy #15,x
+c951:	lda #24,x
+c953:	sta #53
+c955:	sty #52
+c957:	dex
+c958:	ldy @#0
+c95a:	lda (#52),y
+c95c:	jmp #c97c
+
+
+; Deal with '!'
+
+c95f:	jsr #c94c
+c962:	ldy @#1
+c964:	lda (#52),y
+c966:	sta #24,x
+c968:	iny
+c969:	lda (#52),y
+c96b:	sta #33,x
+c96d:	iny
+c96e:	lda (#52),y
+c970:	sta #42,x
+c972:	rts
+
+
+; Read TOP onto Workspace Stack subroutine
+;
+; Reads the TOP value at #D,#E onto the current workspace slot.
+; The Workspace Stack pointer ?4 is incremented.
+
+c973:	ldy @#d
+c975:	jsr #c9a1
+c978:	beq #c981
+
+
+; Read COUNT onto Workspace Stack subroutine
+;
+; Reads the COUNT value at ?7 onto the current workspace slot
+
+c97a:	lda #7
+c97c:	jsr #c9b3
+c97f:	sta #24,x
+c981:	sta #33,x
+c983:	sta #42,x
+c985:	rts
+
+
+; Execute the Function 'RND' subroutine
+;
+; Generates a new random number at #8,#9,#A,#B,#C and copies it to the
+; current slot of the Workspace Stack pointed to by ?4.
+; The Workspace Stack pointer ?4 is incremented.
+
+c986:	ldy @#20
+c988:	lda #a
+c98a:	lsr a
+c98b:	lsr a
+c98c:	lsr a
+c98d:	eor #c
+c98f:	ror a
+c990:	rol #8
+c992:	rol #9
+c994:	rol #a
+c996:	rol #b
+c998:	rol #c
+c99a:	dey
+c99b:	bne #c988
+c99d:	ldy @#8
+c99f:	ldx #4
+c9a1:	lda #1,y
+c9a4:	sta #25,x
+c9a6:	lda #2,y
+c9a9:	sta #34,x
+c9ab:	lda #3,y
+c9ae:	sta #43,x
+c9b0:	lda #0,y
+c9b3:	sta #16,x
+c9b5:	inx
+c9b6:	stx #4
+c9b8:	ldy #3
+c9ba:	lda @#0
+c9bc:	rts
+
+
+; Execute the Function 'LEN'
+
+c9bd:	jsr #c8bc
+c9c0:	jsr #c3cb
+c9c3:	ldy @#0
+c9c5:	lda @#d
+c9c7:	cmp (#52),y
+c9c9:	beq #c9ce
+c9cb:	iny
+c9cc:	bne #c9c7
+c9ce:	tya
+c9cf:	jmp #c97c
+
+
+; Deal with the 'CH' operator
+
+c9d2:	jsr #ceb1
+c9d5:	jmp #c958
+
+
+; BRK Handler
+;
+; Points the BASIC interpreter at the vector (#10,#11) which is normally
+; set to point to #C9E7.
+; Exits to the Diect Mode.
+
+c9d8:	pla
+c9d9:	pla
+c9da:	sta #0
+c9dc:	lda #10
+c9de:	sta #5
+c9e0:	lda #11
+c9e2:	sta #6
+c9e4:	jmp #c2f2
+
+
+c9e7:	.text "@=1;P.$6$7'"ERROR "?0;@=8;IF?1|?2P." LINE"!1& #FFFF", $0d, $00, $00, "P.';E.", $0d
+
+
+; Handle Unrecognised Command
+;
+; Jumps indirectly to (#D002) if the FP ROM exists, otherwise executes BRK.
+
+ca24:	jsr #c424
+ca27:	bcc #ca1b
+ca29:	jmp (#d004)
+
+
+; Assign Integer Variable
+;
+; Copies the last value on the Workspace Stack to the integer variable
+; pointed to by Y (where 0=@, 1=A, etc to 26=Z).
+; Workspace Stack pointer is decremented TWICE.
+
+ca2c:	jsr #c78b
+ca2f:	ldx #4
+ca31:	dex
+ca32:	dex
+ca33:	stx #4
+ca35:	ldy #16,x
+
+
+; Assign Integer Variable subroutine
+;
+; Copies the value on the Workspace Stack pointed to by X to the integer
+; variable pointed to by Y (where 0=@, 1=A, etc to 26=Z).
+; Destroys accumulator.
+
+ca37:	lda #17,x
+ca39:	sta #321,y
+ca3c:	lda #26,x
+ca3e:	sta #33c,y
+ca41:	lda #35,x
+ca43:	sta #357,y
+ca46:	lda #44,x
+ca48:	sta #372,y
+ca4b:	rts
+
+
+; Increment 'COUNT' and Print Character subroutine
+;
+; Increments COUNT at ?7 and the prints the contents of the accumulator.
+
+ca4c:	inc #7
+ca4e:	jmp (#208)
+
+
+; Execute the Command 'LIST'
+;
+; X register must be zero on entry.
+; Exits to the Direct Mode.
+
+ca51:	lda @#0
+ca53:	jsr #c97c
+ca56:	lda @#ff
+ca58:	jsr #c97c
+ca5b:	sta #4
+ca5d:	ldy @#7f
+ca5f:	sty #26
+ca61:	jsr #c465
+ca64:	bcc #cab8
+ca66:	jsr #c231
+ca69:	bcs #cac3
+ca6b:	jsr #c465
+ca6e:	ldx @#1
+ca70:	stx #4
+ca72:	jsr #c4e4
+ca75:	jsr #c62e
+ca78:	bcc #caaa
+ca7a:	dey
+ca7b:	bcs #ca9e
+ca7d:	lda @#5
+ca7f:	sta #321
+ca82:	jsr #c589
+ca85:	lda @#8
+ca87:	sta #321
+ca8a:	ldy #3
+ca8c:	lda (#58),y
+ca8e:	cmp @#d
+ca90:	beq #ca98
+ca92:	jsr #ca4c
+ca95:	iny
+ca96:	bne #ca8c
+ca98:	jsr #cd54
+ca9b:	jsr #cea1
+ca9e:	lda (#58),y
+caa0:	sta #25
+caa2:	iny
+caa3:	lda (#58),y
+caa5:	sta #16
+caa7:	iny
+caa8:	sty #3
+caaa:	lda #16
+caac:	clc
+caad:	sbc #17
+caaf:	lda #25
+cab1:	sbc #26
+cab3:	bcc #ca7d
+cab5:	jmp #c2cf
+cab8:	jsr #c231
+cabb:	inc #4
+cabd:	jsr #c465
+cac0:	jmp #ca6e
+cac3:	lda #16
+cac5:	ldy #25
+cac7:	sta #17
+cac9:	sty #26
+cacb:	bcs #ca6e
+
+
+; Execute the Command 'NEXT'
+
+cacd:	jsr #c434
+cad0:	ldy #15
+cad2:	beq #cae4
+cad4:	bcc #cae5
+cad6:	dec #4
+cad8:	lda #15,x
+cada:	cmp #23f,y
+cadd:	beq #cae5
+cadf:	dey
+cae0:	sty #15
+cae2:	bne #cada
+cae4:	brk
+cae5:	ldx #23f,y
+cae8:	clc
+cae9:	lda #321,x
+caec:	adc #24a,y
+caef:	sta #321,x
+caf2:	sta #52
+caf4:	lda #33c,x
+caf7:	adc #255,y
+cafa:	sta #33c,x
+cafd:	sta #53
+caff:	lda #357,x
+cb02:	adc #260,y
+cb05:	sta #357,x
+cb08:	sta #54
+cb0a:	lda #372,x
+cb0d:	adc #26b,y
+cb10:	sta #372,x
+cb13:	tax
+cb14:	lda #52
+cb16:	sec
+cb17:	sbc #276,y
+cb1a:	sta #52
+cb1c:	lda #53
+cb1e:	sbc #281,y
+cb21:	sta #53
+cb23:	lda #54
+cb25:	sbc #28c,y
+cb28:	sta #54
+cb2a:	txa
+cb2b:	sbc #297,y
+cb2e:	ora #52
+cb30:	ora #53
+cb32:	ora #54
+cb34:	beq #cb45
+cb36:	txa
+cb37:	eor #26b,y
+cb3a:	eor #297,y
+cb3d:	bpl #cb43
+cb3f:	bcs #cb45
+cb41:	bcc #cb52
+cb43:	bcs #cb52
+cb45:	lda #2a2,y
+cb48:	sta #5
+cb4a:	lda #2ad,y
+cb4d:	sta #6
+cb4f:	jmp #cbff
+
+cb52:	dec #15
+cb54:	jmp #c558
+
+
+; Execute the Command 'FOR'
+
+cb57:	jsr #c434
+cb5a:	bcc #cb6d
+cb5c:	jsr #c279
+cb5f:	jsr #ca2c
+cb62:	tya
+cb63:	ldy #15
+cb65:	cpy @#b
+cb67:	bcs #cb6d
+cb69:	sta #240,y
+cb6c:	lda @#0
+cb6e:	sta #26c,y
+cb71:	sta #261,y
+cb74:	sta #256,y
+cb77:	lda @#1
+cb79:	sta #24b,y
+cb7c:	ldx @#16
+cb7e:	jmp #c233
+
+
+; Execute the Command 'TO'
+
+cb81:	jsr #c78b
+cb84:	ldy #15
+cb86:	dex
+cb87:	stx #4
+cb89:	lda #16,x
+cb8b:	sta #277,y
+cb8e:	lda #25,x
+cb90:	sta #282,y
+cb93:	lda #34,x
+cb95:	sta #28d,y
+cb98:	lda #43,x
+cb9a:	sta #298,y
+cb9d:	ldx @#1a
+cb9f:	jmp #c233
+
+
+; Execute the Command 'STEP'
+
+cba2:	jsr #c78b
+cba5:	ldy #15
+cba7:	dex
+cba8:	stx #4
+cbaa:	lda #16,x
+cbac:	sta #24b,y
+cbaf:	lda #25,x
+cbb1:	sta #256,y
+cbb4:	lda #34,x
+
+cbb6:	sta #261,y
+cbb9:	lda #43,x
+cbbb:	sta #26c,y
 
 			; CONFLICT: some ROM binaries say:
 			; CBB6  99 62 02  STA #262,Y	; 62 not 61
@@ -2343,780 +1938,742 @@ CBBB  99 6C 02  STA #26C,Y
 			; CBBB  99 6d 02  STA #26D,Y	; 6D not 6C
 
 
-CBBE  20 0C C5  JSR #C50C
-CBC1  A4 15     LDY #15
-CBC3  A5 05     LDA #5
-CBC5  99 A3 02  STA #2A3,Y
-CBC8  A5 06     LDA #6
-CBCA  99 AE 02  STA #2AE,Y
-CBCD  E6 15     INC #15
-CBCF  4C 1B C3  JMP #C31B
-
-
-  Execute the Command 'GOSUB'
-  ---------------------------
-
-CBD2  20 1F CC  JSR #CC1F
-CBD5  20 0C C5  JSR #C50C
-CBD8  A4 14     LDY #14
-CBDA  C0 0E     CPY @#E
-CBDC  B0 22     BCS #CC00
-CBDE  A5 05     LDA #5
-CBE0  99 CF 02  STA #2CF,Y
-CBE3  A5 06     LDA #6
-CBE5  99 DD 02  STA #2DD,Y
-CBE8  E6 14     INC #14
-CBEA  90 1F     BCC #CC0B
-
-
-  Execute the Command 'RETURN'
-  ----------------------------
-
-CBEC  20 E4 C4  JSR #C4E4
-CBEF  A4 14     LDY #14
-CBF1  F0 2A     BEQ #CC1D
-CBF3  C6 14     DEC #14
-CBF5  B9 CE 02  LDA #2CE,Y
-CBF8  85 05     STA #5
-CBFA  B9 DC 02  LDA #2DC,Y
-CBFD  85 06     STA #6
-CBFF  20 00 C5  JSR #C500
-CC02  4C 1B C3  JMP #C31B
-
-
-  Execute the Command 'GOTO'
-  --------------------------
-
-CC05  20 1F CC  JSR #CC1F
-CC08  20 E4 C4  JSR #C4E4
-CC0B  A5 57     LDA #57
-CC0D  D0 05     BNE #CC14
-CC0F  20 2E C6  JSR #C62E
-CC12  B0 69     BCS #CC7D
-CC14  A4 58     LDY #58
-CC16  A5 59     LDA #59
-CC18  84 05     STY #5
-CC1A  4C FD CB  JMP #CBFD
-
-CC1D  00        BRK
-
-
-  Line Number/Label Text Search subroutine
-  ----------------------------------------
-
-- Used by 'GOTO' and 'GOSUB' routines.
-- Line number copied to #1,#2 if the search is successful.
-- If the label address is known, it is copied to #58,#59.
-- If the label address is not known, it is searched for and copied to the
-  label store as well as to #58,#59.
-
-CC1E  C8        INY
-CC1F  B1 05     LDA (#5),Y
-CC21  C9 20     CMP @#20
-CC23  F0 F9     BEQ #CC1E
-CC25  C9 61     CMP @#61
-CC27  90 50     BCC #CC79
-CC29  85 57     STA #57
-CC2B  E9 61     SBC @#61
-CC2D  C9 1B     CMP @#1B
-CC2F  B0 48     BCS #CC79
-CC31  0A        ASL A
-CC32  AA        TAX
-CC33  BD 8D 03  LDA #38D,X
-CC36  85 58     STA #58
-CC38  20 F6 C4  JSR #C4F6
-CC3B  BD 8E 03  LDA #38E,X
-CC3E  85 59     STA #59
-CC40  05 58     ORA #58
-CC42  D0 34     BNE #CC78
-CC44  A8        TAY
-CC45  A5 12     LDA #12
-CC47  85 59     STA #59
-CC49  88        DEY
-CC4A  A9 0D     LDA @#D
-CC4C  C8        INY
-CC4D  D1 58     CMP (#58),Y
-CC4F  D0 FB     BNE #CC4C
-CC51  C8        INY
-CC52  B1 58     LDA (#58),Y
-CC54  30 45     BMI #CC9B
-CC56  85 02     STA #2
-CC58  C8        INY
-CC59  B1 58     LDA (#58),Y
-CC5B  85 01     STA #1
-CC5D  C8        INY
-CC5E  B1 58     LDA (#58),Y
-CC60  88        DEY
-CC61  C5 57     CMP #57
-CC63  F0 06     BEQ #CC6B
-CC65  20 A1 CE  JSR #CEA1
-CC68  4C 4A CC  JMP #CC4A
-
-CC6B  20 A2 CE  JSR #CEA2
-CC6E  A5 58     LDA #58
-CC70  9D 8D 03  STA #38D,X
-CC73  A5 59     LDA #59
-CC75  9D 8E 03  STA #38E,X
-CC78  60        RTS
-
-
-CC79  20 BC C8  JSR #C8BC
-CC7C  A9 00     LDA @#0
-CC7E  85 57     STA #57
-CC80  60        RTS
-
-
-  Execute the Command 'INPUT'
-  ---------------------------
-
-CC81  20 72 C3  JSR #C372
-CC84  20 34 C4  JSR #C434
-CC87  B0 05     BCS #CC8E
-CC89  A2 2B     LDX @#2B
-CC8B  4C 33 C2  JMP #C233
-
-
-  Numerical Variable Input
-  ------------------------
-
-CC8E  20 09 CD  JSR #CD09
-CC91  A5 05     LDA #5
-CC93  48        PHA
-CC94  A5 06     LDA #6
-CC96  48        PHA
-CC97  A5 03     LDA #3
-CC99  48        PHA
-CC9A  A0 00     LDY @#0
-CC9C  84 03     STY #3
-CC9E  C8        INY
-CC9F  84 06     STY #6
-CCA1  A0 40     LDY @#40
-CCA3  84 05     STY #5
-CCA5  20 2C CA  JSR #CA2C
-CCA8  68        PLA
-CCA9  85 03     STA #3
-CCAB  68        PLA
-CCAC  85 06     STA #6
-CCAE  68        PLA
-CCAF  85 05     STA #5
-CCB1  A2 2C     LDX @#2C
-CCB3  4C 33 C2  JMP #C233
-
-
-  String Variable Input
-  ---------------------
-
-CCB6  20 8B C7  JSR #C78B
-CCB9  A0 54     LDY @#54
-CCBB  20 CD C3  JSR #C3CD
-CCBE  20 09 CD  JSR #CD09
-CCC1  A2 40     LDX @#40
-CCC3  A0 00     LDY @#0
-CCC5  BD 00 01  LDA #100,X
-CCC8  91 54     STA (#54),Y
-CCCA  C9 0D     CMP @#D
-CCCC  F0 B3     BEQ #CC81
-CCCE  E8        INX
-CCCF  C8        INY
-CCD0  D0 F3     BNE #CCC5
-
-
-  Execute the Command 'UNTIL'
-  ---------------------------
-
-CCD2  20 0C C7  JSR #C70C
-CCD5  A4 13     LDY #13
-CCD7  F0 EB     BEQ #CCC4
-CCD9  CA        DEX
-CCDA  86 04     STX #4
-CCDC  B5 16     LDA #16,X
-CCDE  F0 05     BEQ #CCE5
-CCE0  C6 13     DEC #13
-CCE2  4C 58 C5 9JMP #C558
-
-CCE5  B9 B8 02  LDA #2B8,Y
-CCE8  85 05     STA #5
-CCEA  B9 C3 02  LDA #2C3,Y
-CCED  4C FD CB  JMP #CBFD
-
-
-  Execute the Command 'DO'
-  ------------------------
-
-CCF0  A6 13     LDX #13
-CCF2  E0 0B     CPX @#B
-CCF4  B0 1A     BCS #CD10
-CCF6  88        DEY
-CCF7  20 F6 C4  JSR #C4F6
-CCFA  A5 05     LDA #5
-CCFC  9D B9 02  STA #2B9,X
-CCFF  A5 06     LDA #6
-CD01  9D C4 02  STA #2C4,X
-CD04  E6 13     INC #13
-CD06  4C 1B C3  JMP #C31B
-
-
-  Input to String Input Buffer subroutine
-  ---------------------------------------
-
-- Prints a '?' prompt and stores subsequent keypresses in the #140 string
-  input buffer.
-- Returns when <CR> pressed with Y register pointing to the last character
-  entered.
-- COUNT is set to zero on return.
-
-CD09  A9 3F     LDA @#3F
-CD0B  A0 40     LDY @#40
-CD0D  D0 02     BNE #CD11
-
-
-  Input a Line to Direct Mode Input Buffer subroutine
-  ---------------------------------------------------
-
-- Prints the contents of the accumulator and stores subsequent keypresses
-  in the #100 Direct Mode input buffer.
-- Returns when <CR> pressed with Y register pointing to the last character
-  entered.
-- COUNT is set to zero on return.
-
-CD0F  A0 00     LDY @#0
-CD11  20 4C CA  JSR #CA4C
-CD14  84 52     STY #52
-CD16  A4 52     LDY #52
-CD18  20 E6 FF  JSR #FFE6
-CD1B  C9 7F     CMP @#7F
-CD1D  D0 07     BNE #CD26
-CD1F  88        DEY
-CD20  C4 52     CPY #52
-CD22  10 F4     BPL #CD18
-CD24  30 F0     BMI #CD16
-CD26  C9 18     CMP @#18
-CD28  D0 06     BNE #CD30
-CD2A  20 54 CD  JSR #CD54
-CD2D  4C 16 CD  JMP #CD16
-
-CD30  C9 1B     CMP @#1B
-CD32  D0 03     BNE #CD37
-CD34  4C CF C2  JMP #C2CF
-
-CD37  99 00 01  STA #100,Y
-CD3A  C9 0D     CMP @#D
-CD3C  F0 19     BEQ #CD57
-CD3E  C8        INY
-CD3F  98        TYA
-CD40  38        SEC
-CD41  E5 52     SBC #52
-CD43  C9 40     CMP @#40
-CD45  90 D1     BCC #CD18
-CD47  20 E3 FF  JSR #FFE3
-CD4A  C9 7F     CMP @#7F
-CD4C  D0 F9     BNE #CD47
-CD4E  20 F4 FF  JSR #FFF4
-CD51  4C 1F CD  JMP #CD1F
-
-
-  Print a <CR><LF> subroutine
-  ---------------------------
-
-- Sends a <CR><LF> to WRCHAR, and resets COUNT at ?7 to zero.
-- Destroys accumulator.
-
-CD54  20 ED FF  JSR #FFED
-CD57  A9 00     LDA @#0
-CD59  85 07     STA #7
-CD5B  60        RTS
-
-
-  Assign '$' String Variable
-  --------------------------
-
-CD5C  20 8B C7  JSR #C78B
-CD5F  20 AE CE  JSR #CEAE
-CD62  A0 54     LDY @#54
-CD64  20 CD C3  JSR #C3CD
-CD67  A0 FF     LDY @#FF
-CD69  C8        INY
-CD6A  B1 52     LDA (#52),Y
-CD6C  91 54     STA (#54),Y
-CD6E  C9 0D     CMP @#D
-CD70  D0 F7     BNE #CD69
-CD72  4C 58 C5  JMP #C558
-
-
-  Assign !<variable>
-  ------------------
-
-CD75  20 81 CD  JSR #CD81
-CD78  4C F1 C3  JMP #C3F1
-
-
-  Assign ?<variable>
-  ------------------
-
-CD7B  20 81 CD  JSR #CD81
-CD7E  4C 09 C4  JMP #C409
-
-
-
-  Assignment subroutine
-  ---------------------
-
-CD81  20 E1 C8  JSR #C8E1
-CD84  20 BC C8  JSR #C8BC
-CD87  CA        DEX
-CD88  18        CLC
-CD89  B5 16     LDA #16,X
-CD8B  75 15     ADC #15,X
-CD8D  95 15     STA #15,X
-CD8F  B5 25     LDA #25,X
-CD91  75 24     ADC #24,X
-CD93  95 24     STA #24,X
-CD95  86 04     STX #4
-CD97  60        RTS
-
-
-  Execute the Command 'END'
-  -------------------------
-
-- Finds the end of the current text space, starting at page ?#12, and
-  sets the TOP vector #D, #E.
-- Exits to Direct Mode.
-
-CD98  20 E4 C4  JSR #C4E4
-CD9B  A5 12     LDA #12
-CD9D  85 0E     STA #E
-CD9F  A0 00     LDY @#0
-CDA1  84 0D     STY #D
-CDA3  88        DEY
-CDA4  C8        INY
-CDA5  B1 0D     LDA (#D),Y
-CDA7  C9 0D     CMP @#D
-CDA9  D0 F9     BNE #CDA4
-CDAB  20 BC CD  JSR #CDBC
-CDAE  B1 0D     LDA (#D),Y
-CDB0  30 03     BMI #CDB5
-CDB2  C8        INY
-CDB3  D0 EF     BNE #CDA4
-CDB5  C8        INY
-CDB6  20 BC CD  JSR #CDBC
-CDB9  4C CF C2  JMP #C2CF
-
-
-  END subroutine
-  --------------
-
-- Sets TOP=TOP+Y and Y=1.
-
-CDBC  18        CLC
-CDBD  98        TYA
-CDBE  65 0D     ADC #D
-CDC0  85 0D     STA #D
-CDC2  90 02     BCC #CDC6
-CDC4  E6 0E     INC #E
-CDC6  A0 01     LDY @#1
-CDC8  60        RTS
-
-
-  Text Line Insertion and Removal
-  -------------------------------
-
-- On entry #16, #17 contain the line number to be entered.
-
-CDC9  84 56     STY #56
-CDCB  20 2E C6  JSR #C62E
-CDCE  B0 48     BCS #CE18
-CDD0  A5 58     LDA #58
-CDD2  85 52     STA #52
-CDD4  E9 01     SBC @#1
-CDD6  85 58     STA #58
-CDD8  85 0D     STA #D
-CDDA  A5 59     LDA #59
-CDDC  85 53     STA #53
-CDDE  E9 00     SBC @#0
-CDE0  85 0E     STA #E
-CDE2  85 59     STA #59
-CDE4  A9 0D     LDA @#D
-CDE6  C8        INY
-CDE7  D1 52     CMP (#52),Y
-CDE9  D0 FB     BNE #CDE6
-CDEB  18        CLC
-CDEC  98        TYA
-CDED  65 52     ADC #52
-CDEF  85 52     STA #52
-CDF1  90 02     BCC #CDF5
-CDF3  E6 53     INC #53
-CDF5  A0 00     LDY @#0
-CDF7  B1 52     LDA (#52),Y
-CDF9  91 0D     STA (#D),Y
-CDFB  C9 0D     CMP @#D
-CDFD  F0 09     BEQ #CE08
-CDFF  C8        INY
-CE00  D0 F5     BNE #CDF7
-CE02  E6 53     INC #53
-CE04  E6 0E     INC #E
-CE06  D0 EF     BNE #CDF7
-CE08  C8        INY
-CE09  D0 04     BNE #CE0F
-CE0B  E6 53     INC #53
-CE0D  E6 0E     INC #E
-CE0F  B1 52     LDA (#52),Y
-CE11  91 0D     STA (#D),Y
-CE13  10 EA     BPL #CDFF
-CE15  20 BD CD  JSR #CDBD
-CE18  A0 01     LDY @#1
-CE1A  84 57     STY #57
-CE1C  88        DEY
-CE1D  A9 0D     LDA @#D
-CE1F  D1 56     CMP (#56),Y
-CE21  F0 5D     BEQ #CE80
-CE23  C8        INY
-CE24  D1 56     CMP (#56),Y
-CE26  D0 FB     BNE #CE23
-CE28  C8        INY
-CE29  C8        INY
-CE2A  A5 0D     LDA #D
-CE2C  85 54     STA #54
-CE2E  A5 0E     LDA #E
-CE30  85 55     STA #55
-CE32  20 BD CD  JSR #CDBD
-CE35  85 52     STA #52
-CE37  A5 0E     LDA #E
-CE39  85 53     STA #53
-CE3B  88        DEY
-CE3C  A9 55     LDA @#55
-CE3E  91 0D     STA (#D),Y
-CE40  D1 0D     CMP (#D),Y
-CE42  D0 B2     BNE #CDF6
-CE44  0A        ASL A
-CE45  91 0D     STA (#D),Y
-CE47  D1 0D     CMP (#D),Y
-CE49  D0 AB     BNE #CDF6
-CE4B  B1 54     LDA (#54),Y
-CE4D  91 52     STA (#52),Y
-CE4F  98        TYA
-CE50  D0 04     BNE #CE56
-CE52  C6 55     DEC #55
-CE54  C6 53     DEC #53
-CE56  88        DEY
-CE57  98        TYA
-CE58  65 54     ADC #54
-CE5A  A6 55     LDX #55
-CE5C  90 01     BCC #CE5F
-CE5E  E8        INX
-CE5F  C5 58     CMP #58
-CE61  8A        TXA
-CE62  E5 59     SBC #59
-CE64  B0 E5     BCS #CE4B
-CE66  A0 01     LDY @#1
-CE68  A5 25     LDA #25
-CE6A  91 58     STA (#58),Y
-CE6C  C8        INY
-CE6D  A5 16     LDA #16
-CE6F  91 58     STA (#58),Y
-CE71  38        SEC
-CE72  20 A2 CE  JSR #CEA2
-CE75  A0 FF     LDY @#FF
-CE77  C8        INY
-CE78  B1 56     LDA (#56),Y
-CE7A  91 58     STA (#58),Y
-CE7C  C9 0D     CMP @#D
-CE7E  D0 F7     BNE #CE77
-CE80  4C CF C2  JMP #C2CF
-
-
-  Continuation of Execution of the Command 'RUN'
-  ----------------------------------------------
-
-- Continuation from #F141.
-- Sets the Text Pointer at ?5,?6 to the start of text, and then jumps to
-  the interpreter.
-
-CE83  20 E4 C4  JSR #C4E4
-CE86  A0 00     LDY @#0
-CE88  84 05     STY #5
-CE8A  84 03     STY #3
-CE8C  A5 12     LDA #12
-CE8E  85 06     STA #6
-CE90  4C 5B C5  JMP #C55B
-
-
-  !<factor> and ?<factor> subroutine
-  ----------------------------------
-
-CE93  20 DE C4  JSR #C4DE
-CE96  CA        DEX
-CE97  20 CB C3  JSR #C3CB
-CE9A  A0 00     LDY @#0
-CE9C  B5 17     LDA #17,X
-CE9E  91 52     STA (#52),Y
-CEA0  60        RTS
-
-
-  Update #58, #59 Pointer subroutine
-  ----------------------------------
-
-- Sets (#58)=(#58)+Y and Y=1, ?3=1.
-- Checks the <ESC> key before return.
-- Destroys accumulator.
-
-CEA1  18        CLC
-CEA2  98        TYA
-CEA3  65 58     ADC #58
-CEA5  85 58     STA #58
-CEA7  90 02     BCC #CEAB
-CEA9  E6 59     INC #59
-CEAB  4C 00 C5  JMP #C500
-
-
-  Set up String Ready for Assignment
-  ----------------------------------
-
-CEAE  20 79 C2  JSR #C279
-
-
-  Check for Valid String subroutine
-  ---------------------------------
-
-- Checks for '$' or '"' at the location pointed to by (5),Y where y=?3.
-- If successful, returns with (5),?3 pointimg to the character following,
-  otherwise executes BRK.
-
-CEB1  A2 26     LDX @#26
-CEB3  4C 33 C2  JMP #C233
-
-
-  Set up $ String Ready for Asssignment
-  -------------------------------------
-
-CEB6  20 8B C7  JSR #C78B
-CEB9  20 CB C3  JSR #C3CB
-CEBC  A4 03     LDY #3
-CEBE  60        RTS
-
-
-  Set up "string" Ready for Asssignment
-  -------------------------------------
-
-CEBF  20 F6 C4  JSR #C4F6
-
-
-  Copy Quoted String to String Input Buffer subroutine
-  ----------------------------------------------------
-
-- Copies a string in quotes pointed to by (5),Y to the string input buffer
-  at #140.
-- Quotation marks are removed.
-
-CEC2  84 53     STY #53
-CEC4  88        DEY
-CEC5  A2 00     LDX @#0
-CEC7  B1 05     LDA (#5),Y
-CEC9  C9 0D     CMP @#D
-CECB  F0 F9     BEQ #CEC6
-CECD  9D 40 01  STA #140,X
-CED0  E8        INX
-CED1  C8        INY
-CED2  C9 22     CMP @#22
-CED4  D0 F1     BNE #CEC7
-CED6  B1 05     LDA (#5),Y
-CED8  C9 22     CMP @#22
-CEDA  F0 0E     BEQ #CEEA
-CEDC  A9 0D     LDA @#D
-CEDE  9D 3F 01  STA #13F,X
-CEE1  84 03     STY #3
-CEE3  A9 40     LDA @#40
-CEE5  85 52     STA #52
-CEE7  A6 04     LDX #4
-CEE9  60        RTS
-
-CEEA  C8        INY
-CEEB  B0 DA     BCS #CEC7
-
-
-  'LOAD' File
-  -----------
-
-CEED  20 FA CE  JSR #CEFA
-CEF0  88        DEY
-CEF1  84 56     STY #56
-CEF3  38        SEC
-CEF4  20 E0 FF  JSR #FFE0
-CEF7  4C 9B CD  JMP #CD9B
-
-
-  Load and Save Setup subroutine
-  ------------------------------
-
-- Reads the file title into the String Input buffer at #140, and sets
-  the vector #54, #55 to the start of text.
-
-CEFA  20 B1 CE  JSR #CEB1
-CEFD  20 E4 C4  JSR #C4E4
-CF00  88        DEY
-CF01  84 54     STY #54
-CF03  A5 12     LDA #12
-CF05  85 55     STA #55
-CF07  A2 52     LDX @#52
-CF09  60        RTS
-
-
-  Execute the Command 'SAVE'
-  --------------------------
-
-CF0A  20 FA CE  JSR #CEFA
-CF0D  84 58     STY #58
-CF0F  85 59     STA #59
-CF11  A5 0D     LDA #D
-CF13  85 5A     STA #5A
-CF15  A5 0E     LDA #E
-CF17  85 5B     STA #5B
-CF19  A9 B2     LDA @#B2
-CF1B  85 56     STA #56
-CF1D  A9 C2     LDA @#C2
-CF1F  85 57     STA #57
-CF21  18        CLC
-CF22  20 DD FF  JSR #FFDD
-CF25  4C 5B C5  JMP #C55B
-
-
-CF28  38        SEC
-CF29  A9 00     LDA @#0
-CF2B  2A        ROL A
-CF2C  48        PHA
-CF2D  20 3E CF  JSR #CF3E
-CF30  A2 52     LDX @#52
-CF32  68        PLA
-CF33  20 DA FF  JSR #FFDA
-CF36  A0 52     LDY @#52
-CF38  20 9F C9  JSR #C99F
-CF3B  95 42     STA #42,X
-CF3D  60        RTS
-
-
-  Get <factor> into Y Register subroutine
-  ---------------------------------------
-
-CF3E  20 BC C8  JSR #C8BC
-CF41  B4 15     LDY #15,X
-CF43  CA        DEX
-CF44  86 04     STX #4
-CF46  60        RTS
-
-
-CF47  20 BC C8  JSR #C8BC
-CF4A  20 DE C4  JSR #C4DE
-CF4D  20 CB C3  JSR #C3CB
-CF50  20 41 CF  JSR #CF41
-CF53  A2 52     LDX @#52
-CF55  20 D7 FF  JSR #FFD7
-CF58  4C 5B C5  JMP #C55B
-
-
-  Execute 'BGET' subroutine
-  -------------------------
-
-- Reads 1 byte from OSBGET into the workspace stack and sets the other
-  3 bytes to zero.
-
-CF5B  20 3E CF  JSR #CF3E
-CF5E  84 52     STY #52
-CF60  20 D4 FF  JSR #FFD4
-CF63  4C 7C C9  JMP #C97C
-
-
-  Execute 'GET' subroutine
-  ------------------------
-
-- Reads 4 bytes from OSBGET into the workspace stack.
-
-CF66  20 5B CF  JSR #CF5B
-CF69  A4 52     LDY #52
-CF6B  20 D4 FF  JSR #FFD4
-CF6E  95 24     STA #24,X
-CF70  20 D4 FF  JSR #FFD4
-CF73  95 33     STA #33,X
-CF75  20 D4 FF  JSR #FFD4
-CF78  95 42     STA #42,X
-CF7A  60        RTS
-
-
-CF7B  20 BC C8  JSR #C8BC
-CF7E  20 31 C2  JSR #C231
-CF81  20 E1 C4  JSR #C4E1
-CF84  20 CB C3  JSR #C3CB
-CF87  20 41 CF  JSR #CF41
-CF8A  A5 52     LDA #52
-CF8C  6C 16 02  JMP (#216)
-
-
-  Execute the Command 'BPUT'
-  --------------------------
-
-CF8F  20 7B CF  JSR #CF7B
-CF92  4C 5B C5  JMP #C55B
-
-
-  Execute 'PUT' subroutine
-  ------------------------
-
-CF95  20 7B CF  JSR #CF7B
-CF98  A2 01     LDX @#1
-CF9A  B5 52     LDA #52,X
-CF9C  20 D1 FF  JSR #FFD1
-CF9F  E8        INX
-CFA0  E0 04     CPX @#4
-CFA2  90 F6     BCC #CF9A
-CFA4  B0 EC     BCS #CF92
-CFA6  38        SEC
-CFA7  08        PHP
-CFA8  20 B1 CE  JSR #CEB1
-CFAB  A2 52     LDX @#52
-CFAD  28        PLP
-CFAE  20 CE FF  JSR #FFCE
-CFB1  A6 04     LDX #4
-CFB3  4C 7C C9  JMP #C97C
-
-
-CFB6  20 BC C8  JSR #C8BC
-CFB9  20 E4 C4  JSR #C4E4
-CFBC  20 41 CF  JSR #CF41
-CFBF  20 CB FF  JSR #FFCB
-CFC2  4C 5B C5  JMP #C55B
-
-
-  Execute the Command 'SPUT'
-  --------------------------
-
-CFC5  20 2C C2  JSR #C22C
-CFC8  20 B1 CE  JSR #CEB1
-CFCB  20 E4 C4  JSR #C4E4
-CFCE  88        DEY
-CFCF  B1 52     LDA (#52),Y
-CFD1  84 55     STY #55
-CFD3  A4 0F     LDY #F
-CFD5  48        PHA
-CFD6  20 D1 FF  JSR #FFD1
-CFD9  68        PLA
-CFDA  C9 0D     CMP @#D
-CFDC  F0 E4     BEQ #CFC2
-CFDE  A4 55     LDY #55
-CFE0  C8        INY
-CFE1  D0 EC     BNE #CFCF
-
-
-  Execute the Command 'SGET'
-  --------------------------
-
-CFE3  20 2C C2  JSR #C22C
-CFE6  20 E1 C4  JSR #C4E1
-CFE9  20 CB C3  JSR #C3CB
-CFEC  A0 00     LDY @#0
-CFEE  84 55     STY #55
-CFF0  A4 0F     LDY #F
-CFF2  20 D4 FF  JSR #FFD4
-CFF5  A4 55     LDY #55
-CFF7  91 52     STA (#52),Y
-CFF9  C8        INY
-CFFA  C9 0D     CMP @#D
-CFFC  D0 F0     BNE #CFEE
-CFFE  F0 C2     BEQ #CFC2
+cbbe:	jsr #c50c
+cbc1:	ldy #15
+cbc3:	lda #5
+cbc5:	sta #2a3,y
+cbc8:	lda #6
+cbca:	sta #2ae,y
+cbcd:	inc #15
+cbcf:	jmp #c31b
+
+
+; Execute the Command 'GOSUB'
+
+cbd2:	jsr #cc1f
+cbd5:	jsr #c50c
+cbd8:	ldy #14
+cbda:	cpy @#e
+cbdc:	bcs #cc00
+cbde:	lda #5
+cbe0:	sta #2cf,y
+cbe3:	lda #6
+cbe5:	sta #2dd,y
+cbe8:	inc #14
+cbea:	bcc #cc0b
+
+
+; Execute the Command 'RETURN'
+
+cbec:	jsr #c4e4
+cbef:	ldy #14
+cbf1:	beq #cc1d
+cbf3:	dec #14
+cbf5:	lda #2ce,y
+cbf8:	sta #5
+cbfa:	lda #2dc,y
+cbfd:	sta #6
+cbff:	jsr #c500
+cc02:	jmp #c31b
+
+
+; Execute the Command 'GOTO'
+
+cc05:	jsr #cc1f
+cc08:	jsr #c4e4
+cc0b:	lda #57
+cc0d:	bne #cc14
+cc0f:	jsr #c62e
+cc12:	bcs #cc7d
+cc14:	ldy #58
+cc16:	lda #59
+cc18:	sty #5
+cc1a:	jmp #cbfd
+
+cc1d:	brk
+
+
+; Line Number/Label Text Search subroutine
+;
+; Used by 'GOTO' and 'GOSUB' routines.
+; Line number copied to #1,#2 if the search is successful.
+; If the label address is known, it is copied to #58,#59.
+; If the label address is not known, it is searched for and copied to the
+; label store as well as to #58,#59.
+
+cc1e:	iny
+cc1f:	lda (#5),y
+cc21:	cmp @#20
+cc23:	beq #cc1e
+cc25:	cmp @#61
+cc27:	bcc #cc79
+cc29:	sta #57
+cc2b:	sbc @#61
+cc2d:	cmp @#1b
+cc2f:	bcs #cc79
+cc31:	asl a
+cc32:	tax
+cc33:	lda #38d,x
+cc36:	sta #58
+cc38:	jsr #c4f6
+cc3b:	lda #38e,x
+cc3e:	sta #59
+cc40:	ora #58
+cc42:	bne #cc78
+cc44:	tay
+cc45:	lda #12
+cc47:	sta #59
+cc49:	dey
+cc4a:	lda @#d
+cc4c:	iny
+cc4d:	cmp (#58),y
+cc4f:	bne #cc4c
+cc51:	iny
+cc52:	lda (#58),y
+cc54:	bmi #cc9b
+cc56:	sta #2
+cc58:	iny
+cc59:	lda (#58),y
+cc5b:	sta #1
+cc5d:	iny
+cc5e:	lda (#58),y
+cc60:	dey
+cc61:	cmp #57
+cc63:	beq #cc6b
+cc65:	jsr #cea1
+cc68:	jmp #cc4a
+
+cc6b:	jsr #cea2
+cc6e:	lda #58
+cc70:	sta #38d,x
+cc73:	lda #59
+cc75:	sta #38e,x
+cc78:	rts
+
+
+cc79:	jsr #c8bc
+cc7c:	lda @#0
+cc7e:	sta #57
+cc80:	rts
+
+
+; Execute the Command 'INPUT'
+
+cc81:	jsr #c372
+cc84:	jsr #c434
+cc87:	bcs #cc8e
+cc89:	ldx @#2b
+cc8b:	jmp #c233
+
+
+; Numerical Variable Input
+
+cc8e:	jsr #cd09
+cc91:	lda #5
+cc93:	pha
+cc94:	lda #6
+cc96:	pha
+cc97:	lda #3
+cc99:	pha
+cc9a:	ldy @#0
+cc9c:	sty #3
+cc9e:	iny
+cc9f:	sty #6
+cca1:	ldy @#40
+cca3:	sty #5
+cca5:	jsr #ca2c
+cca8:	pla
+cca9:	sta #3
+ccab:	pla
+ccac:	sta #6
+ccae:	pla
+ccaf:	sta #5
+ccb1:	ldx @#2c
+ccb3:	jmp #c233
+
+
+; String Variable Input
+
+ccb6:	jsr #c78b
+ccb9:	ldy @#54
+ccbb:	jsr #c3cd
+ccbe:	jsr #cd09
+ccc1:	ldx @#40
+ccc3:	ldy @#0
+ccc5:	lda #100,x
+ccc8:	sta (#54),y
+ccca:	cmp @#d
+cccc:	beq #cc81
+ccce:	inx
+cccf:	iny
+ccd0:	bne #ccc5
+
+
+; Execute the Command 'UNTIL'
+
+ccd2:	jsr #c70c
+ccd5:	ldy #13
+ccd7:	beq #ccc4
+ccd9:	dex
+ccda:	stx #4
+ccdc:	lda #16,x
+ccde:	beq #cce5
+cce0:	dec #13
+cce2:	jmp $c558
+
+cce5:	lda #2b8,y
+cce8:	sta #5
+ccea:	lda #2c3,y
+cced:	jmp #cbfd
+
+
+; Execute the Command 'DO'
+
+ccf0:	ldx #13
+ccf2:	cpx @#b
+ccf4:	bcs #cd10
+ccf6:	dey
+ccf7:	jsr #c4f6
+ccfa:	lda #5
+ccfc:	sta #2b9,x
+ccff:	lda #6
+cd01:	sta #2c4,x
+cd04:	inc #13
+cd06:	jmp #c31b
+
+
+; Input to String Input Buffer subroutine
+;
+; Prints a '?' prompt and stores subsequent keypresses in the #140 string
+; input buffer.
+; Returns when <CR> pressed with Y register pointing to the last character
+; entered.
+; COUNT is set to zero on return.
+
+cd09:	lda @#3f
+cd0b:	ldy @#40
+cd0d:	bne #cd11
+
+
+; Input a Line to Direct Mode Input Buffer subroutine
+;
+; Prints the contents of the accumulator and stores subsequent keypresses
+; in the #100 Direct Mode input buffer.
+; Returns when <CR> pressed with Y register pointing to the last character
+; entered.
+; COUNT is set to zero on return.
+
+cd0f:	ldy @#0
+cd11:	jsr #ca4c
+cd14:	sty #52
+cd16:	ldy #52
+cd18:	jsr #ffe6
+cd1b:	cmp @#7f
+cd1d:	bne #cd26
+cd1f:	dey
+cd20:	cpy #52
+cd22:	bpl #cd18
+cd24:	bmi #cd16
+cd26:	cmp @#18
+cd28:	bne #cd30
+cd2a:	jsr #cd54
+cd2d:	jmp #cd16
+
+cd30:	cmp @#1b
+cd32:	bne #cd37
+cd34:	jmp #c2cf
+
+cd37:	sta #100,y
+cd3a:	cmp @#d
+cd3c:	beq #cd57
+cd3e:	iny
+cd3f:	tya
+cd40:	sec
+cd41:	sbc #52
+cd43:	cmp @#40
+cd45:	bcc #cd18
+cd47:	jsr #ffe3
+cd4a:	cmp @#7f
+cd4c:	bne #cd47
+cd4e:	jsr #fff4
+cd51:	jmp #cd1f
+
+
+; Print a <CR><LF> subroutine
+;
+; Sends a <CR><LF> to WRCHAR, and resets COUNT at ?7 to zero.
+; Destroys accumulator.
+
+cd54:	jsr #ffed
+cd57:	lda @#0
+cd59:	sta #7
+cd5b:	rts
+
+
+; Assign '$' String Variable
+
+cd5c:	jsr #c78b
+cd5f:	jsr #ceae
+cd62:	ldy @#54
+cd64:	jsr #c3cd
+cd67:	ldy @#ff
+cd69:	iny
+cd6a:	lda (#52),y
+cd6c:	sta (#54),y
+cd6e:	cmp @#d
+cd70:	bne #cd69
+cd72:	jmp #c558
+
+
+; Assign !<variable>
+
+cd75:	jsr #cd81
+cd78:	jmp #c3f1
+
+
+; Assign ?<variable>
+
+cd7b:	jsr #cd81
+cd7e:	jmp #c409
+
+
+; Assignment subroutine
+
+cd81:	jsr #c8e1
+cd84:	jsr #c8bc
+cd87:	dex
+cd88:	clc
+cd89:	lda #16,x
+cd8b:	adc #15,x
+cd8d:	sta #15,x
+cd8f:	lda #25,x
+cd91:	adc #24,x
+cd93:	sta #24,x
+cd95:	stx #4
+cd97:	rts
+
+
+; Execute the Command 'END'
+;
+; Finds the end of the current text space, starting at page ?#12, and
+; sets the TOP vector #D, #E.
+; Exits to Direct Mode.
+
+cd98:	jsr #c4e4
+cd9b:	lda #12
+cd9d:	sta #e
+cd9f:	ldy @#0
+cda1:	sty #d
+cda3:	dey
+cda4:	iny
+cda5:	lda (#d),y
+cda7:	cmp @#d
+cda9:	bne #cda4
+cdab:	jsr #cdbc
+cdae:	lda (#d),y
+cdb0:	bmi #cdb5
+cdb2:	iny
+cdb3:	bne #cda4
+cdb5:	iny
+cdb6:	jsr #cdbc
+cdb9:	jmp #c2cf
+
+
+; END subroutine
+;
+; Sets TOP=TOP+Y and Y=1.
+
+cdbc:	clc
+cdbd:	tya
+cdbe:	adc #d
+cdc0:	sta #d
+cdc2:	bcc #cdc6
+cdc4:	inc #e
+cdc6:	ldy @#1
+cdc8:	rts
+
+
+; Text Line Insertion and Removal
+;
+; On entry #16, #17 contain the line number to be entered.
+
+cdc9:	sty #56
+cdcb:	jsr #c62e
+cdce:	bcs #ce18
+cdd0:	lda #58
+cdd2:	sta #52
+cdd4:	sbc @#1
+cdd6:	sta #58
+cdd8:	sta #d
+cdda:	lda #59
+cddc:	sta #53
+cdde:	sbc @#0
+cde0:	sta #e
+cde2:	sta #59
+cde4:	lda @#d
+cde6:	iny
+cde7:	cmp (#52),y
+cde9:	bne #cde6
+cdeb:	clc
+cdec:	tya
+cded:	adc #52
+cdef:	sta #52
+cdf1:	bcc #cdf5
+cdf3:	inc #53
+cdf5:	ldy @#0
+cdf7:	lda (#52),y
+cdf9:	sta (#d),y
+cdfb:	cmp @#d
+cdfd:	beq #ce08
+cdff:	iny
+ce00:	bne #cdf7
+ce02:	inc #53
+ce04:	inc #e
+ce06:	bne #cdf7
+ce08:	iny
+ce09:	bne #ce0f
+ce0b:	inc #53
+ce0d:	inc #e
+ce0f:	lda (#52),y
+ce11:	sta (#d),y
+ce13:	bpl #cdff
+ce15:	jsr #cdbd
+ce18:	ldy @#1
+ce1a:	sty #57
+ce1c:	dey
+ce1d:	lda @#d
+ce1f:	cmp (#56),y
+ce21:	beq #ce80
+ce23:	iny
+ce24:	cmp (#56),y
+ce26:	bne #ce23
+ce28:	iny
+ce29:	iny
+ce2a:	lda #d
+ce2c:	sta #54
+ce2e:	lda #e
+ce30:	sta #55
+ce32:	jsr #cdbd
+ce35:	sta #52
+ce37:	lda #e
+ce39:	sta #53
+ce3b:	dey
+ce3c:	lda @#55
+ce3e:	sta (#d),y
+ce40:	cmp (#d),y
+ce42:	bne #cdf6
+ce44:	asl a
+ce45:	sta (#d),y
+ce47:	cmp (#d),y
+ce49:	bne #cdf6
+ce4b:	lda (#54),y
+ce4d:	sta (#52),y
+ce4f:	tya
+ce50:	bne #ce56
+ce52:	dec #55
+ce54:	dec #53
+ce56:	dey
+ce57:	tya
+ce58:	adc #54
+ce5a:	ldx #55
+ce5c:	bcc #ce5f
+ce5e:	inx
+ce5f:	cmp #58
+ce61:	txa
+ce62:	sbc #59
+ce64:	bcs #ce4b
+ce66:	ldy @#1
+ce68:	lda #25
+ce6a:	sta (#58),y
+ce6c:	iny
+ce6d:	lda #16
+ce6f:	sta (#58),y
+ce71:	sec
+ce72:	jsr #cea2
+ce75:	ldy @#ff
+ce77:	iny
+ce78:	lda (#56),y
+ce7a:	sta (#58),y
+ce7c:	cmp @#d
+ce7e:	bne #ce77
+ce80:	jmp #c2cf
+
+
+; Continuation of Execution of the Command 'RUN'
+;
+; Continuation from #F141.
+; Sets the Text Pointer at ?5,?6 to the start of text, and then jumps to
+; the interpreter.
+
+ce83:	jsr #c4e4
+ce86:	ldy @#0
+ce88:	sty #5
+ce8a:	sty #3
+ce8c:	lda #12
+ce8e:	sta #6
+ce90:	jmp #c55b
+
+
+; !<factor> and ?<factor> subroutine
+
+ce93:	jsr #c4de
+ce96:	dex
+ce97:	jsr #c3cb
+ce9a:	ldy @#0
+ce9c:	lda #17,x
+ce9e:	sta (#52),y
+cea0:	rts
+
+
+; Update #58, #59 Pointer subroutine
+;
+; Sets (#58)=(#58)+Y and Y=1, ?3=1.
+; Checks the <ESC> key before return.
+; Destroys accumulator.
+
+cea1:	clc
+cea2:	tya
+cea3:	adc #58
+cea5:	sta #58
+cea7:	bcc #ceab
+cea9:	inc #59
+ceab:	jmp #c500
+
+
+; Set up String Ready for Assignment
+
+ceae:	jsr #c279
+
+
+; Check for Valid String subroutine
+;
+; Checks for '$' or '"' at the location pointed to by (5),Y where y=?3.
+; If successful, returns with (5),?3 pointimg to the character following,
+; otherwise executes BRK.
+
+ceb1:	ldx @#26
+ceb3:	jmp #c233
+
+
+; Set up $ String Ready for Asssignment
+
+ceb6:	jsr #c78b
+ceb9:	jsr #c3cb
+cebc:	ldy #3
+cebe:	rts
+
+
+; Set up "string" Ready for Asssignment
+
+cebf:	jsr #c4f6
+
+
+; Copy Quoted String to String Input Buffer subroutine
+;
+; Copies a string in quotes pointed to by (5),Y to the string input buffer
+; at #140.
+; Quotation marks are removed.
+
+cec2:	sty #53
+cec4:	dey
+cec5:	ldx @#0
+cec7:	lda (#5),y
+cec9:	cmp @#d
+cecb:	beq #cec6
+cecd:	sta #140,x
+ced0:	inx
+ced1:	iny
+ced2:	cmp @#22
+ced4:	bne #cec7
+ced6:	lda (#5),y
+ced8:	cmp @#22
+ceda:	beq #ceea
+cedc:	lda @#d
+cede:	sta #13f,x
+cee1:	sty #3
+cee3:	lda @#40
+cee5:	sta #52
+cee7:	ldx #4
+cee9:	rts
+
+ceea:	iny
+ceeb:	bcs #cec7
+
+
+; 'LOAD' File
+
+ceed:	jsr #cefa
+cef0:	dey
+cef1:	sty #56
+cef3:	sec
+cef4:	jsr #ffe0
+cef7:	jmp #cd9b
+
+
+; Load and Save Setup subroutine
+;
+; Reads the file title into the String Input buffer at #140, and sets
+; the vector #54, #55 to the start of text.
+
+cefa:	jsr #ceb1
+cefd:	jsr #c4e4
+cf00:	dey
+cf01:	sty #54
+cf03:	lda #12
+cf05:	sta #55
+cf07:	ldx @#52
+cf09:	rts
+
+
+; Execute the Command 'SAVE'
+
+cf0a:	jsr #cefa
+cf0d:	sty #58
+cf0f:	sta #59
+cf11:	lda #d
+cf13:	sta #5a
+cf15:	lda #e
+cf17:	sta #5b
+cf19:	lda @#b2
+cf1b:	sta #56
+cf1d:	lda @#c2
+cf1f:	sta #57
+cf21:	clc
+cf22:	jsr #ffdd
+cf25:	jmp #c55b
+
+
+cf28:	sec
+cf29:	lda @#0
+cf2b:	rol a
+cf2c:	pha
+cf2d:	jsr #cf3e
+cf30:	ldx @#52
+cf32:	pla
+cf33:	jsr #ffda
+cf36:	ldy @#52
+cf38:	jsr #c99f
+cf3b:	sta #42,x
+cf3d:	rts
+
+
+; Get <factor> into Y Register subroutine
+
+cf3e:	jsr #c8bc
+cf41:	ldy #15,x
+cf43:	dex
+cf44:	stx #4
+cf46:	rts
+
+
+cf47:	jsr #c8bc
+cf4a:	jsr #c4de
+cf4d:	jsr #c3cb
+cf50:	jsr #cf41
+cf53:	ldx @#52
+cf55:	jsr #ffd7
+cf58:	jmp #c55b
+
+
+; Execute 'BGET' subroutine
+;
+; Reads 1 byte from OSBGET into the workspace stack and sets the other
+; 3 bytes to zero.
+
+cf5b:	jsr #cf3e
+cf5e:	sty #52
+cf60:	jsr #ffd4
+cf63:	jmp #c97c
+
+
+; Execute 'GET' subroutine
+;
+; Reads 4 bytes from OSBGET into the workspace stack.
+
+cf66:	jsr #cf5b
+cf69:	ldy #52
+cf6b:	jsr #ffd4
+cf6e:	sta #24,x
+cf70:	jsr #ffd4
+cf73:	sta #33,x
+cf75:	jsr #ffd4
+cf78:	sta #42,x
+cf7a:	rts
+
+
+cf7b:	jsr #c8bc
+cf7e:	jsr #c231
+cf81:	jsr #c4e1
+cf84:	jsr #c3cb
+cf87:	jsr #cf41
+cf8a:	lda #52
+cf8c:	jmp (#216)
+
+
+; Execute the Command 'BPUT'
+
+cf8f:	jsr #cf7b
+cf92:	jmp #c55b
+
+
+; Execute 'PUT' subroutine
+
+cf95:	jsr #cf7b
+cf98:	ldx @#1
+cf9a:	lda #52,x
+cf9c:	jsr #ffd1
+cf9f:	inx
+cfa0:	cpx @#4
+cfa2:	bcc #cf9a
+cfa4:	bcs #cf92
+cfa6:	sec
+cfa7:	php
+cfa8:	jsr #ceb1
+cfab:	ldx @#52
+cfad:	plp
+cfae:	jsr #ffce
+cfb1:	ldx #4
+cfb3:	jmp #c97c
+
+
+cfb6:	jsr #c8bc
+cfb9:	jsr #c4e4
+cfbc:	jsr #cf41
+cfbf:	jsr #ffcb
+cfc2:	jmp #c55b
+
+
+; Execute the Command 'SPUT'
+
+cfc5:	jsr #c22c
+cfc8:	jsr #ceb1
+cfcb:	jsr #c4e4
+cfce:	dey
+cfcf:	lda (#52),y
+cfd1:	sty #55
+cfd3:	ldy #f
+cfd5:	pha
+cfd6:	jsr #ffd1
+cfd9:	pla
+cfda:	cmp @#d
+cfdc:	beq #cfc2
+cfde:	ldy #55
+cfe0:	iny
+cfe1:	bne #cfcf
+
+
+; Execute the Command 'SGET'
+
+cfe3:	jsr #c22c
+cfe6:	jsr #c4e1
+cfe9:	jsr #c3cb
+cfec:	ldy @#0
+cfee:	sty #55
+cff0:	ldy #f
+cff2:	jsr #ffd4
+cff5:	ldy #55
+cff7:	sta (#52),y
+cff9:	iny
+cffa:	cmp @#d
+cffc:	bne #cfee
+cffe:	beq #cfc2
