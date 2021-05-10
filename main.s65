@@ -1,5 +1,7 @@
 ; ATOM BASIC source code
 
+*=$c000
+
 
 ; Interpreter Command Lookup Table
 ;
@@ -64,7 +66,8 @@ c000:
 	.text "PUT", $CF
 	.text "TR", $CF
 	.text "UT", $CF, $C3, $C4, $CD, $C4
-	.text ",", $FE
+	.text ","
+c0ee:	.text $FE
 
 
 ; Jump Address and Return Branch Table
@@ -139,7 +142,7 @@ c233:	ldy $3			; get the interpreter pointer
 				; SKIP ANY PRECEDING SPACES
 
 c235:	dey
-	iny			; Point to the next character in text
+c236:	iny			; Point to the next character in text
 	lda ($5),y		; ... and fetch it
 	cmp #" "		; Is it <SPC>?
 	beq c236		; ... yes, skip to next character
@@ -148,7 +151,7 @@ c235:	dey
 
 c23d:	sty $5e			; Save current interpreter index
 	sta $52			; Save character under interpretation
-	inx			; Point to next character in command table
+c241:	inx			; Point to next character in command table
 	lda c000 - 1,x		; ... and fetch it
 	bmi c26b		; ... a negative byte indicates the end of
 				; the initial letter table
@@ -159,7 +162,7 @@ c23d:	sty $5e			; Save current interpreter index
 
 c24b:	lda c0ee,x		; Get index to rest-of-command-word table
 	tax			; This is now the new table pointer
-	inx			; Point to the next character in the table
+c24f:	inx			; Point to the next character in the table
 	iny			; Point to the next character under analysis
 	lda c000-1,x		; Fetch the next command table character
 	bmi c26b		; ... a negative byte means either a
@@ -339,7 +342,7 @@ c2fd:	sta $13			; Reset the GOSUB..RETURN stack poimter
 c2ff:	sta $14			; Reset the DO...UNTIL stack poimter
 c301:	ldx #$34
 
-                                CLEAR THE LABEL (@ to z) ADDRESS STACK
+                                ; CLEAR THE LABEL (@ to z) ADDRESS STACK
 
 c303:	sta $38c,x
 c306:	dex
@@ -427,10 +430,10 @@ c352:	pha			; Save a copy for upper nibble conversion
 c353:	and #$f			; Mask off the upper nibble
 c355:	sta $45,x		; ... and dump the lower nibble to w/s
 c357:	pla			; Restore the copy
-c358:	lsr a )
-c359:	lsr a )
-c35a:	lsr a )
-c35b:	lsr a ) bring
+c358:	lsr a			; )
+c359:	lsr a			; )
+c35a:	lsr a			; )
+c35b:	lsr a			; ) bring the upper nibble down to the lower nibble
 c35c:	inx			; Increment the w/s pointer
 c35d:	sta $45,x		; ... and dump the converted upper nibble
 c35f:	inx			; Increment the w/s pointe for the next byte
@@ -456,8 +459,7 @@ c372:	ldx #$18		; Set the interpreter table pointer to $C???
 c374:	jmp $c27b		; ... and interpret 'O' ??
 
 
-  ??? Print routine ???
-  ---------------------
+; ??? Print routine ???
 
 c377:	jsr $ca4c		; Increment COUNT and send the contents of
                                 ; the accumulator to OSWRCH
@@ -859,7 +861,7 @@ c541:	lda $6
 c543:	sta $38e,x
 c546:	rts
 
-c547:	jmp $c2cfb5
+c547:	jmp $c2cf
 
 
 ; Statement Executer
@@ -1310,7 +1312,7 @@ c7e0:	sta $23,x
 c7e2:	lda $32,x
 c7e4:	ora $33,x
 c7e6:	sta $32,x
-c7e8:	ldaa$41,x
+c7e8:	lda $41,x
 c7ea:	ora $42,x
 c7ec:	jmp $c791
 
@@ -1698,7 +1700,7 @@ c9e2:	sta $6
 c9e4:	jmp $c2f2
 
 
-c9e7:	.text "@=1;P.$6$7'"ERROR "?0;@=8;IF?1|?2P." LINE"!1& $FFFF", $0d, $00, $00, "P.';E.", $0d
+c9e7:	.text "@=1;P.$6$7'""ERROR ""?0;@=8;IF?1|?2P."" LINE""!1& $FFFF", $0d, $00, $00, "P.';E.", $0d
 
 
 ; Handle Unrecognised Command
