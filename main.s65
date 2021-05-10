@@ -2,6 +2,20 @@
 
 *=$c000
 
+OSCLI=$fff7
+OSWRCH=$fff4
+OSCRLF=$ffed
+OSECHO=$ffe6
+OSRDCH=$ffe3
+OSLOAD=$ffe0
+OSSAVE=$ffdd
+OSRDAR=$ffda
+OSSTAR=$ffd7
+OSBGET=$ffd4
+OSBPUT=$ffd1
+OSFIND=$ffce
+OSSHUT=$ffcb
+
 
 ; Interpreter Command Lookup Table
 ;
@@ -625,7 +639,7 @@ c419:	inx			; Point to the next slot in the buffer
 c41a:	cmp #$d			; Was the last character <CR> ?
 c41c:	bne c411		; ... no, keep copying
                                 ; (defaults to $F8EF)
-c41e:	jsr $fff7		; ... yes, finished, so call OSCLI
+c41e:	jsr OSCLI		; ... yes, finished, so call OSCLI
 c421:	jmp c558		; Perform post test, check for <ESC> etc and
                                 ; return to execute the next command whether
                                 ; by program execution or in direct mode
@@ -2169,7 +2183,7 @@ cd0f:	ldy #$0
 cd11:	jsr ca4c
 cd14:	sty $52
 cd16:	ldy $52
-cd18:	jsr $ffe6
+cd18:	jsr OSECHO
 cd1b:	cmp #$7f
 cd1d:	bne cd26
 cd1f:	dey
@@ -2194,10 +2208,10 @@ cd40:	sec
 cd41:	sbc $52
 cd43:	cmp #$40
 cd45:	bcc cd18
-cd47:	jsr $ffe3
+cd47:	jsr OSRDCH
 cd4a:	cmp #$7f
 cd4c:	bne cd47
-cd4e:	jsr $fff4
+cd4e:	jsr OSWRCH
 cd51:	jmp cd1f
 
 
@@ -2206,7 +2220,7 @@ cd51:	jmp cd1f
 ; Sends a <CR><LF> to WRCHAR, and resets COUNT at ?7 to zero.
 ; Destroys accumulator.
 
-cd54:	jsr $ffed
+cd54:	jsr OSCRLF
 cd57:	lda #$0
 cd59:	sta $7
 cd5b:	rts
@@ -2508,7 +2522,7 @@ ceed:	jsr cefa
 cef0:	dey
 cef1:	sty $56
 cef3:	sec
-cef4:	jsr $ffe0
+cef4:	jsr OSLOAD
 cef7:	jmp cd9b
 
 
@@ -2541,7 +2555,7 @@ cf1b:	sta $56
 cf1d:	lda #$c2
 cf1f:	sta $57
 cf21:	clc
-cf22:	jsr $ffdd
+cf22:	jsr OSSAVE
 cf25:	jmp c55b
 
 
@@ -2552,7 +2566,7 @@ cf2c:	pha
 cf2d:	jsr cf3e
 cf30:	ldx #$52
 cf32:	pla
-cf33:	jsr $ffda
+cf33:	jsr OSRDAR
 cf36:	ldy #$52
 cf38:	jsr c99f
 cf3b:	sta $42,x
@@ -2573,7 +2587,7 @@ cf4a:	jsr c4de
 cf4d:	jsr c3cb
 cf50:	jsr cf41
 cf53:	ldx #$52
-cf55:	jsr $ffd7
+cf55:	jsr OSSTAR
 cf58:	jmp c55b
 
 
@@ -2584,7 +2598,7 @@ cf58:	jmp c55b
 
 cf5b:	jsr cf3e
 cf5e:	sty $52
-cf60:	jsr $ffd4
+cf60:	jsr OSBGET
 cf63:	jmp c97c
 
 
@@ -2594,11 +2608,11 @@ cf63:	jmp c97c
 
 cf66:	jsr cf5b
 cf69:	ldy $52
-cf6b:	jsr $ffd4
+cf6b:	jsr OSBGET
 cf6e:	sta $24,x
-cf70:	jsr $ffd4
+cf70:	jsr OSBGET
 cf73:	sta $33,x
-cf75:	jsr $ffd4
+cf75:	jsr OSBGET
 cf78:	sta $42,x
 cf7a:	rts
 
@@ -2623,7 +2637,7 @@ cf92:	jmp c55b
 cf95:	jsr cf7b
 cf98:	ldx #$1
 cf9a:	lda $52,x
-cf9c:	jsr $ffd1
+cf9c:	jsr OSBPUT
 cf9f:	inx
 cfa0:	cpx #$4
 cfa2:	bcc cf9a
@@ -2633,7 +2647,7 @@ cfa7:	php
 cfa8:	jsr ceb1
 cfab:	ldx #$52
 cfad:	plp
-cfae:	jsr $ffce
+cfae:	jsr OSFIND
 cfb1:	ldx $4
 cfb3:	jmp c97c
 
@@ -2641,7 +2655,7 @@ cfb3:	jmp c97c
 cfb6:	jsr c8bc
 cfb9:	jsr c4e4
 cfbc:	jsr cf41
-cfbf:	jsr $ffcb
+cfbf:	jsr OSSHUT
 cfc2:	jmp c55b
 
 
@@ -2655,7 +2669,7 @@ cfcf:	lda ($52),y
 cfd1:	sty $55
 cfd3:	ldy $f
 cfd5:	pha
-cfd6:	jsr $ffd1
+cfd6:	jsr OSBPUT
 cfd9:	pla
 cfda:	cmp #$d
 cfdc:	beq cfc2
@@ -2672,7 +2686,7 @@ cfe9:	jsr c3cb
 cfec:	ldy #$0
 cfee:	sty $55
 cff0:	ldy $f
-cff2:	jsr $ffd4
+cff2:	jsr OSBGET
 cff5:	ldy $55
 cff7:	sta ($52),y
 cff9:	iny
