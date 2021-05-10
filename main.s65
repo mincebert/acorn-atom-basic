@@ -10,7 +10,7 @@
 
 c000:
 	.text "<=>", $FE
-	.text "-+", $C8, "#(!RTLCAPEGB"
+	.text "-+", $C8, "#(!?RTLCAPEGB"
 	.text "F", $F0
 	.text "T", $FF
 	.text "O", $CB
@@ -18,8 +18,8 @@ c000:
 	.text "TEP", $CB
 	.text "T", $C3
 	.text "HEN", $C3
-	.text $22, "$", $CE, $CE, $CC
-	.text "$", $C5, ","
+	.text """", "$", $CE, $CE, $CC
+	.text "$", ",", $C5
 	.text "$&;", $0D, ",", $C3, $C5, $C2
 	.text ">", $C7
 	.text "=", $C7, $C7, $C7
@@ -83,7 +83,7 @@ c0ef:
 	.text $02, $15, $15, ")", $15, $15, "(", $15, $15, "f", $15, $15, $15, "[r", $15
 	.text $A6, $15, $15, $15, $A7, $90, "5", $E3, $8F, $8F, $8F, "4", $94, $A0, $A8, $AD
 	.text $B1, $BD, $C1, $CD, $E9, $EA, $EB, "x", $97, $99, $D3, $DF, $EC, $D0, "K", $8F
-	.text $8F, $8F, $0A, $8F, $AD, $AD, $8F, $F0, $9C, $8F, $F0, $9C, $8F, "%", $8F, $8F, $8F, $B2, $A4
+	.text $8F, $8F, $0A, $8F, $AD, $AD, $8F, $F0, $9C, $8F, "%", $8F, $8F, $8F, $B2, $A4
 	.text $9C, $8F, "Q", $99, $8F, $8F, $ED, $8F, $8F, $8F, $8F, $D2, $8F, $8F, $8F, $CD
 	.text $B3, "f", $8F, $8F, $8F, $8F, $81, $8F, $8F, $8F, $8F, $D2, $8F, $B8, $8F, $05
 	.text $CA, $C7, $8F, $8F, $8F, $EC, $8F, $8F, "u", $8F, $8F, "A", $8F, $8F, "W", $8F
@@ -1700,7 +1700,7 @@ c9e2:	sta $6
 c9e4:	jmp $c2f2
 
 
-c9e7:	.text "@=1;P.$6$7'""ERROR ""?0;@=8;IF?1|?2P."" LINE""!1& $FFFF", $0d, $00, $00, "P.';E.", $0d
+c9e7:	.text "@=1;P.$6$7'""ERROR ""?0;@=8;IF?1|?2P."" LINE""!1& #FFFF", $0d, $00, $00, "P.';E.", $0d
 
 
 ; Handle Unrecognised Command
