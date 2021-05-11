@@ -1,6 +1,43 @@
 ; ATOM BASIC source code
 
-*=$5000
+*=$8000
+
+
+
+; --- PAGED ROM HEADER ---
+
+
+
+swrom:
+	jmp lang		; language entry
+	jmp svc			; service entry (none)
+	.byte $c2		; = 6502 code
+	.byte <copyright	; copyright offset
+	.byte 1			; version byte
+	.text "Atom BASIC"	; title
+	.byte 0			; terminator
+	.text "0.1"		; version string
+copyright:
+	.byte 0			; terminator
+	.text "(C) Acorn+Mince"	; copyright
+	.byte 0			; terminator
+	.dword 0		; 2nd processor relocation address
+
+
+lang:
+	; enable interrupts
+	cli
+	; reset start pointer
+	ldx #$ff
+	txs
+	; don't bother resetting break vector as Atom BASIC will do that
+	; jump to normal Atom BASIC cold start
+	jmp start
+
+svc:
+	; do nothing for now
+	rts
+
 
 
 ; --- ATOM COS THUNKING CODE ---
@@ -11,6 +48,7 @@ BBCOSWRCH=$ffee
 BBCOSNEWL=$ffe7
 BBCOSRDCH=$ffe0
 BBCOSASCI=$ffe3
+
 
 
 ; OSCLI=$fff7
@@ -381,6 +419,7 @@ c2b0:	bne c2b6
 ; Comes from BREAK routine  at $FF94.
 ; Points the text pointer ?$12 at $2900 and performs a 'NEW'.
 
+start:
 c2b2:	lda #$29
 c2b4:	sta $12			; Set text pointer to page $29
 
@@ -422,6 +461,7 @@ c2d5:	ldx #$1
 c2d7:	stx $6
 c2d9:	dex
 c2da:	stx $5
+
                                 ; CLEAR LINE NUMBER TO ZERO - DIRECT MODE
 
 c2dc:	stx $1			; Clear the MSB line number
@@ -447,11 +487,11 @@ c2f0:	sta $11
 c2f2:	ldx #$ff
 c2f4:	txs			; Reset the stack poimter
 c2f5:	lda #$0
-c2f7:	sta $4			; Reset the workspace stack poimter
+c2f7:	sta $4			; Reset the workspace stack pointer
 c2f9:	sta $3			; Reset the interpreter index
-c2fb:	sta $15			; Reset the FOR....NEXT stack poimter
-c2fd:	sta $13			; Reset the GOSUB...RETURN stack poimter
-c2ff:	sta $14			; Reset the DO...UNTIL stack poimter
+c2fb:	sta $15			; Reset the FOR....NEXT stack pointer
+c2fd:	sta $13			; Reset the GOSUB...RETURN stack pointer
+c2ff:	sta $14			; Reset the DO...UNTIL stack pointer
 c301:	ldx #$34
 
                                 ; CLEAR THE LABEL (@ to z) ADDRESS STACK
@@ -470,7 +510,7 @@ c30c:	bcs c32f		; ... then interpret a simple integer variable
 
 c30e:	jsr c46a		; interpret a decimal string as a number
                                 ; into the w/s stack, and increment ?4
-c311:	bcc c316		; ... nvalid number
+c311:	bcc c316		; ... invalid number
 c313:	jmp cdc9		; Deal with line insertion and removal
 
                                 ; EXECUTE A DIRECT COMMAND AT $100
