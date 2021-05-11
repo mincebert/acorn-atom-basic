@@ -1,0 +1,11 @@
+#!/bin/sh
+
+64tass -l labels -b main.s65 -o atombas
+
+beeb blank_ssd atombas.ssd
+beeb title atombas.ssd ATOMBASIC
+beeb delete atombas.ssd -y atombas
+beeb putfile atombas.ssd atombas
+cp atombas.ssd /Volumes/GOTEK-FF
+
+echo Start address = \&$(grep c2b2 labels)
