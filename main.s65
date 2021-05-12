@@ -1,11 +1,52 @@
 ; ATOM BASIC source code
 
+
+
+; BBCSWROM defined if compiling for the BBC Micro as a SWROM
+
+.if BBC == 0
+
+
+; assembling for Acorn Atom (original ROM)
+
+*=$c000
+
+WORKSP=$0200
+VARSTORE=$38c
+
+; OS calls
+OSCLI=$fff7
+OSWRCH=$fff4
+OSCRLF=$ffed
+OSECHO=$ffe6
+OSRDCH=$ffe3
+OSLOAD=$ffe0
+OSSAVE=$ffdd
+OSRDAR=$ffda
+OSSTAR=$ffd7
+OSBGET=$ffd4
+OSBPUT=$ffd1
+OSFIND=$ffce
+OSSHUT=$ffcb
+
+; vectors
+WRCVEC=$208
+BPTVEC=$216
+
+
+.else
+
+
 *=$8000
 
+; we need two pages of workspace, starting here
+WORKSP=$7200
+
+; start of fixed variable area
+VARSTORE=$738c
 
 
 ; --- PAGED ROM HEADER ---
-
 
 
 swrom:
@@ -36,6 +77,7 @@ lang:
 
 svc:
 	; do nothing for now
+	; should have a *ATOMBASIC command or something similar
 	rts
 
 
@@ -50,9 +92,6 @@ BBCOSRDCH=$ffe0
 BBCOSASCI=$ffe3
 
 
-
-; OSCLI=$fff7
-;
 ; Atom COS call is very similar, except that the command is stored at the fixed
 ; address $0100, rather than the address in Y,X, and clears the decimal flag.
 
@@ -64,17 +103,12 @@ OSCLI:
 	rts
 
 
-; OSWRCH=$fff4
-; OSRDCH=$ffe3
-;
 ; Aside from the address changes, these works identically.
 
 OSWRCH=BBCOSWRCH	; TODO: check this isn't really OSASCI
 OSRDCH=BBCOSRDCH
 
 
-; OSCRLF=$ffed
-;
 ; This is largely identical, except the Atom COS guarantees N+Z are 0.
 ; Can't think of a simple way to ensure this, at the moment, so ignore it.
 
@@ -82,8 +116,6 @@ OSCRLF:
 	jmp BBCOSNEWL
 
 
-; OSECHO=$ffe6
-;
 ; The BBC MOS doesn't have an equivalent call, but this is basically an OSRDCH
 ; which prints out the entered character.
 
@@ -92,6 +124,8 @@ OSECHO:
 	jmp BBCOSASCI
 
 
+; TODO: convert these but we're not using them except when we implement
+; filing calls
 
 OSLOAD=$ffe0
 OSSAVE=$ffdd
@@ -103,54 +137,20 @@ OSFIND=$ffce
 OSSHUT=$ffcb
 
 
+; --- VECTORS ---
+
+
 BBCWRCVEC=$20e
-; WRCVEC=$208
 WRCVEC=BBCWRCVEC
 
 BBCBPUTV=$218
-; BPTVEC=$216
 BPTVEC=BBCBPUTV
 
-LOC023f=$723f
-LOC0240=$7240
-LOC024a=$724a
-LOC024b=$724b
-LOC0255=$7255
-LOC0256=$7256
-LOC0260=$7260
-LOC0261=$7261
-LOC026b=$726b
-LOC026c=$726c
-LOC0276=$7276
-LOC0277=$7277
-LOC0281=$7281
-LOC0282=$7282
-LOC028c=$728c
-LOC028d=$728d
-LOC0297=$7297
-LOC0298=$7298
-LOC02a2=$72a2
-LOC02a3=$72a3
-LOC02ad=$72ad
-LOC02ae=$72ae
-LOC02b8=$72b8
-LOC02b9=$72b9
-LOC02c3=$72c3
-LOC02c4=$72c4
-LOC02ce=$72ce
-LOC02cf=$72cf
-LOC02dc=$72dc
-LOC02dd=$72dd
 
-LOC0321=$7321
-LOC0322=$7322
-LOC0339=$7339
-LOC033a=$733a
-LOC033c=$733c
-LOC0357=$7357
-LOC0372=$7372
-; VARSTORE=$38c = start of fixed variable store
-VARSTORE=$738c
+.endif
+
+
+; --- START OF CODE ---
 
 
 ; Interpreter Command Lookup Table
@@ -441,7 +441,7 @@ c2c5:	sta ($d),y		; ..and dump the terminator
 c2c7:	iny			; Point to the third byte of text
 c2c8:	sty $d			; ..and set LSB TOP
 c2ca:	lda #$8			; Get the default print length
-c2cc:	sta LOC0321		; ..and set LSB integer variable '@'
+c2cc:	sta WORKSP + $121		; ..and set LSB integer variable '@'
 
 
 ; Direct Command Handler
@@ -650,9 +650,9 @@ c3af:	jmp c337
 c3b2:	jsr c3c8		; Evaluate an arbitrarily complex function
                                 ; to $52(LSB)..$55(MSB)
 c3b5:	jsr c4e4		; Do interpreter post-test
-c3b8:	lda LOC0322		; Load accumulator with LSB integer 'A'
-c3bb:	ldx LOC0339		; Load X register with LSB integer 'X'
-c3be:	ldy LOC033a		; Load Y register with LSB integer 'Y'
+c3b8:	lda WORKSP + $122		; Load accumulator with LSB integer 'A'
+c3bb:	ldx WORKSP + $139		; Load X register with LSB integer 'X'
+c3be:	ldy WORKSP + $13a		; Load Y register with LSB integer 'Y'
 c3c1:	jsr c2a5		; Indirect jump to ($52)
 c3c4:	cld			; Ensure binary mode after nasty user's prog
 c3c5:	jmp c55b		; Return to execute the next command whether
@@ -1123,7 +1123,7 @@ c5d1:	bit $27
 c5d3:	bpl c5d7
 c5d5:	inc $52
 c5d7:	sec
-c5d8:	lda LOC0321
+c5d8:	lda WORKSP + $121
 c5db:	beq c5df
 c5dd:	sbc #$1
 c5df:	sbc $52
@@ -1656,13 +1656,13 @@ c8e1:	ldy $15,x
 ; to the current slot of the Workspace Stack pointed to by ?4.
 ; Destroys accumulator.
 
-c8e3:	lda LOC0321,y
+c8e3:	lda WORKSP + $121,y
 c8e6:	sta $15,x
-c8e8:	lda LOC0357,y
+c8e8:	lda WORKSP + $157,y
 c8eb:	sta $33,x
-c8ed:	lda LOC033c,y
+c8ed:	lda WORKSP + $13c,y
 c8f0:	sta $24,x
-c8f2:	lda LOC0372,y
+c8f2:	lda WORKSP + $172,y
 c8f5:	sta $42,x
 c8f7:	rts
 
@@ -1886,13 +1886,13 @@ ca35:	ldy $16,x
 ; Destroys accumulator.
 
 ca37:	lda $17,x
-ca39:	sta LOC0321,y
+ca39:	sta WORKSP + $121,y
 ca3c:	lda $26,x
-ca3e:	sta LOC033c,y
+ca3e:	sta WORKSP + $13c,y
 ca41:	lda $35,x
-ca43:	sta LOC0357,y
+ca43:	sta WORKSP + $157,y
 ca46:	lda $44,x
-ca48:	sta LOC0372,y
+ca48:	sta WORKSP + $172,y
 ca4b:	rts
 
 
@@ -1929,10 +1929,10 @@ ca78:	bcc caaa
 ca7a:	dey
 ca7b:	bcs ca9e
 ca7d:	lda #$5
-ca7f:	sta LOC0321
+ca7f:	sta WORKSP + $121
 ca82:	jsr c589
 ca85:	lda #$8
-ca87:	sta LOC0321
+ca87:	sta WORKSP + $121
 ca8a:	ldy $3
 ca8c:	lda ($58),y
 ca8e:	cmp #$d
@@ -1975,56 +1975,56 @@ cad2:	beq cae4
 cad4:	bcc cae5
 cad6:	dec $4
 cad8:	lda $15,x
-cada:	cmp LOC023f,y
+cada:	cmp WORKSP + $03f,y
 cadd:	beq cae5
 cadf:	dey
 cae0:	sty $15
 cae2:	bne cada
 cae4:	brk
-cae5:	ldx LOC023f,y
+cae5:	ldx WORKSP + $03f,y
 cae8:	clc
-cae9:	lda LOC0321,x
-caec:	adc LOC024a,y
-caef:	sta LOC0321,x
+cae9:	lda WORKSP + $121,x
+caec:	adc WORKSP + $04a,y
+caef:	sta WORKSP + $121,x
 caf2:	sta $52
-caf4:	lda LOC033c,x
-caf7:	adc LOC0255,y
-cafa:	sta LOC033c,x
+caf4:	lda WORKSP + $13c,x
+caf7:	adc WORKSP + $055,y
+cafa:	sta WORKSP + $13c,x
 cafd:	sta $53
-caff:	lda LOC0357,x
-cb02:	adc LOC0260,y
-cb05:	sta LOC0357,x
+caff:	lda WORKSP + $157,x
+cb02:	adc WORKSP + $060,y
+cb05:	sta WORKSP + $157,x
 cb08:	sta $54
-cb0a:	lda LOC0372,x
-cb0d:	adc LOC026b,y
-cb10:	sta LOC0372,x
+cb0a:	lda WORKSP + $172,x
+cb0d:	adc WORKSP + $06b,y
+cb10:	sta WORKSP + $172,x
 cb13:	tax
 cb14:	lda $52
 cb16:	sec
-cb17:	sbc LOC0276,y
+cb17:	sbc WORKSP + $076,y
 cb1a:	sta $52
 cb1c:	lda $53
-cb1e:	sbc LOC0281,y
+cb1e:	sbc WORKSP + $081,y
 cb21:	sta $53
 cb23:	lda $54
-cb25:	sbc LOC028c,y
+cb25:	sbc WORKSP + $08c,y
 cb28:	sta $54
 cb2a:	txa
-cb2b:	sbc LOC0297,y
+cb2b:	sbc WORKSP + $097,y
 cb2e:	ora $52
 cb30:	ora $53
 cb32:	ora $54
 cb34:	beq cb45
 cb36:	txa
-cb37:	eor LOC026b,y
-cb3a:	eor LOC0297,y
+cb37:	eor WORKSP + $06b,y
+cb3a:	eor WORKSP + $097,y
 cb3d:	bpl cb43
 cb3f:	bcs cb45
 cb41:	bcc cb52
 cb43:	bcs cb52
-cb45:	lda LOC02a2,y
+cb45:	lda WORKSP + $0a2,y
 cb48:	sta $5
-cb4a:	lda LOC02ad,y
+cb4a:	lda WORKSP + $0ad,y
 cb4d:	sta $6
 cb4f:	jmp cbff
 
@@ -2042,13 +2042,13 @@ cb62:	tya
 cb63:	ldy $15
 cb65:	cpy #$b
 cb67:	bcs cb6c + 1
-cb69:	sta LOC0240,y
+cb69:	sta WORKSP + $040,y
 cb6c:	lda #$0
-cb6e:	sta LOC026c,y
-cb71:	sta LOC0261,y
-cb74:	sta LOC0256,y
+cb6e:	sta WORKSP + $06c,y
+cb71:	sta WORKSP + $061,y
+cb74:	sta WORKSP + $056,y
 cb77:	lda #$1
-cb79:	sta LOC024b,y
+cb79:	sta WORKSP + $04b,y
 cb7c:	ldx #$16
 cb7e:	jmp c233
 
@@ -2060,13 +2060,13 @@ cb84:	ldy $15
 cb86:	dex
 cb87:	stx $4
 cb89:	lda $16,x
-cb8b:	sta LOC0277,y
+cb8b:	sta WORKSP + $077,y
 cb8e:	lda $25,x
-cb90:	sta LOC0282,y
+cb90:	sta WORKSP + $082,y
 cb93:	lda $34,x
-cb95:	sta LOC028d,y
+cb95:	sta WORKSP + $08d,y
 cb98:	lda $43,x
-cb9a:	sta LOC0298,y
+cb9a:	sta WORKSP + $098,y
 cb9d:	ldx #$1a
 cb9f:	jmp c233
 
@@ -2078,14 +2078,14 @@ cba5:	ldy $15
 cba7:	dex
 cba8:	stx $4
 cbaa:	lda $16,x
-cbac:	sta LOC024b,y
+cbac:	sta WORKSP + $04b,y
 cbaf:	lda $25,x
-cbb1:	sta LOC0256,y
+cbb1:	sta WORKSP + $056,y
 cbb4:	lda $34,x
 
-cbb6:	sta LOC0261,y
+cbb6:	sta WORKSP + $061,y
 cbb9:	lda $43,x
-cbbb:	sta LOC026c,y
+cbbb:	sta WORKSP + $06c,y
 
 			; CONFLICT: some ROM binaries say:
 			; CBB6  99 62 02  STA $262,Y	; 62 not 61
@@ -2096,9 +2096,9 @@ cbbb:	sta LOC026c,y
 cbbe:	jsr c50c
 cbc1:	ldy $15
 cbc3:	lda $5
-cbc5:	sta LOC02a3,y
+cbc5:	sta WORKSP + $0a3,y
 cbc8:	lda $6
-cbca:	sta LOC02ae,y
+cbca:	sta WORKSP + $0ae,y
 cbcd:	inc $15
 cbcf:	jmp c31b
 
@@ -2111,9 +2111,9 @@ cbd8:	ldy $14
 cbda:	cpy #$e
 cbdc:	bcs cbff + 1
 cbde:	lda $5
-cbe0:	sta LOC02cf,y
+cbe0:	sta WORKSP + $0cf,y
 cbe3:	lda $6
-cbe5:	sta LOC02dd,y
+cbe5:	sta WORKSP + $0dd,y
 cbe8:	inc $14
 cbea:	bcc cc0b
 
@@ -2124,9 +2124,9 @@ cbec:	jsr c4e4
 cbef:	ldy $14
 cbf1:	beq cc1d
 cbf3:	dec $14
-cbf5:	lda LOC02ce,y
+cbf5:	lda WORKSP + $0ce,y
 cbf8:	sta $5
-cbfa:	lda LOC02dc,y
+cbfa:	lda WORKSP + $0dc,y
 cbfd:	sta $6
 cbff:	jsr c500
 cc02:	jmp c31b
@@ -2276,9 +2276,9 @@ ccde:	beq cce5
 cce0:	dec $13
 cce2:	jmp c558
 
-cce5:	lda LOC02b8,y
+cce5:	lda WORKSP + $0b8,y
 cce8:	sta $5
-ccea:	lda LOC02c3,y
+ccea:	lda WORKSP + $0c3,y
 cced:	jmp cbfd
 
 
@@ -2290,9 +2290,9 @@ ccf4:	bcs cd0f + 1
 ccf6:	dey
 ccf7:	jsr c4f6
 ccfa:	lda $5
-ccfc:	sta LOC02b9,x
+ccfc:	sta WORKSP + $0b9,x
 ccff:	lda $6
-cd01:	sta LOC02c4,x
+cd01:	sta WORKSP + $0c4,x
 cd04:	inc $13
 cd06:	jmp c31b
 
