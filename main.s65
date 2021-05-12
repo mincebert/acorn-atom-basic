@@ -37,6 +37,9 @@ BPTVEC=$216
 .else
 
 
+; assembling for the BBC as a sideway ROM
+
+
 *=$8000
 
 ; we need two pages of workspace, starting here
