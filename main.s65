@@ -63,7 +63,7 @@ swrom:
 	.text "0.1"		; version string
 copyright:
 	.byte 0			; terminator
-	.text "(C) Acorn+Mince"	; copyright
+	.text "(C) Acorn"	; copyright
 	.byte 0			; terminator
 	.dword 0		; 2nd processor relocation address
 
@@ -163,27 +163,34 @@ BPTVEC=BBCBPUTV
 ; Any other value >=$80 is the MSB of the jump address (LSB is in the table
 ; at c0ee).
 
-c000:
 	; operators
-	.text "<=>", $fe
-	.text "-+", $c8
-	.text "#(!?RTLCAPEGBF", $f0
-	.text "T", $ff
+c000:	.text "<=>", $fe
+	; function interpreter
+c004:	.text "-+", $c8
+	; numerical assignmentds
+c007:	.text "#(!?RTLCAPEGBF", $f0
+	; FOR...
+c016:	.text "T", $ff
 	;
 	.text "O", $cb
-	.text "S", $cb
+	; TO...
+c01a:	.text "S", $cb
 	.text "TEP", $cb
-	.text "T", $c3
+c020:	.text "T", $c3
 	.text "HEN", $c3
-	.text """", "$", $cE, $ce, $cc
-	.text "$", ",", $c5
-	.text "$&;", $0d, ",", $c3, $c5, $c2
+	; check for valid string
+c026:	.text """", "$", $cE, $ce, $cc
+	; INPUT...
+c02b:	.text "$"
+	; numerical variable input
+c02c:	.text ",", $c5
+c02e:	.text "$&;", $0d, ",", $c3, $c5, $c2
 	.text ">", $c7
 	.text "=", $c7, $c7, $c7
 	.text "=", $c7, $c7, $c8
 	.text "R", $c7, $c7
-	.text "OA", $fe
-	.text "$", $c7
+c043:	.text "OA", $fe
+c046:	.text "$", $c7
 	.text "H", $c9
 	.text "EN", $c9
 	.text "ND", $c7, $c9, $c9, $c9, $c9
@@ -198,7 +205,8 @@ c000:
 	.text "IN", $cf
 	.text "OUT", $cf, $c3, $c3
 	.text "RINT", $c3
-	.text "NLUNIGRF!?$PDLSB*E", $f0
+c07d:	.text "NL"
+c07f:	.text "UNIGRF!?$PDLSB*E", $f0
 	.text "AVE", $cf
 	.text "EW", $c2
 	.text "O", $cc
@@ -235,7 +243,8 @@ c0ef:
 	.text $50, $51, $52, $53, $54, $57, $4a, $5a, $5f, $62, $65, $68, $6b, $6f, $2e
 	.text $18, $ac
 	;
-	.text $17, $81, $1C, $BE, $17, $17, $17, $A2, $22
+	.text $17, $81
+	.text $1c, $be, $17, $17, $17, $a2, $22
 	.text $1B, $17, $17, $17, $1B, ")(", $B6, $BF, $B6, "*", $B7, "Xvw4"
 	.text "4|?Jx8m:dt[>{", $82, $C1, "E"
 	.text $22, "1@MMBS", $15, $D2, $15, $15, $BD, "EE", $14, $0A
@@ -525,7 +534,7 @@ c313:	jmp cdc9		; Deal with line insertion and removal
 
                                 ; EXECUTE A DIRECT COMMAND AT $100
 
-c316:	ldx #$7d		; Set the interpreter table pointer to $C???
+c316:	ldx #c07d - c000	; Set the interpreter table pointer to $C???
 c318:	jmp c233		; ... and interpret & execute the command
 
 
@@ -536,7 +545,7 @@ c31b:	jsr c434		; If the first non space character is
                                 ; is not (but is not '.')
 c31e:	bcs c32f		; ... then treat this as an integer variable
                                 ; assignment
-c320:	ldx #$7f		; Set the interpreter table pointer to $C???
+c320:	ldx #c07f - c000	; Set the interpreter table pointer to $C???
 c322:	jmp c233		; ... and interpret & execute the command
 
 
@@ -563,7 +572,7 @@ c334:	sec
 c335:	ror $f			; Set bit 7 of the hex print flag to get
                                 ; the default decimal print mode
 c337:	jsr c372
-c33a:	ldx #$2e		; Set the interpreter table pointer to $C???
+c33a:	ldx #c02e - c000	; Set the interpreter table pointer to $C???
 c33c:	jmp c233		; ... and interpret & execute '=', '?' or '!'
 
 
@@ -1063,7 +1072,7 @@ c569:	dex
 c56a:	stx $4
 c56c:	lda $16,x
 c56e:	beq c575
-c570:	ldx #$20
+c570:	ldx #c020 - c000
 c572:	jmp c233
 
 
@@ -1314,7 +1323,7 @@ c70b:	rts
 ; Used by IF and UNTIL commands.
 
 c70c:	jsr c72c
-c70f:	ldx #$43
+c70f:	ldx #c043 - c000
 c711:	jmp c233
 
 
@@ -1335,7 +1344,7 @@ c725:	lda $14,x
 c727:	ora $15,x
 c729:	jmp c71b
 
-c72c:	ldx #$46
+c72c:	ldx #c046 - c000
 c72e:	jmp c233
 
 
@@ -1361,7 +1370,7 @@ c751:	beq c761
 
 
 c753:	jsr c78b
-c756:	ldx #$0
+c756:	ldx #c000 - c000
 c758:	jmp c233
 
 
@@ -1620,7 +1629,7 @@ c8b9:	jmp c80e
 ; the last character in the string interpreted.
 ; The Workspace Stack pointer ?4 is incremented.
 
-c8bc:	ldx #$4
+c8bc:	ldx #c004 - c000
 c8be:	jmp c233
 
 
@@ -1681,7 +1690,7 @@ c8f7:	rts
 
 c8f8:	jsr c46a
 c8fb:	bcs c8f7
-c8fd:	ldx #$7
+c8fd:	ldx #c007 - c000
 c8ff:	jmp c233
 
 
@@ -2059,7 +2068,7 @@ cb71:	sta WORKSP + $061,y
 cb74:	sta WORKSP + $056,y
 cb77:	lda #$1
 cb79:	sta WORKSP + $04b,y
-cb7c:	ldx #$16
+cb7c:	ldx #c016 - c000
 cb7e:	jmp c233
 
 
@@ -2077,7 +2086,7 @@ cb93:	lda $34,x
 cb95:	sta WORKSP + $08d,y
 cb98:	lda $43,x
 cb9a:	sta WORKSP + $098,y
-cb9d:	ldx #$1a
+cb9d:	ldx #c01a - c000
 cb9f:	jmp c233
 
 
@@ -2227,7 +2236,7 @@ cc80:	rts
 cc81:	jsr c372
 cc84:	jsr c434
 cc87:	bcs cc8e
-cc89:	ldx #$2b
+cc89:	ldx #c02b - c000
 cc8b:	jmp c233
 
 
@@ -2253,7 +2262,7 @@ ccab:	pla
 ccac:	sta $6
 ccae:	pla
 ccaf:	sta $5
-ccb1:	ldx #$2c
+ccb1:	ldx #c02c - c000
 ccb3:	jmp c233
 
 
@@ -2616,7 +2625,7 @@ ceae:	jsr c279
 ; If successful, returns with (5),?3 pointimg to the character following,
 ; otherwise executes BRK.
 
-ceb1:	ldx #$26
+ceb1:	ldx #c026 - c000
 ceb3:	jmp c233
 
 
