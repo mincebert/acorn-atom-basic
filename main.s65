@@ -160,75 +160,82 @@ BPTVEC=BBCBPUTV
 ;
 ; Each sub table is terminated by a negative byte.
 ; A termination byte of $FF causes BRK to be executed on failure.
+; Any other value >=$80 is the MSB of the jump address (LSB is in the table
+; at c0ee).
 
 c000:
-	.text "<=>", $FE
-	.text "-+", $C8, "#(!?RTLCAPEGB"
-	.text "F", $F0
-	.text "T", $FF
-	.text "O", $CB
-	.text "S", $CB
-	.text "TEP", $CB
-	.text "T", $C3
-	.text "HEN", $C3
-	.text """", "$", $CE, $CE, $CC
-	.text "$", ",", $C5
-	.text "$&;", $0D, ",", $C3, $C5, $C2
-	.text ">", $C7
-	.text "=", $C7, $C7, $C7
-	.text "=", $C7, $C7, $C8
-	.text "R", $C7, $C7
-	.text "OA", $FE
-	.text "$", $C7
-	.text "H", $C9
-	.text "EN", $C9
-	.text "ND", $C7, $C9, $C9, $C9, $C9
-	.text "ND", $C9
-	.text "OP", $C9
-	.text "OUNT", $C9
-	.text "BS", $C9
-	.text "TR", $CF
-	.text "XT", $CF
-	.text "ET", $CF
-	.text "GET", $CF
-	.text "IN", $CF
-	.text "OUT", $CF, $C3, $C3
-	.text "RINT", $C3
-	.text "NLUNIGRF!?$PDLSB*E", $F0
-	.text "AVE", $CF
-	.text "EW", $C2
-	.text "O", $CC
-	.text "ET", $C3
-	.text "INK", $C3
-	.text "IST", $CA
-	.text "OAD", $CE
-	.text "NTIL", $CC
-	.text "EXT", $CA
-	.text "F", $C5
-	.text "NPUT", $CC
-	.text "OSUB", $CB
-	.text "OTO", $CC
-	.text "ETURN", $CB
-	.text "EM", $C5
-	.text "UN", $F1
-	.text "OR", $CB
-	.text "ND", $CD
-	.text "GET", $CF
-	.text "PUT", $CF
-	.text "HUT", $CF
-	.text "PUT", $CF
-	.text "TR", $CF
-	.text "UT", $CF, $C3, $C4, $CD, $C4
-	.text ","
-c0ee:	.text $FE
+	; operators
+	.text "<=>", $fe
+	.text "-+", $c8
+	.text "#(!?RTLCAPEGBF", $f0
+	.text "T", $ff
+	;
+	.text "O", $cb
+	.text "S", $cb
+	.text "TEP", $cb
+	.text "T", $c3
+	.text "HEN", $c3
+	.text """", "$", $cE, $ce, $cc
+	.text "$", ",", $c5
+	.text "$&;", $0d, ",", $c3, $c5, $c2
+	.text ">", $c7
+	.text "=", $c7, $c7, $c7
+	.text "=", $c7, $c7, $c8
+	.text "R", $c7, $c7
+	.text "OA", $fe
+	.text "$", $c7
+	.text "H", $c9
+	.text "EN", $c9
+	.text "ND", $c7, $c9, $c9, $c9, $c9
+	.text "ND", $c9
+	.text "OP", $c9
+	.text "OUNT", $c9
+	.text "BS", $c9
+	.text "TR", $cf
+	.text "XT", $cf
+	.text "ET", $cf
+	.text "GET", $cf
+	.text "IN", $cf
+	.text "OUT", $cf, $c3, $c3
+	.text "RINT", $c3
+	.text "NLUNIGRF!?$PDLSB*E", $f0
+	.text "AVE", $cf
+	.text "EW", $c2
+	.text "O", $cc
+	.text "ET", $c3
+	.text "INK", $c3
+	.text "IST", $ca
+	.text "OAD", $ce
+	.text "NTIL", $cc
+	.text "EXT", $ca
+	.text "F", $c5
+	.text "NPUT", $cc
+	.text "OSUB", $cb
+	.text "OTO", $cc
+	.text "ETURN", $cb
+	.text "EM", $c5
+	.text "UN", $f1
+	.text "OR", $cb
+	.text "ND", $cd
+	.text "GET", $cf
+	.text "PUT", $cf
+	.text "HUT", $cf
+	.text "PUT", $cf
+	.text "TR", $cf
+	.text "UT", $cf, $c3, $c4, $cd, $c4
+	.text ",", $fe
 
 
 ; Jump Address and Return Branch Table
 
 c0ef:
-	.text "6"
-	.text ";<", $C0, "?", $06, $DC, "PQRSTWJZ_b"
-	.text "ehko.", $18, $AC, $17, $81, $1C, $BE, $17, $17, $17, $A2, $22
+	; operators
+	.text $36, $3b, $3c, $c0
+	.text $3f, $06, $dc
+	.text $50, $51, $52, $53, $54, $57, $4a, $5a, $5f, $62, $65, $68, $6b, $6f, $2e
+	.text $18, $ac
+	;
+	.text $17, $81, $1C, $BE, $17, $17, $17, $A2, $22
 	.text $1B, $17, $17, $17, $1B, ")(", $B6, $BF, $B6, "*", $B7, "Xvw4"
 	.text "4|?Jx8m:dt[>{", $82, $C1, "E"
 	.text $22, "1@MMBS", $15, $D2, $15, $15, $BD, "EE", $14, $0A
@@ -313,7 +320,7 @@ c241:	inx			; Point to next character in command table
 
 				; MATCH THE REST OF THE COMMAND WORD
 
-c24b:	lda c0ee,x		; Get index to rest-of-command-word table
+c24b:	lda c0ef - 1,x		; Get index to rest-of-command-word table
 	tax			; This is now the new table pointer
 c24f:	inx			; Point to the next character in the table
 	iny			; Point to the next character under analysis
@@ -348,7 +355,7 @@ c26b:	cmp #$fe		; reached the end of the command table ?
 				; ZERO PAGE AND JUMP TO IT
 
 c26f:	sta $53			; Termination byte is the MSB jump address
-	lda c0ee,x		; Get the LSB jump address from the table
+	lda c0ef - 1,x		; Get the LSB jump address from the table
 	bcc c29f		; Dump it to $52, update $3 and $4 and
 				; jump to the command address now in ($52)
 
