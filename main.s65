@@ -185,8 +185,9 @@ c02b:	.text "$"
 	; numerical variable input
 c02c:	.text ",", $c5
 c02e:	.text "$&;", $0d, ",", $c3, $c5, $c2
-	.text ">", $c7
-	.text "=", $c7, $c7, $c7
+c036:	.text ">", $c7
+	.text "=", $c7, $c7
+c03b:	.text $c7
 	.text "=", $c7, $c7, $c8
 	.text "R", $c7, $c7
 c043:	.text "OA", $fe
@@ -235,6 +236,10 @@ c07f:	.text "UNIGRF!?$PDLSB*E", $f0
 
 
 ; Jump Address and Return Branch Table
+;
+; The offset from the start of the c000 table where a character is matched is
+; used to index into this table and retrieve a new index into the c000 table
+; for the following characters.
 
 c0ef:
 	; operators
@@ -334,8 +339,8 @@ c24b:	lda c0ef - 1,x		; Get index to rest-of-command-word table
 c24f:	inx			; Point to the next character in the table
 	iny			; Point to the next character under analysis
 	lda c000 - 1,x		; Fetch the next command table character
-	bmi c26b		; ... a negative byte means either a
-				; successful match of end of command table
+	bmi c26b		; ... a negative byte means a successful
+				; match of end of command table
 	cmp ($5),y		; Same as character under interpretation?
 	beq c24f		; ... yes, now try to match the next character
 	lda ($5),Y		; ... no, get the failed character under
