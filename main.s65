@@ -167,7 +167,7 @@ BPTVEC=BBCBPUTV
 c000:	.text "<=>", $fe
 	; function interpreter
 c004:	.text "-+", $c8
-	; numerical assignmentds
+	; numerical assignments
 c007:	.text "#(!?RTLCAPEGBF", $f0
 	; FOR...
 c016:	.text "T", $ff
@@ -179,7 +179,7 @@ c01a:	.text "S", $cb
 c020:	.text "T", $c3
 	.text "HEN", $c3
 	; check for valid string
-c026:	.text """", "$", $cE, $ce, $cc
+c026:	.text """", "$", $ce, $ce, $cc
 	; INPUT...
 c02b:	.text "$"
 	; numerical variable input
@@ -214,7 +214,7 @@ c07f:	.text "UNIGRF!?$PDLSB*E", $f0
 	.text "ET", $c3
 	.text "INK", $c3
 	.text "IST", $ca
-	.text "OAD", $ce
+	.text "OAD", >ceed
 	.text "NTIL", $cc
 	.text "EXT", $ca
 	.text "F", $c5
@@ -244,14 +244,29 @@ c07f:	.text "UNIGRF!?$PDLSB*E", $f0
 c0ef:
 	; operators
 	.text $36, $3b, $3c, $c0
+	; function interpreter
 	.text $3f, $06, $dc
+	; numerical assignments
 	.text $50, $51, $52, $53, $54, $57, $4a, $5a, $5f, $62, $65, $68, $6b, $6f, $2e
-	.text $18, $ac
+	; FOR...
+	.text $18, $ac				; T
 	;
-	.text $17, $81
-	.text $1c, $be, $17, $17, $17, $a2, $22
-	.text $1B, $17, $17, $17, $1B, ")(", $B6, $BF, $B6, "*", $B7, "Xvw4"
-	.text "4|?Jx8m:dt[>{", $82, $C1, "E"
+	.text $17, $81				; O
+	; TO...
+	.text $1c, $be				; S
+	;
+	.text $17, $17, $17, $a2		; TEP
+	.text $22, $1b				; T
+	.text $17, $17, $17, $1b		; HEN
+	; check for valid string
+	.text $29, $28, $b6, $bf, $b6		; "$
+	; INPUT...
+	.text $2a				; $
+	; numerical variable input
+	.text $b7, $58				; ,
+	.text $76, $77, $34
+	.text $34, $7c, $3f, $4a, $78, $38, $6d, $3a, $64, $74, $5b, $3e, $7b
+	.text $82, $c1, "E"
 	.text $22, "1@MMBS", $15, $D2, $15, $15, $BD, "EE", $14, $0A
 	.text "D_L", $15, $15, $86, $15, $15, "sH", $15, $15, $15, "z", $15, $15
 	.text $02, $15, $15, ")", $15, $15, "(", $15, $15, "f", $15, $15, $15, "[r", $15
