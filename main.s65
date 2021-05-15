@@ -345,7 +345,7 @@ c22c:		jsr cf3e		; get <factor> into Y register§
 ; Search for ',' subroutine
 
 c231:		ldx #$ed		; set table pointer to C0ED to search
-				; for ',' only
+					; for ',' only
 
 
 ; Interpreter subroutine
@@ -354,7 +354,7 @@ c231:		ldx #$ed		; set table pointer to C0ED to search
 
 c233:		ldy $3			; get the interpreter pointer
 
-				; SKIP ANY PRECEDING SPACES
+					; SKIP ANY PRECEDING SPACES
 
 c235:		dey
 c236:		iny			; Point to the next character in text
@@ -362,22 +362,22 @@ c236:		iny			; Point to the next character in text
 		cmp #" "		; Is it <SPC>?
 		beq c236		; ... yes, skip to next character
 
-				; GET FIRST CHARACTER MATCH
+					; GET FIRST CHARACTER MATCH
 
 c23d:		sty $5e			; Save current interpreter index
 		sta $52			; Save character under interpretation
 c241:		inx			; Point to next character in command table
 		lda c000 - 1,x		; ... and fetch it
 		bmi c26b		; ... a negative byte indicates the end of
-				; the initial letter table
+					; the initial letter table
 		cmp $52			; Same as character under interpretation?
 		bne c241		; ... no, try next initial letter
 
 					; MATCH THE REST OF THE COMMAND WORD
 
-c24b:	lda c0ef - 1,x		; Get index to rest-of-command-word table
+c24b:		lda c0ef - 1,x		; Get index to rest-of-command-word table
 		tax			; This is now the new table pointer
-c24f:	inx			; Point to the next character in the table
+c24f:		inx			; Point to the next character in the table
 		iny			; Point to the next character under analysis
 		lda c000 - 1,x		; Fetch the next command table character
 		bmi c26b		; ... a negative byte means a successful
@@ -395,26 +395,26 @@ c24f:	inx			; Point to the next character in the table
 					; SUCCESSFUL ABREVIATED MATCH - SKIP TO
 					; THE END OF THE COMMAND WORD IN THE TABLE
 
-c264:	inx			; Point to the next character in the table
+c264:		inx			; Point to the next character in the table
 		lda c000 - 1,x		; and fetch it
 		bpl c264		; Keep incrementing to reach the command
 					; word's negative termination byte
 		iny			; Point to the next character under analysis
 
-                                ; Test for success or failure
+			                ; Test for success or failure
 
-c26b:	cmp #$fe		; reached the end of the command table ?
+c26b:		cmp #$fe		; reached the end of the command table ?
 		bcs c2aa		; ... yes, return or execute BRK as required
 
 					; GET THE COMMAND WORD'S JUMP ADDRESS INTO
 					; ZERO PAGE AND JUMP TO IT
 
-c26f:	sta $53			; Termination byte is the MSB jump address
+c26f:		sta $53			; Termination byte is the MSB jump address
 		lda c0ef - 1,x		; Get the LSB jump address from the table
 		bcc c29f		; Dump it to $52, update $3 and $4 and
 					; jump to the command address now in ($52)
 
-c276:	ldx $4
+c276:		ldx $4
 		rts
 
 
