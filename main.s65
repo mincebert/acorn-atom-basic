@@ -208,7 +208,7 @@ c046:	.text "$", $c7
 c07d:	.text "NL"
 c07f:	.text "UNIGRF!?$PDLSB*E", $f0
 	.text "AVE", $cf
-	.text "EW", $c2
+	.text "EW", >CMD_NEW
 	.text "O", $cc
 	.text "ET", $c3
 	.text "INK", $c3
@@ -265,7 +265,7 @@ c0ef:
 	.text $b7, $58				; ,
 	.text $76, $77, $34, $34, $7c, $3f, $4a, $78	; $&;<CR>,
 	.text $38, $6d, $3a, $64, $74, $5b, $3e, $7b
-	.text $82, $c1				; >
+	.text $82, $c1				; [<]>
 	.text $45, $22, $31, $40		; =
 	.text $4d, $4d, $42, $53		; =
 	.text $15, $d2, $15			; R
@@ -284,12 +284,15 @@ c0ef:
 	.text $15, $a6, $15, $15		; GET
 	.text $15, $a7, $90			; IN
 	.text $35, $e3, $8f, $8f		; OUT
-	.text $8f, $34, $94, $a0, $a8		; RINT
-	.text $ad, $b1				; NL...
+	.text $8f, $34				; RINT
+	; TODO out of sync somewhere above here!
+	.text $94, $a0, $a8			; NL...
+	.text $ad, $b1				; ???
 	.text $bd, $c1, $cd, $e9, $ea, $eb, $78, $97		; ...UNIGRF!?...
 	.text $99, $d3, $df, $ec, $d0, $4b, $8f, $8f, $8f	; ...$PDLSB*E
-	.text $0a, $8f, $ad, $ad		; AVE
-	.text $8f, $f0, $9c			; EW
+	.text $0a, $8f				; ???
+	.text <CMD_NEW, <CMD_NEW, $8f		; [N]EW
+	.text $f0, $9c				; EW
 	.text $8f, $25				; O
 	.text $8f, $8f, $8f			; ET
 	.text $b2, $a4, $9c, $8f		; INK
@@ -466,16 +469,16 @@ c299:	sta $53			; ... into workspace
 c29b:	lda c1f8,x		; Get the LSB jump address
 c29e:	iny			; Increment the text pointer past the
                                 ; character just successfully interpreted
-c29f:	sta $52			; Dump the MSB jump address to workspace
-c2a1:	sty $3			; Update the interpreter pointer
-c2a3:	ldx $4			; Get the current workspace pointer
-c2a5:	jmp ($52)		; ... and jump
+c29f:		sta $52			; Dump the MSB jump address to workspace
+c2a1:		sty $3			; Update the interpreter pointer
+c2a3:		ldx $4			; Get the current workspace pointer
+c2a5:		jmp ($52)		; ... and jump
 
                                 ; END OF TABLE ACTION
 
-c2a8:	cmp #$fe		; Non-destructive failure ?
-c2aa:	beq c276		; ... yes, load workspace pointer and return
-c2ac:	brk			; ... no, error 174
+c2a8:		cmp #$fe		; Non-destructive failure ?
+c2aa:		beq c276		; ... yes, load workspace pointer and return
+c2ac:		brk			; ... no, error 174
 
 
 ; Execute the command 'NEW'
@@ -483,8 +486,8 @@ c2ac:	brk			; ... no, error 174
 ; Resets the print field length LSB variable '@' to the default of 8.
 ; Exits back to direct mode.
 
-c2ad:	jsr c4e4		; Perform the interpreter post test
-c2b0:	bne c2b6
+CMD_NEW:	jsr c4e4		; Perform the interpreter post test
+		bne c2b6
 
 
 ; 'Cold Start' routine - Text at $2900
@@ -493,8 +496,8 @@ c2b0:	bne c2b6
 ; Points the text pointer ?$12 at $2900 and performs a 'NEW'.
 
 start:
-c2b2:	lda #$29
-c2b4:	sta $12			; Set text pointer to page $29
+c2b2:		lda #$29
+c2b4:		sta $12			; Set text pointer to page $29
 
 
 ; 'Cold Start' routine - unspecified text Space
