@@ -362,7 +362,7 @@ c236:		iny			; Point to the next character in text
 		cmp #" "		; Is it <SPC>?
 		beq c236		; ... yes, skip to next character
 
-					; GET FIRST CHARACTER MATCH
+		; GET FIRST CHARACTER MATCH
 
 c23d:		sty $5e			; Save current interpreter index
 		sta $52			; Save character under interpretation
@@ -373,7 +373,7 @@ c241:		inx			; Point to next character in command table
 		cmp $52			; Same as character under interpretation?
 		bne c241		; ... no, try next initial letter
 
-					; MATCH THE REST OF THE COMMAND WORD
+		; MATCH THE REST OF THE COMMAND WORD
 
 c24b:		lda c0ef - 1,x		; Get index to rest-of-command-word table
 		tax			; This is now the new table pointer
@@ -392,8 +392,8 @@ c24f:		inx			; Point to the next character in the table
 		bpl c24b		; ... and try to match the next word in the
 					; command table
 
-					; SUCCESSFUL ABREVIATED MATCH - SKIP TO
-					; THE END OF THE COMMAND WORD IN THE TABLE
+		; SUCCESSFUL ABREVIATED MATCH - SKIP TO
+		; THE END OF THE COMMAND WORD IN THE TABLE
 
 c264:		inx			; Point to the next character in the table
 		lda c000 - 1,x		; and fetch it
@@ -401,13 +401,13 @@ c264:		inx			; Point to the next character in the table
 					; word's negative termination byte
 		iny			; Point to the next character under analysis
 
-			                ; Test for success or failure
+		; Test for success or failure
 
 c26b:		cmp #$fe		; reached the end of the command table ?
 		bcs c2aa		; ... yes, return or execute BRK as required
 
-					; GET THE COMMAND WORD'S JUMP ADDRESS INTO
-					; ZERO PAGE AND JUMP TO IT
+		; GET THE COMMAND WORD'S JUMP ADDRESS INTO
+		; ZERO PAGE AND JUMP TO IT
 
 c26f:		sta $53			; Termination byte is the MSB jump address
 		lda c0ef - 1,x		; Get the LSB jump address from the table
@@ -435,35 +435,35 @@ c279:	ldx #$e			; Point to '=' at c1eb
 ; Interpretes the single byte symbols at C1DD.
 ; Enter with X register pointing to the symbol table to be used.
 
-c27b:	ldy $3			; Get the interpreter pointer
-c27d:	dey
-c27e:	iny
-c27f:	lda ($5),y		; Get the next character from text
-c281:	cmp #$20		; Is it <spc> ?
-c283:	beq c27e		; ... yes, skip preceding spaces
-c285:	cmp c1dd,x		; Is it this single byte symbol ?
-c288:	beq c296		; ... yes, go fetch its jump address
-c28a:	sta $52			; ... no, save the character under analysis
-c28c:	inx			; Point to the next table symbol
-c28d:	lda c1dd,x		; ... and fetch it
-c290:	bmi c2a8		; ... a negative byte means the end of table
-                                ; termination byte has been reached
-c292:	cmp $52			; Does this symbol match the text ?
-c294:	bne c28c		; ... no, try the next symbol
+c27b:		ldy $3			; Get the interpreter pointer
+c27d:		dey
+c27e:		iny
+c27f:		lda ($5),y		; Get the next character from text
+c281:		cmp #$20		; Is it <spc> ?
+c283:		beq c27e		; ... yes, skip preceding spaces
+c285:		cmp c1dd,x		; Is it this single byte symbol ?
+c288:		beq c296		; ... yes, go fetch its jump address
+c28a:		sta $52			; ... no, save the character under analysis
+c28c:		inx			; Point to the next table symbol
+c28d:		lda c1dd,x		; ... and fetch it
+c290:		bmi c2a8		; ... a negative byte means the end of table
+					; termination byte has been reached
+c292:		cmp $52			; Does this symbol match the text ?
+c294:		bne c28c		; ... no, try the next symbol
 
-                                ; MATCHED SYMBOL - FETCH JUMP ADDRESS
+		; MATCHED SYMBOL - FETCH JUMP ADDRESS
 
-c296:	lda c212,x		; Get the MSB jump address
-c299:	sta $53			; ... into workspace
-c29b:	lda c1f8,x		; Get the LSB jump address
-c29e:	iny			; Increment the text pointer past the
-                                ; character just successfully interpreted
+c296:		lda c212,x		; Get the MSB jump address
+c299:		sta $53			; ... into workspace
+c29b:		lda c1f8,x		; Get the LSB jump address
+c29e:		iny			; Increment the text pointer past the
+					; character just successfully interpreted
 c29f:		sta $52			; Dump the MSB jump address to workspace
 c2a1:		sty $3			; Update the interpreter pointer
 c2a3:		ldx $4			; Get the current workspace pointer
 c2a5:		jmp ($52)		; ... and jump
 
-                                ; END OF TABLE ACTION
+		; END OF TABLE ACTION
 
 c2a8:		cmp #$fe		; Non-destructive failure ?
 c2aa:		beq c276		; ... yes, load workspace pointer and return
@@ -481,7 +481,7 @@ CMD_NEW:	jsr c4e4		; Perform the interpreter post test
 
 ; 'Cold Start' routine - Text at $2900
 ;
-; Comes from BREAK routine  at $FF94.
+; Comes from BREAK routine at $FF94.
 ; Points the text pointer ?$12 at $2900 and performs a 'NEW'.
 
 start:
@@ -506,7 +506,7 @@ c2c5:		sta ($d),y		; ..and dump the terminator
 c2c7:		iny			; Point to the third byte of text
 c2c8:		sty $d			; ..and set LSB TOP
 c2ca:		lda #$8			; Get the default print length
-c2cc:		sta WORKSP + $121		; ..and set LSB integer variable '@'
+c2cc:		sta WORKSP + $121	; ..and set LSB integer variable '@'
 
 
 ; Direct Command Handler
@@ -516,38 +516,38 @@ c2cc:		sta WORKSP + $121		; ..and set LSB integer variable '@'
 c2cf:		lda #$3e		; Get '>'
 c2d1:		cld
 c2d2:		jsr cd0f		; Print the contents of the accumulator and
-                                ; get a line of text terminated by <CR> from
-                                ; the keyboard into the $100 buffer
+					; get a line of text terminated by <CR> from
+					; the keyboard into the $100 buffer
 
-                                ; INITIALISE THE (5),Y TEXT POINTER TO THE
-                                ; START OF THE $100 BUFFER
+		; INITIALISE THE (5),Y TEXT POINTER TO THE
+		; START OF THE $100 BUFFER
 
 c2d5:		ldx #$1
 c2d7:		stx $6
 c2d9:		dex
 c2da:		stx $5
 
-                                ; CLEAR LINE NUMBER TO ZERO - DIRECT MODE
+		; CLEAR LINE NUMBER TO ZERO - DIRECT MODE
 
 c2dc:		stx $1			; Clear the MSB line number
 c2de:		stx $2			; Clear the LSB line number
 
-                                ; SET BRKVEC TO THE DEFAULT ROUTINE AT C9D8
+		; SET BRKVEC TO THE DEFAULT ROUTINE AT C9D8
 
 c2e0:		lda #<c9d8
 c2e2:		sta $202
 c2e5:		lda #>c9d8
 c2e7:		sta $203
 
-                                ; SET THE BASIC ERROR HANDLER TO THE
-                                ; DEFAULT TEXT AT C9E7
+		; SET THE BASIC ERROR HANDLER TO THE
+		; DEFAULT TEXT AT C9E7
 
 c2ea:		lda #<c9e7
 c2ec:		sta $10
 c2ee:		lda #>c9e7
 c2f0:		sta $11
 
-                                ; EXECUTE THE TEXT POINTED BTO BY (5),Y
+		; EXECUTE THE TEXT POINTED BTO BY (5),Y
 
 c2f2:		ldx #$ff
 c2f4:		txs			; Reset the stack poimter
@@ -559,26 +559,26 @@ c2fd:		sta $13			; Reset the GOSUB...RETURN stack pointer
 c2ff:		sta $14			; Reset the DO...UNTIL stack pointer
 c301:		ldx #$34
 
-                                ; CLEAR THE LABEL (@ to z) ADDRESS STACK
+		; CLEAR THE LABEL (@ to z) ADDRESS STACK
 
 c303:		sta VARSTORE,x
 c306:		dex
 c307:		bne c303
 
 c309:		jsr c434		; If the first non space character is
-                                ; alphabetic and the the subsequent
-                                ; is not (but is not '.')
+					; alphabetic and the the subsequent
+					; is not (but is not '.')
 c30c:		bcs c32f		; ... then interpret a simple integer variable
-                                ; definition
+					; definition
 
-                                ; CHECK FOR TEXT LINE ENTRY OR DELETION
+					; CHECK FOR TEXT LINE ENTRY OR DELETION
 
 c30e:		jsr c46a		; interpret a decimal string as a number
-                                ; into the w/s stack, and increment ?4
+				; into the w/s stack, and increment ?4
 c311:		bcc c316		; ... invalid number
 c313:		jmp cdc9		; Deal with line insertion and removal
 
-                                ; EXECUTE A DIRECT COMMAND AT $100
+				; EXECUTE A DIRECT COMMAND AT $100
 
 c316:		ldx #c07d - c000	; Set the interpreter table pointer to $C???
 c318:		jmp c233		; ... and interpret & execute the command
@@ -587,10 +587,10 @@ c318:		jmp c233		; ... and interpret & execute the command
 ; Execute the command 'THEN'
 
 c31b:		jsr c434		; If the first non space character is
-                                ; alphabetic and the the subsequent
-                                ; is not (but is not '.')
+					; alphabetic and the the subsequent
+					; is not (but is not '.')
 c31e:		bcs c32f		; ... then treat this as an integer variable
-                                ; assignment
+					; assignment
 c320:		ldx #c07f - c000	; Set the interpreter table pointer to $C???
 c322:		jmp c233		; ... and interpret & execute the command
 
@@ -598,15 +598,15 @@ c322:		jmp c233		; ... and interpret & execute the command
 ; Execute the command 'LET'
 
 c325:		jsr c434		; If the first non space character is
-                                ; alphabetic and the the subsequent
-                                ; is not (but is not '.')
+					; alphabetic and the the subsequent
+					; is not (but is not '.')
 c328:		bcs c32f		; ... then interpret a simple integer variable
 c32a:		ldx #$10		; Otherwise set the table pointer
 c32c:		jmp c27b		; ... and interpret a ?, ! or $ definition
 
-                                ; EXECUTE {simple integer variable} =, ? OR
+		; EXECUTE {simple integer variable} =, ? OR
 
-                                ; ! ASSIGNMENT
+		; ! ASSIGNMENT
 
 c32f:		ldx #$14		; Set table pointer to
 c331:		jmp c27b		; Search for & execute '=', '?' or '!'
@@ -616,7 +616,7 @@ c331:		jmp c27b		; Search for & execute '=', '?' or '!'
 
 c334:		sec
 c335:		ror $f			; Set bit 7 of the hex print flag to get
-                                ; the default decimal print mode
+					; the default decimal print mode
 c337:		jsr c372
 c33a:		ldx #c02e - c000	; Set the interpreter table pointer to $C???
 c33c:		jmp c233		; ... and interpret & execute '=', '?' or '!'
@@ -625,10 +625,10 @@ c33c:		jmp c233		; ... and interpret & execute '=', '?' or '!'
 ; Execute and Print an Arbitrarily Complex Expression
 
 c33f:		jsr c78b		; Evaluate an arbitrarily complex
-                                ; expression, followed by a single byte
-                                ; symbol, followed by '<', '=' or '>'
+					; expression, followed by a single byte
+					; symbol, followed by '<', '=' or '>'
 c342:		jsr c3cb		; Copy the last level of the w/s stack to
-                                ; $52(LSB)..$55(MSB) & increment w/s pointer
+					; $52(LSB)..$55(MSB) & increment w/s pointer
 c345:		lda $f			; Print in decimal ?
 c347:		bmi c36a		; ... yes, branch to decimal print routine
 
@@ -641,7 +641,7 @@ c347:		bmi c36a		; ... yes, branch to decimal print routine
 
 c349:		ldx #$0
 c34b:		stx $27			; Clear the negative flag used by the
-                                ; print routine at C5C8
+					; print routine at C5C8
 c34d:		ldy #$0			; Clear index to the 4-byte word
 c34f:		lda $52,y		; Get the current byte of the word
 c352:		pha			; Save a copy for upper nibble conversion
@@ -659,17 +659,17 @@ c360:		iny			; Point to the next byte of theword
 c361:		cpy #$4			; Done all $ bytes ?
 c363:		bcc c34f		; ... no, go for the next one
 c365:		jsr c5c8		; Print the digit stream suppressing leading
-                                ; zeros
+					; zeros
 c368:		bmi c337		; Branch ALWAYS to interpret the next item
-                                ; in the print stream
+					; in the print stream
 
 
 ; Decimal print routine
 
 c36a:		jsr c589		; Print the lowest level of the w/s stack as
-                                ; a signed decimal number in field size @
+					; a signed decimal number in field size @
 c36d:		bmi c337		; Branch ALWAYS to interpret the next item
-                                ; in the print stream
+					; in the print stream
 
 
 c36f:		jsr cd54		; Send <CR><LF> to OSWRCH
@@ -680,7 +680,7 @@ c374:		jmp c27b		; ... and interpret 'O' ??
 ; ??? Print routine ???
 
 c377:		jsr ca4c		; Increment COUNT and send the contents of
-                                ; the accumulator to OSWRCH
+					; the accumulator to OSWRCH
 c37a:		lda ($5),y
 c37c:		iny
 c37d:		cmp #$d
@@ -713,15 +713,15 @@ c3af:		jmp c337
 ; Execute the command 'LINK'
 
 c3b2:		jsr c3c8		; Evaluate an arbitrarily complex function
-                                ; to $52(LSB)..$55(MSB)
+					; to $52(LSB)..$55(MSB)
 c3b5:		jsr c4e4		; Do interpreter post-test
-c3b8:		lda WORKSP + $122		; Load accumulator with LSB integer 'A'
-c3bb:		ldx WORKSP + $139		; Load X register with LSB integer 'X'
-c3be:		ldy WORKSP + $13a		; Load Y register with LSB integer 'Y'
+c3b8:		lda WORKSP + $122	; Load accumulator with LSB integer 'A'
+c3bb:		ldx WORKSP + $139	; Load X register with LSB integer 'X'
+c3be:		ldy WORKSP + $13a	; Load Y register with LSB integer 'Y'
 c3c1:		jsr c2a5		; Indirect jump to ($52)
 c3c4:		cld			; Ensure binary mode after nasty user's prog
 c3c5:		jmp c55b		; Return to execute the next command whether
-                                ; by program execution or in direct mode
+					; by program execution or in direct mode
 
 
 ; Function Interpreter subroutine
@@ -734,7 +734,7 @@ c3c5:		jmp c55b		; Return to execute the next command whether
 ; The workspace stack pointer ?4 is NOT incremented.
 
 c3c8:		jsr c8bc		; Evaluate an arbitrarily complex numeric
-                                ; expression pointed to by (5),Y
+					; expression pointed to by (5),Y
 
 
 ; Copy Current Level of the Workspace Stack to $52..$55 subroutine
@@ -784,11 +784,11 @@ c3e4:		rts
 ; the workspace stack at level (?4-1).
 
 c3e5:		jsr c4e1		; Evaluate a numerical expression onto the
-                                ; w/s stack and do post-test.
+					; w/s stack and do post-test.
 c3e8:		jsr ca2f		; Assign value on the w/s stack to a variable
-                                ; number on the w/s stack
+					; number on the w/s stack
 c3eb:		jmp c55b		; Return to execute the next command whether
-                                ; by program execution or in direct mode
+					; by program execution or in direct mode
 
 
 ; Execute the command '!'
@@ -796,11 +796,11 @@ c3eb:		jmp c55b		; Return to execute the next command whether
 ; Sets pre-interpreted vector to an arbitrarily complex expression.
 
 c3ee:		jsr c8bc		; Evaluate an arbitrarily complex numeric
-                                ; expression pointed to by (5),Y
-                                ; which is the ! base address
+					; expression pointed to by (5),Y
+					; which is the ! base address
 c3f1:		jsr ce93		; Interpret an '=' sign and a numerical
-                                ; expression following, and copy the LSB
-                                ; to the base address on stack
+					; expression following, and copy the LSB
+					; to the base address on stack
 c3f4:		lda $26,x		; Get the second LSB from stack
 c3f6:		iny			; Point to the second address
 c3f7:		sta ($52),y		; ... and dump the second LSB
@@ -811,7 +811,7 @@ c3fe:		iny			; Point to the fourth address
 c3ff:		lda $44,x		; Get the fourth LSB from stack
 c401:		sta ($52),y		; ... and dump the fourth LSB
 c403:		jmp c55b		; Return to execute the next command whether
-                                ; by program execution or in direct mode
+					; by program execution or in direct mode
 
 
 ; Execute the command '?'
@@ -819,12 +819,12 @@ c403:		jmp c55b		; Return to execute the next command whether
 ; Sets pre-interpreted byte to an arbitrarily complex expression.
 
 c406:		jsr c8bc		; Evaluate an arbitrarily complex numeric
-                                ; expression pointed to by (5),Y
+					; expression pointed to by (5),Y
 c409:		jsr ce93		; Interpret an '=' sign and a numerical
-                                ; expression following, and copy the LSB
-                                ; to the base address on stack
+					; expression following, and copy the LSB
+					; to the base address on stack
 c40c:		jmp c55b		; Return to execute the next command whether
-                                ; by program execution or in direct mode
+					; by program execution or in direct mode
 
 
 ; Execute OS commands
@@ -842,11 +842,11 @@ c418:		iny			; Point to the next character of text
 c419:		inx			; Point to the next slot in the buffer
 c41a:		cmp #$d			; Was the last character <CR> ?
 c41c:		bne c411		; ... no, keep copying
-                                ; (defaults to $F8EF)
+					; (defaults to $F8EF)
 c41e:		jsr OSCLI		; ... yes, finished, so call OSCLI
 c421:		jmp c558		; Perform post test, check for <ESC> etc and
-                                ; return to execute the next command whether
-                                ; by program execution or in direct mode
+					; return to execute the next command whether
+					; by program execution or in direct mode
 
 
 ; Floating Point ROM Check subroutine
@@ -868,17 +868,17 @@ c433:		rts
 ; Reads the first non-space character pointed to by (5),Y where y=?3
 ; and tests it and the following character.
 ; 1st character: If it is alphabetic (@ to Z), the character number
-;                (where @=0, A=1 to Z=26) is stored in the LSB of the
-;                current level of the workspace stack, pointed to by ?4,
-;                and the second character is tested.
-;                However if it is not alphabetic, the routine is exited
-;                with Carry clear and the interpreter pointer Y=?3
-;                pointing to the second character.
+;		(where @=0, A=1 to Z=26) is stored in the LSB of the
+;		current level of the workspace stack, pointed to by ?4,
+;		and the second character is tested.
+;		However if it is not alphabetic, the routine is exited
+;		with Carry clear and the interpreter pointer Y=?3
+;		pointing to the second character.
 ; 2nd character: If it is not alphabetic and also not '.', the workspace
-;                pointer X=?4 is incremented before return with Carry set
-;                and the interpreter pointer Y=?3 pointing to this
-;                second character.
-;                Otherwise return with pointers as above but with Carry clear.
+;		pointer X=?4 is incremented before return with Carry set
+;		and the interpreter pointer Y=?3 pointing to this
+;		second character.
+;		Otherwise return with pointers as above but with Carry clear.
 
 c434:		ldy $3			; Get the interpreter pointer
 c436:		bpl c43b		; ... branch always
@@ -890,11 +890,11 @@ c43d:		cmp #$20		; If it's a space...
 c43f:		beq c438		; ... then skip to the next character
 c441:		cmp #$5b		; Test for valid alphabetic character
 c443:		bcs c463		; ... invalid
-c445:		sbc #$3f		; Convert to @=0, A=1,...to  Z=26
+c445:		sbc #$3f		; Convert to @=0, A=1,...to Z=26
 c447:		bcc c464		; ... invalid alphabetic character
 c449:		ldx $4			; Get the workspace pointer
 c44b:		sta $16,x		; Dump the first character on the LSB of
-                                ; the current workspace slot
+					; the current workspace slot
 c44d:		iny			; Point to the next character
 c44e:		lda ($5),y		; ... and fetch it
 c450:		cmp #$2e		; Is it '.' ?
@@ -924,8 +924,10 @@ c464:		rts
 
 c465:		jsr c434		; If next symbol is a <variable>, BRK
 c468:		bcs c424 + 1
-                                ; GET POSITIVE NUMBER
-                                ; (return with Carry clear if no number)
+
+		; GET POSITIVE NUMBER
+		; (return with Carry clear if no number)
+
 c46a:		ldx #$0
 c46c:		ldy $3
 c46e:		stx $52
