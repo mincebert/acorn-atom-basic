@@ -14,7 +14,7 @@ basbbc basbbc.labels: main.s65
 	@grep start basbbc.labels
 
 basatom.hex: basatom
-	od -A x -t x1 -t c basatom > basatom.hex
+	od -A x -t x1 -t a basatom > basatom.hex
 
 .PHONY: copy
 copy: bbc
