@@ -279,15 +279,39 @@ c0ef:
 	.text $15, $15, $02, $15, $15		; OUNT
 	.text $29, $15, $15			; BS
 	.text $28, $15, $15			; TR
-	.text $66, $15, $15, $15, $5b, $72, $15
-	.text $a6, $15, $15, $15, $a7, $90, $35, $e3, $8f, $8f, $8f, $34, $94, $a0, $a8, $ad
-	.text $b1, $bd, $c1, $cd, $e9, $ea, $eb, $78, $97, $99, $d3, $df, $ec, $d0, $4b, $8f
-	.text $8f, $8f, $0a, $8f, $ad, $ad, $8f, $f0, $9c, $8f, $25, $8f, $8f, $8f, $b2, $a4
-	.text $9c, $8f, $51, $99, $8f, $8f, $ed, $8f, $8f, $8f, $8f, $d2, $8f, $8f, $8f, $cd
-	.text $b3, $66, $8f, $8f, $8f, $8f, $81, $8f, $8f, $8f, $8f, $d2, $8f, $b8, $8f, $05
-	.text $ca, $c7, $8f, $8f, $8f, $ec, $8f, $8f, $75, $8f, $8f, $41, $8f, $8f, $57, $8f
-	.text $8f, $98, $d7, $8f, $8f, $e3, $db, $8f, $8f, $c5, $90, $8f, $8f, $b6, $8f, $8f
-	.text $8f, $8f, $e6, $8f, $47, $8f, $8f, $95, $ee, $06, $5c, $0f, $35
+	.text $66, $15, $15			; XT
+	.text $15, $5b, $72			; ET
+	.text $15, $a6, $15, $15		; GET
+	.text $15, $a7, $90			; IN
+	.text $35, $e3, $8f, $8f		; OUT
+	.text $8f, $34, $94, $a0, $a8		; RINT
+	.text $ad, $b1				; NL...
+	.text $bd, $c1, $cd, $e9, $ea, $eb, $78, $97		; ...UNIGRF!?...
+	.text $99, $d3, $df, $ec, $d0, $4b, $8f, $8f, $8f	; ...$PDLSB*E
+	.text $0a, $8f, $ad, $ad		; AVE
+	.text $8f, $f0, $9c			; EW
+	.text $8f, $25				; O
+	.text $8f, $8f, $8f			; ET
+	.text $b2, $a4, $9c, $8f		; INK
+	.text $51, $99, $8f, $8f		; IST
+	.text $ed, $8f, $8f, $8f		; OAD
+	.text $8f, $d2, $8f, $8f, $8f		; NTIL
+	.text $cd, $b3, $66, $8f		; EXT
+	.text $8f, $8f				; F
+	.text $8f, $81, $8f, $8f, $8f		; NPUT
+	.text $8f, $d2, $8f, $b8, $8f		; OSUB
+	.text $05, $ca, $c7, $8f		; OTO
+	.text $8f, $8f, $ec, $8f, $8f, $75	; ETURN
+	.text $8f, $8f, $41			; EM
+	.text $8f, $8f, $57			; UN
+	.text $8f, $8f, $98			; OR
+	.text $d7, $8f, $8f			; ND
+	.text $e3, $db, $8f, $8f		; GET
+	.text $c5, $90, $8f, $8f		; PUT
+	.text $b6, $8f, $8f			; TR
+	.text $8f, $8f, $e6, $8f, $47, $8f, $8f	; UT
+	.text $95, $ee				; ,
+	.text $06, $5c, $0f, $35		; ???
 
 
 ; Interpreter Single Byte Command Lookup Table
