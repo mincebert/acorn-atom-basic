@@ -156,34 +156,36 @@ BPTVEC=BBCBPUTV
 ; Any other value >=$80 is the MSB of the jump address (LSB is in the table
 ; at c0ee).
 
+cmd_table:
 		; operators
-c000:		.text "<=>", $fe
+cmd_00:		.text "<=>", $fe
 		; function interpreter
-c004:		.text "-+", $c8
+cmd_04:		.text "-+", $c8
 		; numerical assignments
-c007:		.text "#(!?RTLCAPEGBF", $f0
+cmd_07:		.text "#(!?RTLC"
+		.text "APEGBF", $f0
 		; FOR...
-c016:		.text "T", $ff
+cmd_16:		.text "T", $ff
 		;
-		.text "O", $cb
+cmd_18:		.text "O", $cb
 		; TO...
-c01a:		.text "S", $cb
+cmd_1a:		.text "S", $cb
 		.text "TEP", $cb
-c020:		.text "T", $c3
+cmd_20:		.text "T", $c3
 		.text "HEN", $c3
 		; check for valid string
-c026:		.text """", "$", $ce, $ce, $cc
+cmd_26:		.text """", "$", $ce, $ce, $cc
 		; INPUT...
-c02b:		.text "$"
+cmd_2b:		.text "$"
 		; numerical variable input
-c02c:		.text ",", $c5
-c02e:		.text "$&;", $0d, ",", $c3, $c5, $c2
-c036:		.text ">", $c7
+cmd_2c:		.text ",", $c5
+cmd_2e:		.text "$&;", $0d, ",", $c3, $c5, $c2
+cmd_36:		.text ">", $c7
 		.text "=", $c7, $c7, $c7
 		.text "=", $c7, $c7, $c8
 		.text "R", $c7, $c7
-c043:		.text "OA", $fe
-c046:		.text "$", $c7
+cmd_43:		.text "OA", $fe
+cmd_46:		.text "$", $c7
 		.text "H", $c9
 		.text "EN", $c9
 		.text "ND", $c7, $c9, $c9, $c9, $c9
@@ -198,8 +200,8 @@ c046:		.text "$", $c7
 		.text "IN", $cf
 		.text "OUT", $cf, $c3, $c3
 		.text "RINT", $c3
-c07d:		.text "NL"
-c07f:		.text "UNIGRF!?$PDLSB*E", $f0
+cmd_7d:		.text "NL"
+cmd_7f:		.text "UNIGRF!?$PDLSB*E", $f0
 		.text "AVE", $cf
 		.text "EW", >CMD_NEW
 		.text "O", $cc
@@ -233,14 +235,16 @@ c07f:		.text "UNIGRF!?$PDLSB*E", $f0
 ; used to index into this table and retrieve a new index into the c000 table
 ; for the following characters.
 
-c0ef:		; operators
-		.text $36, $3b, $3c, $c0
+off_table:
+		; operators
+off_00:		.text $36, $3b, $3c, $c0
 		; function interpreter
-		.text $3f, $06, $dc
+off_04:		.text $3f, $06, $dc
 		; numerical assignments
-		.text $50, $51, $52, $53, $54, $57, $4a, $5a, $5f, $62, $65, $68, $6b, $6f, $2e
+off_07:		.text $50, $51, $52, $53, $54, $57, $4a, $5a
+off_0f:		.text $5f, $62, $65, $68, $6b, $6f, $2e
 		; FOR...
-		.text $18, $ac				; T
+off_16:		.text $18, $ac				; T
 		;
 		.text $17, $81				; O
 		; TO...
@@ -367,7 +371,7 @@ c236:		iny			; Point to the next character in text
 c23d:		sty $5e			; Save current interpreter index
 		sta $52			; Save character under interpretation
 c241:		inx			; Point to next character in command table
-		lda c000 - 1,x		; ... and fetch it
+		lda cmd_00 - 1,x	; ... and fetch it
 		bmi c26b		; ... a negative byte indicates the end of
 					; the initial letter table
 		cmp $52			; Same as character under interpretation?
@@ -375,11 +379,11 @@ c241:		inx			; Point to next character in command table
 
 		; MATCH THE REST OF THE COMMAND WORD
 
-c24b:		lda c0ef - 1,x		; Get index to rest-of-command-word table
+c24b:		lda off_00 - 1,x	; Get index to rest-of-command-word table
 		tax			; This is now the new table pointer
 c24f:		inx			; Point to the next character in the table
 		iny			; Point to the next character under analysis
-		lda c000 - 1,x		; Fetch the next command table character
+		lda cmd_00 - 1,x	; Fetch the next command table character
 		bmi c26b		; ... a negative byte means a successful
 					; match of end of command table
 		cmp ($5),y		; Same as character under interpretation?
@@ -396,7 +400,7 @@ c24f:		inx			; Point to the next character in the table
 		; THE END OF THE COMMAND WORD IN THE TABLE
 
 c264:		inx			; Point to the next character in the table
-		lda c000 - 1,x		; and fetch it
+		lda cmd_00 - 1,x	; and fetch it
 		bpl c264		; Keep incrementing to reach the command
 					; word's negative termination byte
 		iny			; Point to the next character under analysis
@@ -410,7 +414,7 @@ c26b:		cmp #$fe		; reached the end of the command table ?
 		; ZERO PAGE AND JUMP TO IT
 
 c26f:		sta $53			; Termination byte is the MSB jump address
-		lda c0ef - 1,x		; Get the LSB jump address from the table
+		lda off_00 - 1,x	; Get the LSB jump address from the table
 		bcc c29f		; Dump it to $52, update $3 and $4 and
 					; jump to the command address now in ($52)
 
@@ -580,7 +584,7 @@ c313:		jmp cdc9		; Deal with line insertion and removal
 
 				; EXECUTE A DIRECT COMMAND AT $100
 
-c316:		ldx #c07d - c000	; Set the interpreter table pointer to $C???
+c316:		ldx #cmd_7d - cmd_table	; Set the interpreter table pointer to $C???
 c318:		jmp c233		; ... and interpret & execute the command
 
 
@@ -591,7 +595,7 @@ c31b:		jsr c434		; If the first non space character is
 					; is not (but is not '.')
 c31e:		bcs c32f		; ... then treat this as an integer variable
 					; assignment
-c320:		ldx #c07f - c000	; Set the interpreter table pointer to $C???
+c320:		ldx #cmd_7f - cmd_table	; Set the interpreter table pointer to $C???
 c322:		jmp c233		; ... and interpret & execute the command
 
 
@@ -618,7 +622,7 @@ c334:		sec
 c335:		ror $f			; Set bit 7 of the hex print flag to get
 					; the default decimal print mode
 c337:		jsr c372
-c33a:		ldx #c02e - c000	; Set the interpreter table pointer to $C???
+c33a:		ldx #cmd_2e - cmd_table	; Set the interpreter table pointer to $C???
 c33c:		jmp c233		; ... and interpret & execute '=', '?' or '!'
 
 
@@ -1120,7 +1124,7 @@ c569:		dex
 c56a:		stx $4
 c56c:		lda $16,x
 c56e:		beq c575
-c570:		ldx #c020 - c000
+c570:		ldx #cmd_20 - cmd_table
 c572:		jmp c233
 
 
@@ -1371,7 +1375,7 @@ c70b:		rts
 ; Used by IF and UNTIL commands.
 
 c70c:		jsr c72c
-c70f:		ldx #c043 - c000
+c70f:		ldx #cmd_43 - cmd_table
 c711:		jmp c233
 
 
@@ -1392,7 +1396,7 @@ c725:		lda $14,x
 c727:		ora $15,x
 c729:		jmp c71b
 
-c72c:		ldx #c046 - c000
+c72c:		ldx #cmd_46 - cmd_table
 c72e:		jmp c233
 
 
@@ -1418,7 +1422,7 @@ c751:		beq c761
 
 
 c753:		jsr c78b
-c756:		ldx #c000 - c000
+c756:		ldx #cmd_00 - cmd_table
 c758:		jmp c233
 
 
@@ -1677,7 +1681,7 @@ c8b9:		jmp c80e
 ; the last character in the string interpreted.
 ; The Workspace Stack pointer ?4 is incremented.
 
-c8bc:		ldx #c004 - c000
+c8bc:		ldx #cmd_04 - cmd_table
 c8be:		jmp c233
 
 
@@ -1738,7 +1742,7 @@ c8f7:		rts
 
 c8f8:		jsr c46a
 c8fb:		bcs c8f7
-c8fd:		ldx #c007 - c000
+c8fd:		ldx #cmd_07 - cmd_table
 c8ff:		jmp c233
 
 
@@ -2116,7 +2120,7 @@ cb71:		sta WORKSP + $061,y
 cb74:		sta WORKSP + $056,y
 cb77:		lda #$1
 cb79:		sta WORKSP + $04b,y
-cb7c:		ldx #c016 - c000
+cb7c:		ldx #cmd_16 - cmd_table
 cb7e:		jmp c233
 
 
@@ -2134,7 +2138,7 @@ cb93:		lda $34,x
 cb95:		sta WORKSP + $08d,y
 cb98:		lda $43,x
 cb9a:		sta WORKSP + $098,y
-cb9d:		ldx #c01a - c000
+cb9d:		ldx #cmd_1a - cmd_table
 cb9f:		jmp c233
 
 
@@ -2284,7 +2288,7 @@ cc80:		rts
 cc81:		jsr c372
 cc84:		jsr c434
 cc87:		bcs cc8e
-cc89:		ldx #c02b - c000
+cc89:		ldx #cmd_2b - cmd_table
 cc8b:		jmp c233
 
 
@@ -2310,7 +2314,7 @@ ccab:		pla
 ccac:		sta $6
 ccae:		pla
 ccaf:		sta $5
-ccb1:		ldx #c02c - c000
+ccb1:		ldx #cmd_2c - cmd_table
 ccb3:		jmp c233
 
 
@@ -2673,7 +2677,7 @@ ceae:		jsr c279
 ; If successful, returns with (5),?3 pointimg to the character following,
 ; otherwise executes BRK.
 
-ceb1:		ldx #c026 - c000
+ceb1:		ldx #cmd_26 - cmd_table
 ceb3:		jmp c233
 
 
