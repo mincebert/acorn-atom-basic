@@ -172,7 +172,7 @@ cmd_18:		.text "O", $cb
 cmd_1a:		.text "S", $cb
 		.text "TEP", $cb
 cmd_20:		.text "T", $c3
-		.text "HEN", $c3
+cmd_22:		.text "HEN", $c3
 		; check for valid string
 cmd_26:		.text """", "$", $ce, $ce, $cc
 		; INPUT...
@@ -180,8 +180,9 @@ cmd_2b:		.text "$"
 		; numerical variable input
 cmd_2c:		.text ",", $c5
 cmd_2e:		.text "$&;", $0d, ",", $c3, $c5, $c2
-cmd_noteq:	.text ">", $c7
-cmd_38:		.text "=", $c7, $c7, $c7
+cmd_noteq:	.text ">", >do_noteq
+cmd_lteq:	.text "=", >do_lteq, $c7
+cmd_lt:		.text >do_eq
 cmd_3c:		.text "=", $c7, $c7, $c8
 cmd_40:		.text "R", $c7, $c7
 cmd_43:		.text "OA", $fe
@@ -203,7 +204,7 @@ cmd_78:		.text "RINT", $c3
 cmd_7d:		.text "NL"
 cmd_7f:		.text "UNIGRF!?$PDLSB*E", $f0
 		.text "AVE", $cf
-		.text "EW", >CMD_NEW
+		.text "EW", >do_new
 		.text "O", $cc
 		.text "ET", $c3
 		.text "INK", $c3
@@ -237,7 +238,7 @@ cmd_7f:		.text "UNIGRF!?$PDLSB*E", $f0
 
 off_table:
 		; operators
-off_00:		.text cmd_noteq - cmd_table, $3b, $3c, $c0
+off_00:		.text cmd_noteq - cmd_table, cmd_lt - cmd_table, $3c, $c0
 		; function interpreter
 off_04:		.text $3f, $06, $dc
 		; numerical assignments
@@ -260,7 +261,10 @@ off_2b:		.text $2a				; $
 		; numerical variable input
 off_2c:		.text $b7, $58				; ,
 off_2e:		.text $76, $77, $34, $34, $7c, $3f, $4a, $78	; $&;<CR>,
-off_36:		.text $38, $6d, $3a, $64, $74, $5b, $3e, $7b
+off_36:		.text cmd_lteq - cmd_table, <do_noteq
+off_38:		.text $3a, <do_lteq, $74
+off_3b:		.text <do_eq
+off_3c:		.text $3e, $7b
 		.text $82, $c1				; [<]>
 		.text $45, $22, $31, $40		; =
 		.text $4d, $4d, $42, $53		; =
@@ -287,7 +291,7 @@ off_36:		.text $38, $6d, $3a, $64, $74, $5b, $3e, $7b
 		.text $bd, $c1, $cd, $e9, $ea, $eb, $78, $97		; ...UNIGRF!?...
 		.text $99, $d3, $df, $ec, $d0, $4b, $8f, $8f, $8f	; ...$PDLSB*E
 		.text $0a, $8f				; ???
-		.text <CMD_NEW, <CMD_NEW, $8f		; [N]EW
+		.text <do_new, <do_new, $8f		; [N]EW
 		.text $f0, $9c				; EW
 		.text $8f, $25				; O
 		.text $8f, $8f, $8f			; ET
@@ -479,7 +483,7 @@ c2ac:		BRK			; ... no, error 174
 ; Resets the print field length LSB variable '@' to the default of 8.
 ; Exits back to direct mode.
 
-CMD_NEW:	JSR c4e4		; Perform the interpreter post test
+do_new:		JSR c4e4		; Perform the interpreter post test
 		BNE c2b6
 
 
@@ -1428,7 +1432,7 @@ c758:		JMP c233
 
 ; Test <expression> = <expression>
 
-c75b:		JSR c6da
+do_eq:		JSR c6da
 c75e:		BNE c761
 c760:		INY
 c761:		STY $15,X
@@ -1437,7 +1441,7 @@ c763:		RTS
 
 ; Test <expression> <= <expression>
 
-c764:		JSR c6da
+do_lteq:	JSR c6da
 c767:		BEQ c760
 c769:		BCC c760
 c76b:		BCS c761
@@ -1445,7 +1449,7 @@ c76b:		BCS c761
 
 ; Test <expression> <> <expression>
 
-c76d:		JSR c6da
+do_noteq:	JSR c6da
 c770:		BNE c760
 c772:		BEQ c761
 
