@@ -180,26 +180,26 @@ cmd_2b:		.text "$"
 		; numerical variable input
 cmd_2c:		.text ",", $c5
 cmd_2e:		.text "$&;", $0d, ",", $c3, $c5, $c2
-cmd_36:		.text ">", $c7
-		.text "=", $c7, $c7, $c7
-		.text "=", $c7, $c7, $c8
-		.text "R", $c7, $c7
+cmd_noteq:	.text ">", $c7
+cmd_38:		.text "=", $c7, $c7, $c7
+cmd_3c:		.text "=", $c7, $c7, $c8
+cmd_40:		.text "R", $c7, $c7
 cmd_43:		.text "OA", $fe
 cmd_46:		.text "$", $c7
-		.text "H", $c9
-		.text "EN", $c9
-		.text "ND", $c7, $c9, $c9, $c9, $c9
-		.text "ND", $c9
-		.text "OP", $c9
-		.text "OUNT", $c9
-		.text "BS", $c9
-		.text "TR", $cf
-		.text "XT", $cf
-		.text "ET", $cf
-		.text "GET", $cf
-		.text "IN", $cf
-		.text "OUT", $cf, $c3, $c3
-		.text "RINT", $c3
+cmd_48:		.text "H", $c9
+cmd_4a:		.text "EN", $c9
+cmd_4d:		.text "ND", $c7, $c9, $c9, $c9, $c9
+cmd_54:		.text "ND", $c9
+cmd_57:		.text "OP", $c9
+cmd_5a:		.text "OUNT", $c9
+cmd_5f:		.text "BS", $c9
+cmd_62:		.text "TR", $cf
+cmd_65:		.text "XT", $cf
+cmd_68:		.text "ET", $cf
+cmd_6b:		.text "GET", $cf
+cmd_6f:		.text "IN", $cf
+cmd_72:		.text "OUT", $cf, $c3, $c3
+cmd_78:		.text "RINT", $c3
 cmd_7d:		.text "NL"
 cmd_7f:		.text "UNIGRF!?$PDLSB*E", $f0
 		.text "AVE", $cf
@@ -237,7 +237,7 @@ cmd_7f:		.text "UNIGRF!?$PDLSB*E", $f0
 
 off_table:
 		; operators
-off_00:		.text $36, $3b, $3c, $c0
+off_00:		.text cmd_noteq - cmd_table, $3b, $3c, $c0
 		; function interpreter
 off_04:		.text $3f, $06, $dc
 		; numerical assignments
@@ -246,21 +246,21 @@ off_0f:		.text $5f, $62, $65, $68, $6b, $6f, $2e
 		; FOR...
 off_16:		.text $18, $ac				; T
 		;
-		.text $17, $81				; O
+off_18:		.text $17, $81				; O
 		; TO...
-		.text $1c, $be				; S
+off_1a:		.text $1c, $be				; S
 		;
-		.text $17, $17, $17, $a2		; TEP
-		.text $22, $1b				; T
-		.text $17, $17, $17, $1b		; HEN
+off_1c:		.text $17, $17, $17, $a2		; TEP
+off_20:		.text $22, $1b				; T
+off_22:		.text $17, $17, $17, $1b		; HEN
 		; check for valid string
-		.text $29, $28, $b6, $bf, $b6		; "$
+off_26:		.text $29, $28, $b6, $bf, $b6		; "$
 		; INPUT...
-		.text $2a				; $
+off_2b:		.text $2a				; $
 		; numerical variable input
-		.text $b7, $58				; ,
-		.text $76, $77, $34, $34, $7c, $3f, $4a, $78	; $&;<CR>,
-		.text $38, $6d, $3a, $64, $74, $5b, $3e, $7b
+off_2c:		.text $b7, $58				; ,
+off_2e:		.text $76, $77, $34, $34, $7c, $3f, $4a, $78	; $&;<CR>,
+off_36:		.text $38, $6d, $3a, $64, $74, $5b, $3e, $7b
 		.text $82, $c1				; [<]>
 		.text $45, $22, $31, $40		; =
 		.text $4d, $4d, $42, $53		; =
@@ -366,29 +366,29 @@ c236:		iny			; Point to the next character in text
 		cmp #" "		; Is it <SPC>?
 		beq c236		; ... yes, skip to next character
 
-		; GET FIRST CHARACTER MATCH
+			; GET FIRST CHARACTER MATCH
 
 c23d:		sty $5e			; Save current interpreter index
 		sta $52			; Save character under interpretation
 c241:		inx			; Point to next character in command table
-		lda cmd_00 - 1,x	; ... and fetch it
+		lda cmd_table - 1,x	; ... and fetch it
 		bmi c26b		; ... a negative byte indicates the end of
 					; the initial letter table
 		cmp $52			; Same as character under interpretation?
 		bne c241		; ... no, try next initial letter
 
-		; MATCH THE REST OF THE COMMAND WORD
+			; MATCH THE REST OF THE COMMAND WORD
 
-c24b:		lda off_00 - 1,x	; Get index to rest-of-command-word table
+c24b:		lda off_table - 1,x	; Get index to rest-of-command-word table
 		tax			; This is now the new table pointer
 c24f:		inx			; Point to the next character in the table
 		iny			; Point to the next character under analysis
-		lda cmd_00 - 1,x	; Fetch the next command table character
+		lda cmd_table - 1,x	; Fetch the next command table character
 		bmi c26b		; ... a negative byte means a successful
 					; match of end of command table
 		cmp ($5),y		; Same as character under interpretation?
 		beq c24f		; ... yes, now try to match the next character
-		lda ($5),Y		; ... no, get the failed character under
+		lda ($5),y		; ... no, get the failed character under
 					; interpretation
 		cmp #"."		; Is it '.' indicating an abbreviation?
 		beq c264		; ... yes, so it's a successful match
@@ -396,25 +396,25 @@ c24f:		inx			; Point to the next character in the table
 		bpl c24b		; ... and try to match the next word in the
 					; command table
 
-		; SUCCESSFUL ABREVIATED MATCH - SKIP TO
-		; THE END OF THE COMMAND WORD IN THE TABLE
+			; SUCCESSFUL ABREVIATED MATCH - SKIP TO
+			; THE END OF THE COMMAND WORD IN THE TABLE
 
 c264:		inx			; Point to the next character in the table
-		lda cmd_00 - 1,x	; and fetch it
+		lda cmd_table - 1,x	; and fetch it
 		bpl c264		; Keep incrementing to reach the command
 					; word's negative termination byte
 		iny			; Point to the next character under analysis
 
-		; Test for success or failure
+			; Test for success or failure
 
 c26b:		cmp #$fe		; reached the end of the command table ?
 		bcs c2aa		; ... yes, return or execute BRK as required
 
-		; GET THE COMMAND WORD'S JUMP ADDRESS INTO
-		; ZERO PAGE AND JUMP TO IT
+			; GET THE COMMAND WORD'S JUMP ADDRESS INTO
+			; ZERO PAGE AND JUMP TO IT
 
 c26f:		sta $53			; Termination byte is the MSB jump address
-		lda off_00 - 1,x	; Get the LSB jump address from the table
+		lda off_table - 1,x	; Get the LSB jump address from the table
 		bcc c29f		; Dump it to $52, update $3 and $4 and
 					; jump to the command address now in ($52)
 
