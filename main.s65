@@ -221,11 +221,12 @@ cmd_top:	.text "OP", >do_top		; [T]OP
 cmd_count:	.text "OUNT", >do_count		; [C]OUNT
 cmd_abs:	.text "BS", >do_abs		; [A]BS
 cmd_ptr:	.text "TR", >do_ptr		; [P]TR
-cmd_65:		.text "XT", $cf
-cmd_68:		.text "ET", $cf
-cmd_6b:		.text "GET", $cf
-cmd_6f:		.text "IN", $cf
-cmd_72:		.text "OUT", $cf, $c3, $c3
+cmd_ext:	.text "XT", >do_ext		; [E]XT
+cmd_get:	.text "ET", >do_get		; [G]ET
+cmd_bget:	.text "GET", >do_bget		; [B]GET
+cmd_fin:	.text "IN", >do_fin		; [F]IN
+cmd_fout:	.text "OUT", >do_fout		; [F]OUT
+		.text $c3, $c3
 cmd_78:		.text "RINT", $c3
 cmd_7d:		.text "NL"
 cmd_7f:		.text "UNIGRF!?$PDLSB*E", $f0
@@ -283,10 +284,10 @@ off_07:		.text cmd_hash - cmd_table		; #
 		.text cmd_count - cmd_table		; C
 off_0f:		.text cmd_abs - cmd_table		; A
 		.text cmd_ptr - cmd_table		; P
-		.text $65
-		.text $68
-		.text $6b
-		.text $6f
+		.text cmd_ext - cmd_table		; E
+		.text cmd_get - cmd_table		; G
+		.text cmd_bget - cmd_table		; B
+		.text cmd_fin - cmd_table		; F
 		.text $2e
 		; FOR...
 off_16:		.text $18, $ac				; T
@@ -339,12 +340,24 @@ off_4d:		.text $45, $45, $14			; $
 		.text cmd_unk - cmd_table		; [P]TR
 		.text cmd_unk - cmd_table
 		.text <do_ptr
-off_66:		.text $15, $15			; BS
-off_67:		.text $28, $15, $15			; TR
-off_6a:		.text $66, $15, $15			; XT
-off_6d:		.text $15, $5b, $72			; ET
-off_70:		.text $15, $a6, $15, $15		; GET
-off_74:		.text $15, $a7, $90			; IN
+		.text cmd_unk - cmd_table		; [E]XT
+		.text cmd_unk - cmd_table
+		.text <do_ext
+		.text cmd_unk - cmd_table		; [G]ET
+		.text cmd_unk - cmd_table
+		.text <do_get
+		.text cmd_unk - cmd_table		; [B]GET
+		.text cmd_unk - cmd_table
+		.text cmd_unk - cmd_table
+		.text <do_bget
+		.text cmd_fout - cmd_table		; [F]IN
+		.text cmd_unk - cmd_table
+		.text <do_fin
+		.text cmd_unk - cmd_table		; [F]OUT
+		.text cmd_unk - cmd_table
+		.text cmd_unk - cmd_table
+		.text <do_fout
+		.text $90				; IN
 off_77:		.text $35, $e3, $8f, $8f		; OUT
 off_7b:		.text $8f, $34				; RINT
 		; TODO out of sync somewhere above here!
@@ -2835,11 +2848,9 @@ cf22:		JSR OSSAVE
 cf25:		JMP c55b
 
 
-; Execute the Command 'PTR'
-;
-; unclear how the SEC at cf28 could be used
+; Execute the Commands 'EXT' and 'PTR'
 
-cf28:		SEC
+do_ext:		SEC
 do_ptr:		LDA #$0
 cf2b:		ROL A
 cf2c:		PHA
@@ -2876,7 +2887,7 @@ cf58:		JMP c55b
 ; Reads 1 byte from OSBGET into the workspace stack and sets the other
 ; 3 bytes to zero.
 
-cf5b:		JSR cf3e
+do_bget:	JSR cf3e
 cf5e:		STY $52
 cf60:		JSR OSBGET
 cf63:		JMP c97c
@@ -2886,7 +2897,7 @@ cf63:		JMP c97c
 ;
 ; Reads 4 bytes from OSBGET into the workspace stack.
 
-cf66:		JSR cf5b
+do_get:		JSR do_bget
 cf69:		LDY $52
 cf6b:		JSR OSBGET
 cf6e:		STA $24,X
@@ -2912,7 +2923,7 @@ cf8f:		JSR cf7b
 cf92:		JMP c55b
 
 
-; Execute 'PUT' subroutine
+; Execute 'PUT', 'FIN' and 'FOUT' subroutines
 
 cf95:		JSR cf7b
 cf98:		LDX #$1
@@ -2922,8 +2933,8 @@ cf9f:		INX
 cfa0:		CPX #$4
 cfa2:		BCC cf9a
 cfa4:		BCS cf92
-cfa6:		SEC
-cfa7:		PHP
+do_fin:		SEC
+do_fout:	PHP
 cfa8:		JSR ceb1
 cfab:		LDX #$52
 cfad:		PLP
