@@ -167,7 +167,14 @@ cmd_04:		.text "-"
 		.text "+"
 cmd_fnp:	.text >do_fnp
 		; numerical assignments
-cmd_07:		.text "#(!?RTLC"
+cmd_07:		.text "#"
+		.text "("
+		.text "!"
+		.text "?"
+		.text "R"
+		.text "T"
+		.text "L"
+		.text "C"
 		.text "APEGBF", $f0
 		; FOR...
 cmd_16:		.text "T", $ff
@@ -197,7 +204,8 @@ cmd_43:		.text "OA", $fe
 cmd_46:		.text "$", $c7
 cmd_48:		.text "H", $c9
 cmd_4a:		.text "EN", $c9
-cmd_4d:		.text "ND", $c7, $c9, $c9, $c9, $c9
+cmd_4d:		.text "ND", $c7
+cmd_numhash:	.text $c9, $c9, $c9, $c9
 cmd_54:		.text "ND", $c9
 cmd_57:		.text "OP", $c9
 cmd_5a:		.text "OUNT", $c9
@@ -255,7 +263,14 @@ off_04:		.text cmd_fnn - cmd_table		; fn -
 		.text cmd_fnp - cmd_table		; fn +
 		.text <do_fnp
 		; numerical assignments
-off_07:		.text $50, $51, $52, $53, $54, $57, $4a, $5a
+off_07:		.text $50				; #
+		.text $51				; (
+		.text $52				; !
+		.text $53				; ?
+		.text $54				; R
+		.text $57				; T
+		.text $4a				; L
+		.text $5a				; C
 off_0f:		.text $5f, $62, $65, $68, $6b, $6f, $2e
 		; FOR...
 off_16:		.text $18, $ac				; T
@@ -281,55 +296,55 @@ off_eq:		.text <do_eq				; [=]
 off_ge:		.text cmd_gt - cmd_table, <do_ge	; [>]=
 off_gt:		.text <do_gt				; [>]
 off_fnn:	.text <do_fnn				; fn -
-		.text $45, $22, $31, $40		; =
-		.text $4d, $4d, $42, $53		; =
-		.text $15, $d2, $15			; R
-		.text $15, $bd, $45			; OA
-		.text $45, $14				; $
-		.text $0a, $44				; H
-		.text $5f, $4c, $15			; EN
-		.text $15, $86, $15, $15, $73, $48	; ND
-		.text $15, $15				; ND
-		.text $15, $7A				; OP
-		.text $15, $15, $02, $15, $15		; OUNT
-		.text $29, $15, $15			; BS
-		.text $28, $15, $15			; TR
-		.text $66, $15, $15			; XT
-		.text $15, $5b, $72			; ET
-		.text $15, $a6, $15, $15		; GET
-		.text $15, $a7, $90			; IN
-		.text $35, $e3, $8f, $8f		; OUT
-		.text $8f, $34				; RINT
+off_40:		.text $45, $22, $31, $40		; =
+off_44:		.text $4d, $4d, $42, $53		; =
+off_48:		.text $15, $d2, $15			; R
+off_4b:		.text $15, $bd, $45			; OA
+off_4e:		.text $45, $14				; $
+off_50:		.text $0a, $44				; H
+off_52:		.text $5f, $4c, $15			; EN
+off_55:		.text $15, $86, $15, $15, $73, $48	; ND
+off_5b:		.text $15, $15				; ND
+off_5d:		.text $15, $7A				; OP
+off_5f:		.text $15, $15, $02, $15, $15		; OUNT
+off_64:		.text $29, $15, $15			; BS
+off_67:		.text $28, $15, $15			; TR
+off_6a:		.text $66, $15, $15			; XT
+off_6d:		.text $15, $5b, $72			; ET
+off_70:		.text $15, $a6, $15, $15		; GET
+off_74:		.text $15, $a7, $90			; IN
+off_77:		.text $35, $e3, $8f, $8f		; OUT
+off_7b:		.text $8f, $34				; RINT
 		; TODO out of sync somewhere above here!
-		.text $94, $a0, $a8			; NL...
-		.text $ad, $b1				; ???
-		.text $bd, $c1, $cd, $e9, $ea, $eb, $78, $97		; ...UNIGRF!?...
-		.text $99, $d3, $df, $ec, $d0, $4b, $8f, $8f, $8f	; ...$PDLSB*E
-		.text $0a, $8f				; ???
-		.text <do_new, <do_new, $8f		; [N]EW
-		.text $f0, $9c				; EW
-		.text $8f, $25				; O
-		.text $8f, $8f, $8f			; ET
-		.text $b2, $a4, $9c, $8f		; INK
-		.text $51, $99, $8f, $8f		; IST
-		.text $ed, $8f, $8f, $8f		; OAD
-		.text $8f, $d2, $8f, $8f, $8f		; NTIL
-		.text $cd, $b3, $66, $8f		; EXT
-		.text $8f, $8f				; F
-		.text $8f, $81, $8f, $8f, $8f		; NPUT
-		.text $8f, $d2, $8f, $b8, $8f		; OSUB
-		.text $05, $ca, $c7, $8f		; OTO
-		.text $8f, $8f, $ec, $8f, $8f, $75	; ETURN
-		.text $8f, $8f, $41			; EM
-		.text $8f, $8f, $57			; UN
-		.text $8f, $8f, $98			; OR
-		.text $d7, $8f, $8f			; ND
-		.text $e3, $db, $8f, $8f		; GET
-		.text $c5, $90, $8f, $8f		; PUT
-		.text $b6, $8f, $8f			; TR
-		.text $8f, $8f, $e6, $8f, $47, $8f, $8f	; UT
-		.text $95, $ee				; ,
-		.text $06, $5c, $0f, $35		; ???
+off_7d:		.text $94, $a0, $a8			; NL...
+off_80:		.text $ad, $b1				; ???
+off_82:		.text $bd, $c1, $cd, $e9, $ea, $eb, $78, $97		; ...UNIGRF!?...
+off_8a:		.text $99, $d3, $df, $ec, $d0, $4b, $8f, $8f, $8f	; ...$PDLSB*E
+off_93:		.text $0a, $8f				; ???
+off_95:		.text <do_new, <do_new, $8f		; [N]EW
+off_98:		.text $f0, $9c				; EW
+off_9a:		.text $8f, $25				; O
+off_9c:		.text $8f, $8f, $8f			; ET
+off_9f:		.text $b2, $a4, $9c, $8f		; INK
+off_a3:		.text $51, $99, $8f, $8f		; IST
+off_a7:		.text $ed, $8f, $8f, $8f		; OAD
+off_ab:		.text $8f, $d2, $8f, $8f, $8f		; NTIL
+off_b0:		.text $cd, $b3, $66, $8f		; EXT
+off_b4:		.text $8f, $8f				; F
+off_b6:		.text $8f, $81, $8f, $8f, $8f		; NPUT
+off_bb:		.text $8f, $d2, $8f, $b8, $8f		; OSUB
+off_c0:		.text $05, $ca, $c7, $8f		; OTO
+off_c4:		.text $8f, $8f, $ec, $8f, $8f, $75	; ETURN
+off_ca:		.text $8f, $8f, $41			; EM
+off_cd:		.text $8f, $8f, $57			; UN
+off_d0:		.text $8f, $8f, $98			; OR
+off_d3:		.text $d7, $8f, $8f			; ND
+off_d6:		.text $e3, $db, $8f, $8f		; GET
+off_da:		.text $c5, $90, $8f, $8f		; PUT
+off_de:		.text $b6, $8f, $8f			; TR
+off_e1:		.text $8f, $8f, $e6, $8f, $47, $8f, $8f	; UT
+off_e8:		.text $95, $ee				; ,
+off_ea:		.text $06, $5c, $0f, $35		; ???
 
 
 ; Interpreter Single Byte Command Lookup Table
