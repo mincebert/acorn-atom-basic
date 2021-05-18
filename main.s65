@@ -175,7 +175,12 @@ cmd_07:		.text "#"
 		.text "T"
 		.text "L"
 		.text "C"
-		.text "APEGBF"
+		.text "A"
+		.text "P"
+		.text "E"
+		.text "G"
+		.text "B"
+		.text "F"
 		; error?
 cmd_unk:	.text $f0
 		; FOR...
@@ -204,7 +209,7 @@ cmd_fnn:	.text >do_fnn
 cmd_40:		.text "R", $c7, $c7
 cmd_43:		.text "OA", $fe
 cmd_46:		.text "$", $c7
-cmd_48:		.text "H", $c9
+cmd_48:		.text "H", >do_ch		; [C]H
 cmd_len:	.text "EN", $c9			; num [L]EN
 cmd_4d:		.text "ND", $c7
 cmd_hash:	.text >do_hash			; [#]
@@ -213,9 +218,9 @@ cmd_pling:	.text >do_pling			; [!]
 cmd_query:	.text >do_query			; [?]
 cmd_rnd:	.text "ND", >do_rnd		; [R]ND
 cmd_top:	.text "OP", >do_top		; [T]OP
-cmd_count:	.text "OUNT", $c9
-cmd_5f:		.text "BS", $c9
-cmd_62:		.text "TR", $cf
+cmd_count:	.text "OUNT", >do_count		; [C]OUNT
+cmd_abs:	.text "BS", >do_abs		; [A]BS
+cmd_ptr:	.text "TR", >do_ptr		; [P]TR
 cmd_65:		.text "XT", $cf
 cmd_68:		.text "ET", $cf
 cmd_6b:		.text "GET", $cf
@@ -276,7 +281,13 @@ off_07:		.text cmd_hash - cmd_table		; #
 		.text cmd_top - cmd_table		; T
 		.text cmd_len - cmd_table		; L
 		.text cmd_count - cmd_table		; C
-off_0f:		.text $5f, $62, $65, $68, $6b, $6f, $2e
+off_0f:		.text cmd_abs - cmd_table		; A
+		.text cmd_ptr - cmd_table		; P
+		.text $65
+		.text $68
+		.text $6b
+		.text $6f
+		.text $2e
 		; FOR...
 off_16:		.text $18, $ac				; T
 		;
@@ -301,10 +312,11 @@ off_2e:		.text $76, $77, $34, $34, $7c, $3f, $4a, $78	; $&;<CR>,
 		.text cmd_gt - cmd_table, <do_ge	; [>]=
 		.text <do_gt				; [>]
 		.text <do_fnn				; fn -
-		.text $45, $22, $31, $40		; =
-		.text $4d, $4d, $42, $53		; =
-		.text $15, $d2				; R
-		.text $15, $15, $bd			; [L]EN
+off_40:		.text $45, $22, $31, $40		; =
+off_44:		.text $4d, $4d, $42, $53		; =
+		.text cmd_unk - cmd_table		; [C]H
+		.text <do_ch
+off_4a:		.text $15, $15, $bd			; [L]EN
 off_4d:		.text $45, $45, $14			; $
 		.text <do_hash				; [#]
 		.text <do_bktop				; [(]
@@ -317,10 +329,17 @@ off_4d:		.text $45, $45, $14			; $
 		.text cmd_unk - cmd_table
 		.text <do_top
 		.text $48	; ND
-off_5b:		.text $15, $15				; ND
-off_5d:		.text $15, $7A				; OP
-off_5f:		.text $15, $15, $02, $15, $15		; OUNT
-off_64:		.text $29, $15, $15			; BS
+		.text cmd_unk - cmd_table		; [C]OUNT
+		.text cmd_unk - cmd_table
+		.text cmd_unk - cmd_table
+		.text <do_count
+		.text cmd_unk - cmd_table		; [A]BS
+		.text cmd_unk - cmd_table
+		.text <do_abs
+		.text cmd_unk - cmd_table		; [P]TR
+		.text cmd_unk - cmd_table
+		.text <do_ptr
+off_66:		.text $15, $15			; BS
 off_67:		.text $28, $15, $15			; TR
 off_6a:		.text $66, $15, $15			; XT
 off_6d:		.text $15, $5b, $72			; ET
@@ -1798,7 +1817,7 @@ c8ff:		JMP c233
 ; Performs ABS of function pointed to by (5),Y and places the result on
 ; the Workspace Stack.
 
-c902:		JSR c8bc
+do_abs:		JSR c8bc
 c905:		LDA $42,X
 c907:		BMI c8c4
 c909:		RTS
@@ -1890,7 +1909,7 @@ c978:		BEQ c981
 ;
 ; Reads the COUNT value at ?7 onto the current workspace slot
 
-c97a:		LDA $7
+do_count:	LDA $7
 c97c:		JSR c9b3
 c97f:		STA $24,X
 c981:		STA $33,X
@@ -1951,7 +1970,7 @@ c9cf:		JMP c97c
 
 ; Deal with the 'CH' operator
 
-c9d2:		JSR ceb1
+do_ch:		JSR ceb1
 c9d5:		JMP c958
 
 
@@ -2816,8 +2835,12 @@ cf22:		JSR OSSAVE
 cf25:		JMP c55b
 
 
+; Execute the Command 'PTR'
+;
+; unclear how the SEC at cf28 could be used
+
 cf28:		SEC
-cf29:		LDA #$0
+do_ptr:		LDA #$0
 cf2b:		ROL A
 cf2c:		PHA
 cf2d:		JSR cf3e
