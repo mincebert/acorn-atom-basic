@@ -158,7 +158,10 @@ BPTVEC=BBCBPUTV
 
 cmd_table:
 		; operators
-cmd_00:		.text "<=>", $fe
+cmd_00:		.text "<"
+		.text "="
+		.text ">"
+		.text $fe
 		; function interpreter
 cmd_04:		.text "-+", $c8
 		; numerical assignments
@@ -180,10 +183,12 @@ cmd_2b:		.text "$"
 		; numerical variable input
 cmd_2c:		.text ",", $c5
 cmd_2e:		.text "$&;", $0d, ",", $c3, $c5, $c2
-cmd_noteq:	.text ">", >do_noteq
-cmd_lteq:	.text "=", >do_lteq, $c7
-cmd_lt:		.text >do_eq
-cmd_3c:		.text "=", $c7, $c7, $c8
+cmd_ne:		.text ">", >do_ne		; [<]>
+cmd_le:		.text "=", >do_le		; [<]=
+cmd_lt:		.text >do_lt			; [<]
+cmd_eq:		.text >do_eq
+cmd_ge:		.text "=", $c7
+		.text $c7, $c8
 cmd_40:		.text "R", $c7, $c7
 cmd_43:		.text "OA", $fe
 cmd_46:		.text "$", $c7
@@ -238,7 +243,10 @@ cmd_7f:		.text "UNIGRF!?$PDLSB*E", $f0
 
 off_table:
 		; operators
-off_00:		.text cmd_noteq - cmd_table, cmd_lt - cmd_table, $3c, $c0
+off_00:		.text cmd_ne - cmd_table		; <
+		.text cmd_eq - cmd_table		; =
+		.text cmd_ge - cmd_table		; >
+		.text $c0
 		; function interpreter
 off_04:		.text $3f, $06, $dc
 		; numerical assignments
@@ -261,8 +269,9 @@ off_2b:		.text $2a				; $
 		; numerical variable input
 off_2c:		.text $b7, $58				; ,
 off_2e:		.text $76, $77, $34, $34, $7c, $3f, $4a, $78	; $&;<CR>,
-off_36:		.text cmd_lteq - cmd_table, <do_noteq
-off_38:		.text $3a, <do_lteq, $74
+off_ne:		.text cmd_le - cmd_table, <do_ne	; [<]>
+off_le:		.text cmd_lt - cmd_table, <do_le	; [<]=
+off_lt:		.text <do_lt				; [<]
 off_3b:		.text <do_eq
 off_3c:		.text $3e, $7b
 		.text $82, $c1				; [<]>
@@ -1441,7 +1450,7 @@ c763:		RTS
 
 ; Test <expression> <= <expression>
 
-do_lteq:	JSR c6da
+do_le:		JSR c6da
 c767:		BEQ c760
 c769:		BCC c760
 c76b:		BCS c761
@@ -1449,14 +1458,14 @@ c76b:		BCS c761
 
 ; Test <expression> <> <expression>
 
-do_noteq:	JSR c6da
+do_ne:		JSR c6da
 c770:		BNE c760
 c772:		BEQ c761
 
 
 ; Test <expression> < <expression>
 
-c774:		JSR c6da
+do_lt:		JSR c6da
 c777:		BCC c760
 c779:		BCS c761
 
