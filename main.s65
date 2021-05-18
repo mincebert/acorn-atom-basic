@@ -205,7 +205,10 @@ cmd_46:		.text "$", $c7
 cmd_48:		.text "H", $c9
 cmd_4a:		.text "EN", $c9
 cmd_4d:		.text "ND", $c7
-cmd_numhash:	.text $c9, $c9, $c9, $c9
+cmd_numhash:	.text >do_numhash		; num [#]
+cmd_numopen:	.text >do_numopen		; num [(]
+cmd_numplng:	.text >do_numplng		; num [!]
+cmd_numqry:	.text >do_numqry		; num [?]
 cmd_54:		.text "ND", $c9
 cmd_57:		.text "OP", $c9
 cmd_5a:		.text "OUNT", $c9
@@ -263,10 +266,10 @@ off_04:		.text cmd_fnn - cmd_table		; fn -
 		.text cmd_fnp - cmd_table		; fn +
 		.text <do_fnp
 		; numerical assignments
-off_07:		.text $50				; #
-		.text $51				; (
-		.text $52				; !
-		.text $53				; ?
+off_07:		.text cmd_numhash - cmd_table		; #
+		.text cmd_numopen - cmd_table		; (
+		.text cmd_numplng - cmd_table		; !
+		.text cmd_numqry - cmd_table		; ?
 		.text $54				; R
 		.text $57				; T
 		.text $4a				; L
@@ -301,8 +304,11 @@ off_44:		.text $4d, $4d, $42, $53		; =
 off_48:		.text $15, $d2, $15			; R
 off_4b:		.text $15, $bd, $45			; OA
 off_4e:		.text $45, $14				; $
-off_50:		.text $0a, $44				; H
-off_52:		.text $5f, $4c, $15			; EN
+off_numhash:	.text <do_numhash			; num [#]
+off_numopen:	.text <do_numopen			; num [(]
+off_numplng:	.text <do_numplng			; num [!]
+off_numqry:	.text <do_numqry			; num [?]
+		.text $15			; EN
 off_55:		.text $15, $86, $15, $15, $73, $48	; ND
 off_5b:		.text $15, $15				; ND
 off_5d:		.text $15, $7A				; OP
@@ -1793,7 +1799,7 @@ c909:		RTS
 
 ; Deal with '#'
 
-c90a:		LDX #$0
+do_numhash:	LDX #$0
 c90c:		STX $52
 c90e:		STX $53
 c910:		STX $54
@@ -1830,14 +1836,14 @@ c941:		JMP c4d6
 
 ; Deal with '('
 
-c944:		JSR c70c
+do_numopen:	JSR c70c
 c947:		LDX #$c
 c949:		JMP c27b
-c94c:		JSR c8bc
 
 
 ; Deal with '?'
 
+do_numqry:	JSR c8bc
 c94f:		LDY $15,X
 c951:		LDA $24,X
 c953:		STA $53
@@ -1850,7 +1856,7 @@ c95c:		JMP c97c
 
 ; Deal with '!'
 
-c95f:		JSR c94c
+do_numplng:	JSR do_numqry
 c962:		LDY #$1
 c964:		LDA ($52),Y
 c966:		STA $24,X
