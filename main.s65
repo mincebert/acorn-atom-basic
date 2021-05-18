@@ -186,9 +186,10 @@ cmd_2e:		.text "$&;", $0d, ",", $c3, $c5, $c2
 cmd_ne:		.text ">", >do_ne		; [<]>
 cmd_le:		.text "=", >do_le		; [<]=
 cmd_lt:		.text >do_lt			; [<]
-cmd_eq:		.text >do_eq
-cmd_ge:		.text "=", $c7
-		.text $c7, $c8
+cmd_eq:		.text >do_eq			; [=]
+cmd_ge:		.text "=", >do_ge		; [>]=
+cmd_gt:		.text >do_gt			; [>]
+cmd_3f:		.text $c8
 cmd_40:		.text "R", $c7, $c7
 cmd_43:		.text "OA", $fe
 cmd_46:		.text "$", $c7
@@ -272,9 +273,10 @@ off_2e:		.text $76, $77, $34, $34, $7c, $3f, $4a, $78	; $&;<CR>,
 off_ne:		.text cmd_le - cmd_table, <do_ne	; [<]>
 off_le:		.text cmd_lt - cmd_table, <do_le	; [<]=
 off_lt:		.text <do_lt				; [<]
-off_3b:		.text <do_eq
-off_3c:		.text $3e, $7b
-		.text $82, $c1				; [<]>
+off_eq:		.text <do_eq				; [=]
+off_ge:		.text cmd_gt - cmd_table, <do_ge	; [>]=
+		.text <do_gt				; [>]
+		.text $c1				; [<]>
 		.text $45, $22, $31, $40		; =
 		.text $4d, $4d, $42, $53		; =
 		.text $15, $d2, $15			; R
@@ -1472,14 +1474,14 @@ c779:		BCS c761
 
 ; Test <expression> >= <expression>
 
-c77b:		JSR c6da
+do_ge:		JSR c6da
 c77e:		BCS c760
 c780:		BCC c761
 
 
 ; Test <expression> > <expression>
 
-c782:		JSR c6da
+do_gt:		JSR c6da
 c785:		BEQ c761
 c787:		BCS c760
 c789:		BCC c761
