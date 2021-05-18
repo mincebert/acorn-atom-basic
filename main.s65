@@ -212,7 +212,7 @@ cmd_bktop:	.text >do_bktop			; [(]
 cmd_pling:	.text >do_pling			; [!]
 cmd_query:	.text >do_query			; [?]
 cmd_rnd:	.text "ND", >do_rnd		; [R]ND
-cmd_top:	.text "OP", $c9			; [T]OP
+cmd_top:	.text "OP", >do_top		; [T]OP
 cmd_count:	.text "OUNT", $c9
 cmd_5f:		.text "BS", $c9
 cmd_62:		.text "TR", $cf
@@ -294,28 +294,29 @@ off_2b:		.text $2a				; $
 		; numerical variable input
 off_2c:		.text $b7, $58				; ,
 off_2e:		.text $76, $77, $34, $34, $7c, $3f, $4a, $78	; $&;<CR>,
-off_ne:		.text cmd_le - cmd_table, <do_ne	; [<]>
-off_le:		.text cmd_lt - cmd_table, <do_le	; [<]=
-off_lt:		.text <do_lt				; [<]
-off_eq:		.text <do_eq				; [=]
-off_ge:		.text cmd_gt - cmd_table, <do_ge	; [>]=
-off_gt:		.text <do_gt				; [>]
-off_fnn:	.text <do_fnn				; fn -
-off_40:		.text $45, $22, $31, $40		; =
-off_44:		.text $4d, $4d, $42, $53		; =
-off_48:		.text $15, $d2				; R
-off_len:	.text $15, $15, $bd			; [L]EN
+		.text cmd_le - cmd_table, <do_ne	; [<]>
+		.text cmd_lt - cmd_table, <do_le	; [<]=
+		.text <do_lt				; [<]
+		.text <do_eq				; [=]
+		.text cmd_gt - cmd_table, <do_ge	; [>]=
+		.text <do_gt				; [>]
+		.text <do_fnn				; fn -
+		.text $45, $22, $31, $40		; =
+		.text $4d, $4d, $42, $53		; =
+		.text $15, $d2				; R
+		.text $15, $15, $bd			; [L]EN
 off_4d:		.text $45, $45, $14			; $
-off_hash:	.text <do_hash				; [#]
-off_bktop:	.text <do_bktop				; [(]
-off_pling:	.text <do_pling				; [!]
-off_query:	.text <do_query				; [?]
-off_rnd:	.text cmd_unk - cmd_table		; [R]ND
+		.text <do_hash				; [#]
+		.text <do_bktop				; [(]
+		.text <do_pling				; [!]
+		.text <do_query				; [?]
+		.text cmd_unk - cmd_table		; [R]ND
 		.text cmd_unk - cmd_table
 		.text <do_rnd
-		.text $15
-		.text $15
-		.text $73, $48	; ND
+		.text cmd_unk - cmd_table		; [T]OP
+		.text cmd_unk - cmd_table
+		.text <do_top
+		.text $48	; ND
 off_5b:		.text $15, $15				; ND
 off_5d:		.text $15, $7A				; OP
 off_5f:		.text $15, $15, $02, $15, $15		; OUNT
@@ -1880,7 +1881,7 @@ c972:		RTS
 ; Reads the TOP value at $D,$E onto the current workspace slot.
 ; The Workspace Stack pointer ?4 is incremented.
 
-c973:		LDY #$d
+do_top:		LDY #$d
 c975:		JSR c9a1
 c978:		BEQ c981
 
