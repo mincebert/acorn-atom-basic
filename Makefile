@@ -3,7 +3,7 @@ all: basatom basbbc basatom.hex
 clean:
 	-rm basatom basbbc basatom.labels basbbc.labels basatom.hex
 
-remake: clean all
+remake: clean all diff
 
 basatom basatom.labels: main.s65
 	64tass -l basatom.labels -b main.s65 -o basatom -D BBC=0
@@ -15,6 +15,9 @@ basbbc basbbc.labels: main.s65
 
 basatom.hex: basatom
 	od -A x -t x1 -t a basatom > basatom.hex
+
+diff: basatom.hex
+	diff basatom-orig.hex basatom.hex
 
 .PHONY: copy
 copy: bbc
