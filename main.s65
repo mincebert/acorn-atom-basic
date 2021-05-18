@@ -163,7 +163,9 @@ cmd_00:		.text "<"
 		.text ">"
 		.text $fe
 		; function interpreter
-cmd_04:		.text "-+", $c8
+cmd_04:		.text "-"
+		.text "+"
+cmd_fnp:	.text >do_fnp
 		; numerical assignments
 cmd_07:		.text "#(!?RTLC"
 		.text "APEGBF", $f0
@@ -189,7 +191,7 @@ cmd_lt:		.text >do_lt			; [<]
 cmd_eq:		.text >do_eq			; [=]
 cmd_ge:		.text "=", >do_ge		; [>]=
 cmd_gt:		.text >do_gt			; [>]
-cmd_3f:		.text $c8
+cmd_fnn:	.text >do_fnn
 cmd_40:		.text "R", $c7, $c7
 cmd_43:		.text "OA", $fe
 cmd_46:		.text "$", $c7
@@ -249,7 +251,9 @@ off_00:		.text cmd_ne - cmd_table		; <
 		.text cmd_ge - cmd_table		; >
 		.text $c0
 		; function interpreter
-off_04:		.text $3f, $06, $dc
+off_04:		.text cmd_fnn - cmd_table		; fn -
+		.text cmd_fnp - cmd_table		; fn +
+		.text <do_fnp
 		; numerical assignments
 off_07:		.text $50, $51, $52, $53, $54, $57, $4a, $5a
 off_0f:		.text $5f, $62, $65, $68, $6b, $6f, $2e
@@ -275,8 +279,8 @@ off_le:		.text cmd_lt - cmd_table, <do_le	; [<]=
 off_lt:		.text <do_lt				; [<]
 off_eq:		.text <do_eq				; [=]
 off_ge:		.text cmd_gt - cmd_table, <do_ge	; [>]=
-		.text <do_gt				; [>]
-		.text $c1				; [<]>
+off_gt:		.text <do_gt				; [>]
+off_fnn:	.text <do_fnn				; fn -
 		.text $45, $22, $31, $40		; =
 		.text $4d, $4d, $42, $53		; =
 		.text $15, $d2, $15			; R
@@ -1704,7 +1708,7 @@ c8be:		JMP c233
 ;
 ; {15,X 24,X 33,X 42,X} = 0 - {15,X 24,X 33,X 42,X}
 
-c8c1:		JSR c8dc
+do_fnn:		JSR do_fnp
 
 
 ; Negate Current Slot of Workspace Stack subroutine
@@ -1731,7 +1735,7 @@ c8db:		RTS
 
 ; Variable Assignment to Workspace
 
-c8dc:		JSR c434
+do_fnp:		JSR c434
 c8df:		BCC c8f8
 c8e1:		LDY $15,X
 
