@@ -215,7 +215,8 @@ cmd_tbl_input:	; INPUT...
 		.text "$"
 		; numerical variable input
 cmd_2c:		.text ","
-		.text $c5
+		.text >do_input_num
+
 cmd_2e:		.text "$&;", $0d, ",", $c3, $c5, $c2
 cmd_ne:		.text ">", >do_ne		; [<]>
 cmd_le:		.text "=", >do_le		; [<]=
@@ -258,8 +259,9 @@ cmd_7f:		.text "UNIGRF!?$PDLSB*E", $f0
 		.text "NTIL", $cc
 		.text "EXT", $ca
 		.text "F", $c5
-		.text "NPUT", $cc
-		.text "OSUB", $cb
+		.text "NPUT"
+cmd_input_do:	.text >do_input
+here:		.text "OSUB", $cb
 		.text "OTO", $cc
 		.text "ETURN", $cb
 		.text "EM", $c5
@@ -346,7 +348,9 @@ off_tbl:
 		; [INPUT ...]
 		.text cmd_strvar - cmd_tbl		; $
 		; numerical variable input
-off_2c:		.text $b7, $58				; ,
+off_2c:		.text cmd_input_do - cmd_tbl		; ,
+		.text <do_input_num
+
 off_2e:		.text $76, $77, $34, $34, $7c, $3f, $4a, $78	; $&;<CR>,
 		.text cmd_le - cmd_tbl, <do_ne		; [<]>
 		.text cmd_lt - cmd_tbl, <do_le		; [<]=
@@ -418,7 +422,10 @@ off_a7:		.text $ed, $8f, $8f, $8f		; OAD
 off_ab:		.text $8f, $d2, $8f, $8f, $8f		; NTIL
 off_b0:		.text $cd, $b3, $66, $8f		; EXT
 off_b4:		.text $8f, $8f				; F
-off_b6:		.text $8f, $81, $8f, $8f, $8f		; NPUT
+off_b6:		.text $8f
+		.text <do_input
+off_b8:		.text $8f, $8f		; INPUT
+		.text $8f
 off_bb:		.text $8f, $d2, $8f, $b8, $8f		; OSUB
 off_c0:		.text $05, $ca, $c7, $8f		; OTO
 off_c4:		.text $8f, $8f, $ec, $8f, $8f, $75	; ETURN
@@ -969,7 +976,7 @@ c41a:		CMP #$d			; Was the last character <CR> ?
 c41c:		BNE c411		; ... no, keep copying
 					; (defaults to $F8EF)
 c41e:		JSR OSCLI		; ... yes, finished, so call OSCLI
-c421:		JMP c558		; Perform post test, check for <ESC> etc and
+c421:		JMP do_input_num		; Perform post test, check for <ESC> etc and
 					; return to execute the next command whether
 					; by program execution or in direct mode
 
@@ -1219,9 +1226,9 @@ c54a:		DEY
 c54b:		JSR c4f6
 c54e:		BNE c55b
 c550:		JSR c424		; Handle unrecognised statement
-c553:		BCC c558
+c553:		BCC do_input_num
 c555:		JMP ($d002)
-c558:		JSR c4e4
+do_input_num:	JSR c4e4
 
 
 ; Return Routine
@@ -2221,7 +2228,7 @@ cb4d:		STA $6
 cb4f:		JMP cbff
 
 cb52:		DEC $15
-cb54:		JMP c558
+cb54:		JMP do_input_num
 
 
 ; Execute the Command 'FOR'
@@ -2406,7 +2413,7 @@ cc80:		RTS
 
 ; Execute the Command 'INPUT'
 
-cc81:		JSR c372
+do_input:	JSR c372
 cc84:		JSR c434
 cc87:		BCS cc8e
 cc89:		LDX #cmd_tbl_input - cmd_tbl
@@ -2450,7 +2457,7 @@ ccc3:		LDY #$0
 ccc5:		LDA $100,X
 ccc8:		STA ($54),Y
 ccca:		CMP #$d
-cccc:		BEQ cc81
+cccc:		BEQ do_input
 ccce:		INX
 cccf:		INY
 ccd0:		BNE ccc5
@@ -2466,7 +2473,7 @@ ccda:		STX $4
 ccdc:		LDA $16,X
 ccde:		BEQ cce5
 cce0:		DEC $13
-cce2:		JMP c558
+cce2:		JMP do_input_num
 
 cce5:		LDA WORKSP + $0b8,Y
 cce8:		STA $5
@@ -2569,7 +2576,7 @@ cd6a:		LDA ($52),Y
 cd6c:		STA ($54),Y
 cd6e:		CMP #$d
 cd70:		BNE cd69
-cd72:		JMP c558
+cd72:		JMP do_input_num
 
 
 ; Assign !<variable>
