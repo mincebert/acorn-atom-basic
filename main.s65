@@ -203,8 +203,14 @@ cmd_tbl_if:	; [IF ...]
 		;
 cmd_then:	.text "HEN", >do_then
 
-		; check for valid string
-cmd_26:		.text """", "$", $ce, $ce, $cc
+cmd_tbl_str:	; check for valid string
+		.text """"
+		.text "$"
+cmd_str:	.text >do_str			; [$]
+		;
+cmd_quote	.text >do_quote			; ["]
+
+		.text >do_strvar
 		; INPUT...
 cmd_2b:		.text "$"
 		; numerical variable input
@@ -329,7 +335,13 @@ off_tbl:
 		.text <do_then
 
 		; check for valid string
-off_26:		.text $29, $28, $b6, $bf, $b6		; "$
+off_26:		.text cmd_quote - cmd_tbl		; "
+		.text cmd_str - cmd_tbl			; $
+		.text <do_str				; [$]
+		;
+		.text <do_quote				; ["]
+
+		.text <do_strvar
 		; [INPUT ...]
 off_2b:		.text $2a				; $
 		; numerical variable input
@@ -2428,7 +2440,7 @@ ccb3:		JMP c233
 
 ; String Variable Input
 
-ccb6:		JSR c78b
+do_strvar:	JSR c78b
 ccb9:		LDY #$54
 ccbb:		JSR c3cd
 ccbe:		JSR cd09
@@ -2785,13 +2797,13 @@ ceae:		JSR c279
 ; If successful, returns with (5),?3 pointimg to the character following,
 ; otherwise executes BRK.
 
-ceb1:		LDX #cmd_26 - cmd_tbl
+ceb1:		LDX #cmd_tbl_str - cmd_tbl
 ceb3:		JMP c233
 
 
 ; Set up $ String Ready for Asssignment
 
-ceb6:		JSR c78b
+do_str:		JSR c78b
 ceb9:		JSR c3cb
 cebc:		LDY $3
 cebe:		RTS
@@ -2799,7 +2811,7 @@ cebe:		RTS
 
 ; Set up "string" Ready for Asssignment
 
-cebf:		JSR c4f6
+do_quote:	JSR c4f6
 
 
 ; Copy Quoted String to String Input Buffer subroutine
