@@ -184,12 +184,18 @@ cmd_07:		.text "#"
 		; error?
 cmd_unk:	.text $f0
 		; FOR...
-cmd_16:		.text "T", $ff
+cmd_tbl_for:	.text "T"
+cmd_end:	.text $ff
 		;
-cmd_18:		.text "O", $cb
+cmd_to:		.text "O"			; [T]O
+		.text >do_to
 		; TO...
-cmd_1a:		.text "S", $cb
-		.text "TEP", $cb
+cmd_tbl_forto:	.text "S"
+		.text $cb
+cmd_step	.text "T"
+		.text "E"
+		.text "P"
+		.text >do_step
 cmd_20:		.text "T", $c3
 cmd_22:		.text "HEN", $c3
 		; check for valid string
@@ -205,7 +211,7 @@ cmd_lt:		.text >do_lt			; [<]
 cmd_eq:		.text >do_eq			; [=]
 cmd_ge:		.text "=", >do_ge		; [>]=
 cmd_gt:		.text >do_gt			; [>]
-cmd_fnn:	.text >do_fnn
+cmd_fnn:	.text >do_fnn			; [fn -]
 cmd_40:		.text "R", $c7, $c7
 cmd_43:		.text "OA", $fe
 cmd_46:		.text "$", $c7
@@ -265,16 +271,16 @@ cmd_7f:		.text "UNIGRF!?$PDLSB*E", $f0
 
 off_table:
 		; operators
-off_00:		.text cmd_ne - cmd_table		; <
+		.text cmd_ne - cmd_table		; <
 		.text cmd_eq - cmd_table		; =
 		.text cmd_ge - cmd_table		; >
 		.text $c0
 		; function interpreter
-off_04:		.text cmd_fnn - cmd_table		; fn -
+		.text cmd_fnn - cmd_table		; fn -
 		.text cmd_fnp - cmd_table		; fn +
 		.text <do_fnp
 		; numerical assignments
-off_07:		.text cmd_hash - cmd_table		; #
+		.text cmd_hash - cmd_table		; #
 		.text cmd_bktop - cmd_table		; (
 		.text cmd_pling - cmd_table		; !
 		.text cmd_query - cmd_table		; ?
@@ -282,21 +288,27 @@ off_07:		.text cmd_hash - cmd_table		; #
 		.text cmd_top - cmd_table		; T
 		.text cmd_len - cmd_table		; L
 		.text cmd_count - cmd_table		; C
-off_0f:		.text cmd_abs - cmd_table		; A
+		.text cmd_abs - cmd_table		; A
 		.text cmd_ptr - cmd_table		; P
 		.text cmd_ext - cmd_table		; E
 		.text cmd_get - cmd_table		; G
 		.text cmd_bget - cmd_table		; B
 		.text cmd_fin - cmd_table		; F
 		.text $2e
-		; FOR...
-off_16:		.text $18, $ac				; T
+		; [FOR ...]
+		.text cmd_to - cmd_table		; T
+		.text $ac
 		;
-off_18:		.text $17, $81				; O
-		; TO...
-off_1a:		.text $1c, $be				; S
+		.text cmd_end - cmd_table		; [T]O
+		.text <do_to
+		; [FOR ... TO ...]
+off_1a:		.text cmd_step - cmd_table		; S
+		.text $be
 		;
-off_1c:		.text $17, $17, $17, $a2		; TEP
+off_1c:		.text cmd_end - cmd_table		; [S]TEP
+		.text cmd_end - cmd_table
+		.text cmd_end - cmd_table
+		.text <do_step
 off_20:		.text $22, $1b				; T
 off_22:		.text $17, $17, $17, $1b		; HEN
 		; check for valid string
@@ -312,7 +324,7 @@ off_2e:		.text $76, $77, $34, $34, $7c, $3f, $4a, $78	; $&;<CR>,
 		.text <do_eq				; [=]
 		.text cmd_gt - cmd_table, <do_ge	; [>]=
 		.text <do_gt				; [>]
-		.text <do_fnn				; fn -
+		.text <do_fnn				; [fn -]
 off_40:		.text $45, $22, $31, $40		; =
 off_44:		.text $4d, $4d, $42, $53		; =
 		.text cmd_unk - cmd_table		; [C]H
@@ -2199,13 +2211,13 @@ cb71:		STA WORKSP + $061,Y
 cb74:		STA WORKSP + $056,Y
 cb77:		LDA #$1
 cb79:		STA WORKSP + $04b,Y
-cb7c:		LDX #cmd_16 - cmd_table
+cb7c:		LDX #cmd_tbl_for - cmd_table
 cb7e:		JMP c233
 
 
 ; Execute the Command 'TO'
 
-cb81:		JSR c78b
+do_to:		JSR c78b
 cb84:		LDY $15
 cb86:		DEX
 cb87:		STX $4
@@ -2217,13 +2229,13 @@ cb93:		LDA $34,X
 cb95:		STA WORKSP + $08d,Y
 cb98:		LDA $43,X
 cb9a:		STA WORKSP + $098,Y
-cb9d:		LDX #cmd_1a - cmd_table
+cb9d:		LDX #cmd_tbl_forto - cmd_table
 cb9f:		JMP c233
 
 
 ; Execute the Command 'STEP'
 
-cba2:		JSR c78b
+do_step:	JSR c78b
 cba5:		LDY $15
 cba7:		DEX
 cba8:		STX $4
