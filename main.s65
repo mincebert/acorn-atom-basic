@@ -157,19 +157,19 @@ BPTVEC=BBCBPUTV
 ; at c0ee).
 
 cmd_tbl:
-		; operators
-cmd_00:		.text "<"
+cmd_tbl_op:	; operators
+		.text "<"
 		.text "="
 		.text ">"
 		.text $fe
 
 		; function interpreter
-cmd_04:		.text "-"
+cmd_tbl_fnint:	.text "-"
 		.text "+"
 cmd_fnp:	.text >do_fnp
 
 		; numerical assignments
-cmd_07:		.text "#"
+cmd_tbl_numass:	.text "#"
 		.text "("
 		.text "!"
 		.text "?"
@@ -202,7 +202,7 @@ cmd_tbl_if:	; [IF ...]
 		.text "T", >do_then
 		;
 cmd_then:	.text "HEN", >do_then
-		;
+
 		; check for valid string
 cmd_26:		.text """", "$", $ce, $ce, $cc
 		; INPUT...
@@ -1530,7 +1530,7 @@ c751:		BEQ c761
 
 
 c753:		JSR c78b
-c756:		LDX #cmd_00 - cmd_tbl
+c756:		LDX #cmd_tbl_op - cmd_tbl
 c758:		JMP c233
 
 
@@ -1789,7 +1789,7 @@ c8b9:		JMP c80e
 ; the last character in the string interpreted.
 ; The Workspace Stack pointer ?4 is incremented.
 
-c8bc:		LDX #cmd_04 - cmd_tbl
+c8bc:		LDX #cmd_tbl_fnint - cmd_tbl
 c8be:		JMP c233
 
 
@@ -1850,7 +1850,7 @@ c8f7:		RTS
 
 c8f8:		JSR c46a
 c8fb:		BCS c8f7
-c8fd:		LDX #cmd_07 - cmd_tbl
+c8fd:		LDX #cmd_tbl_numass - cmd_tbl
 c8ff:		JMP c233
 
 
