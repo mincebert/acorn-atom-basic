@@ -162,10 +162,12 @@ cmd_00:		.text "<"
 		.text "="
 		.text ">"
 		.text $fe
+
 		; function interpreter
 cmd_04:		.text "-"
 		.text "+"
 cmd_fnp:	.text >do_fnp
+
 		; numerical assignments
 cmd_07:		.text "#"
 		.text "("
@@ -183,21 +185,24 @@ cmd_07:		.text "#"
 		.text "F"
 		; error?
 cmd_unk:	.text $f0
-		; FOR...
-cmd_tbl_for:	.text "T"
+
+cmd_tbl_for:	; [FOR ...]
+		.text "T"
 cmd_end:	.text $ff
 		;
-cmd_to:		.text "O"			; [T]O
-		.text >do_to
-		; TO...
-cmd_tbl_forto:	.text "S"
+cmd_to:		.text "O", >do_to		; [T]O
+
+cmd_tbl_forto:	; [FOR ... TO ...]
+		.text "S"
 		.text $cb
-cmd_step	.text "T"			; [S]TEP
-		.text "E"
-		.text "P"
-		.text >do_step
-cmd_20:		.text "T", $c3
-cmd_22:		.text "HEN", $c3
+		;
+cmd_step	.text "TEP", >do_step		; [S]TEP
+
+cmd_tbl_if:	; [IF ...]
+		.text "T", >do_then
+		;
+cmd_then:	.text "HEN", >do_then
+		;
 		; check for valid string
 cmd_26:		.text """", "$", $ce, $ce, $cc
 		; INPUT...
@@ -275,10 +280,12 @@ off_tbl:
 		.text cmd_eq - cmd_tbl			; =
 		.text cmd_ge - cmd_tbl			; >
 		.text $c0
+
 		; function interpreter
 		.text cmd_fnn - cmd_tbl			; fn -
 		.text cmd_fnp - cmd_tbl			; fn +
 		.text <do_fnp
+
 		; numerical assignments
 		.text cmd_hash - cmd_tbl		; #
 		.text cmd_bktop - cmd_tbl		; (
@@ -295,25 +302,35 @@ off_tbl:
 		.text cmd_bget - cmd_tbl		; B
 		.text cmd_fin - cmd_tbl			; F
 		.text $2e
+
 		; [FOR ...]
 		.text cmd_to - cmd_tbl			; T
 		.text $ac
 		;
 		.text cmd_end - cmd_tbl			; [T]O
 		.text <do_to
+
 		; [FOR ... TO ...]
 		.text cmd_step - cmd_tbl		; S
 		.text $be
 		;
-off_1c:		.text cmd_end - cmd_tbl			; [S]TEP
+		.text cmd_end - cmd_tbl			; [S]TEP
 		.text cmd_end - cmd_tbl
 		.text cmd_end - cmd_tbl
 		.text <do_step
-off_20:		.text $22, $1b				; T
-off_22:		.text $17, $17, $17, $1b		; HEN
+
+		; [IF ...]
+		.text cmd_then - cmd_tbl		; T
+		.text <do_then
+		;
+		.text cmd_end - cmd_tbl			; [T]HEN
+		.text cmd_end - cmd_tbl
+		.text cmd_end - cmd_tbl
+		.text <do_then
+
 		; check for valid string
 off_26:		.text $29, $28, $b6, $bf, $b6		; "$
-		; INPUT...
+		; [INPUT ...]
 off_2b:		.text $2a				; $
 		; numerical variable input
 off_2c:		.text $b7, $58				; ,
@@ -681,7 +698,7 @@ c318:		JMP c233		; ... and interpret & execute the command
 
 ; Execute the command 'THEN'
 
-c31b:		JSR c434		; If the first non space character is
+do_then:	JSR c434		; If the first non space character is
 					; alphabetic and the the subsequent
 					; is not (but is not '.')
 c31e:		BCS c32f		; ... then treat this as an integer variable
@@ -1203,7 +1220,7 @@ c55b:		LDY #$0
 c55d:		LDA ($5),Y
 c55f:		CMP #$3b
 c561:		BNE c57d
-c563:		JMP c31b
+c563:		JMP do_then
 
 
 ; Execute the command 'IF'
@@ -1215,7 +1232,7 @@ c569:		DEX
 c56a:		STX $4
 c56c:		LDA $16,X
 c56e:		BEQ c575
-c570:		LDX #cmd_20 - cmd_tbl
+c570:		LDX #cmd_tbl_if - cmd_tbl
 c572:		JMP c233
 
 
@@ -1232,7 +1249,7 @@ c57d:		LDA $6
 c57f:		CMP #$1
 c581:		BEQ c547
 c583:		JSR c51c
-c586:		JMP c31b
+c586:		JMP do_then
 
 
 ; Print Decimal subroutine
@@ -2262,7 +2279,7 @@ cbc5:		STA WORKSP + $0a3,Y
 cbc8:		LDA $6
 cbca:		STA WORKSP + $0ae,Y
 cbcd:		INC $15
-cbcf:		JMP c31b
+cbcf:		JMP do_then
 
 
 ; Execute the Command 'GOSUB'
@@ -2291,7 +2308,7 @@ cbf8:		STA $5
 cbfa:		LDA WORKSP + $0dc,Y
 cbfd:		STA $6
 cbff:		JSR c500
-cc02:		JMP c31b
+cc02:		JMP do_then
 
 
 ; Execute the Command 'GOTO'
@@ -2456,7 +2473,7 @@ ccfc:		STA WORKSP + $0b9,X
 ccff:		LDA $6
 cd01:		STA WORKSP + $0c4,X
 cd04:		INC $13
-cd06:		JMP c31b
+cd06:		JMP do_then
 
 
 ; Input to String Input Buffer subroutine
