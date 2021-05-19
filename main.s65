@@ -348,7 +348,7 @@ off_tbl:
 		; [INPUT ...]
 		.text cmd_strvar - cmd_tbl		; $
 		; numerical variable input
-off_2c:		.text cmd_input_do - cmd_tbl		; ,
+		.text cmd_input_do - cmd_tbl		; ,
 		.text <do_input_num
 
 off_2e:		.text $76, $77, $34, $34, $7c, $3f, $4a, $78	; $&;<CR>,
