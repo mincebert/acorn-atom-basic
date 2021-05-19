@@ -210,11 +210,12 @@ cmd_str:	.text >do_str			; [$]
 		;
 cmd_quote	.text >do_quote			; ["]
 
-		.text >do_strvar
-		; INPUT...
-cmd_2b:		.text "$"
+cmd_strvar:	.text >do_strvar
+cmd_tbl_input:	; INPUT...
+		.text "$"
 		; numerical variable input
-cmd_2c:		.text ",", $c5
+cmd_2c:		.text ","
+		.text $c5
 cmd_2e:		.text "$&;", $0d, ",", $c3, $c5, $c2
 cmd_ne:		.text ">", >do_ne		; [<]>
 cmd_le:		.text "=", >do_le		; [<]=
@@ -335,15 +336,15 @@ off_tbl:
 		.text <do_then
 
 		; check for valid string
-off_26:		.text cmd_quote - cmd_tbl		; "
+		.text cmd_quote - cmd_tbl		; "
 		.text cmd_str - cmd_tbl			; $
 		.text <do_str				; [$]
 		;
 		.text <do_quote				; ["]
 
-		.text <do_strvar
+		.text <do_strvar			; [$]
 		; [INPUT ...]
-off_2b:		.text $2a				; $
+		.text cmd_strvar - cmd_tbl		; $
 		; numerical variable input
 off_2c:		.text $b7, $58				; ,
 off_2e:		.text $76, $77, $34, $34, $7c, $3f, $4a, $78	; $&;<CR>,
@@ -2408,7 +2409,7 @@ cc80:		RTS
 cc81:		JSR c372
 cc84:		JSR c434
 cc87:		BCS cc8e
-cc89:		LDX #cmd_2b - cmd_tbl
+cc89:		LDX #cmd_tbl_input - cmd_tbl
 cc8b:		JMP c233
 
 
