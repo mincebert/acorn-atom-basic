@@ -156,7 +156,7 @@ BPTVEC=BBCBPUTV
 ; Any other value >=$80 is the MSB of the jump address (LSB is in the table
 ; at c0ee).
 
-cmd_table:
+cmd_tbl:
 		; operators
 cmd_00:		.text "<"
 		.text "="
@@ -269,45 +269,45 @@ cmd_7f:		.text "UNIGRF!?$PDLSB*E", $f0
 ; used to index into this table and retrieve a new index into the c000 table
 ; for the following characters.
 
-off_table:
+off_tbl:
 		; operators
-		.text cmd_ne - cmd_table		; <
-		.text cmd_eq - cmd_table		; =
-		.text cmd_ge - cmd_table		; >
+		.text cmd_ne - cmd_tbl		; <
+		.text cmd_eq - cmd_tbl		; =
+		.text cmd_ge - cmd_tbl		; >
 		.text $c0
 		; function interpreter
-		.text cmd_fnn - cmd_table		; fn -
-		.text cmd_fnp - cmd_table		; fn +
+		.text cmd_fnn - cmd_tbl		; fn -
+		.text cmd_fnp - cmd_tbl		; fn +
 		.text <do_fnp
 		; numerical assignments
-		.text cmd_hash - cmd_table		; #
-		.text cmd_bktop - cmd_table		; (
-		.text cmd_pling - cmd_table		; !
-		.text cmd_query - cmd_table		; ?
-		.text cmd_rnd - cmd_table		; R
-		.text cmd_top - cmd_table		; T
-		.text cmd_len - cmd_table		; L
-		.text cmd_count - cmd_table		; C
-		.text cmd_abs - cmd_table		; A
-		.text cmd_ptr - cmd_table		; P
-		.text cmd_ext - cmd_table		; E
-		.text cmd_get - cmd_table		; G
-		.text cmd_bget - cmd_table		; B
-		.text cmd_fin - cmd_table		; F
+		.text cmd_hash - cmd_tbl		; #
+		.text cmd_bktop - cmd_tbl		; (
+		.text cmd_pling - cmd_tbl		; !
+		.text cmd_query - cmd_tbl		; ?
+		.text cmd_rnd - cmd_tbl		; R
+		.text cmd_top - cmd_tbl		; T
+		.text cmd_len - cmd_tbl		; L
+		.text cmd_count - cmd_tbl		; C
+		.text cmd_abs - cmd_tbl		; A
+		.text cmd_ptr - cmd_tbl		; P
+		.text cmd_ext - cmd_tbl		; E
+		.text cmd_get - cmd_tbl		; G
+		.text cmd_bget - cmd_tbl		; B
+		.text cmd_fin - cmd_tbl		; F
 		.text $2e
 		; [FOR ...]
-		.text cmd_to - cmd_table		; T
+		.text cmd_to - cmd_tbl		; T
 		.text $ac
 		;
-		.text cmd_end - cmd_table		; [T]O
+		.text cmd_end - cmd_tbl		; [T]O
 		.text <do_to
 		; [FOR ... TO ...]
-off_1a:		.text cmd_step - cmd_table		; S
+off_1a:		.text cmd_step - cmd_tbl		; S
 		.text $be
 		;
-off_1c:		.text cmd_end - cmd_table		; [S]TEP
-		.text cmd_end - cmd_table
-		.text cmd_end - cmd_table
+off_1c:		.text cmd_end - cmd_tbl		; [S]TEP
+		.text cmd_end - cmd_tbl
+		.text cmd_end - cmd_tbl
 		.text <do_step
 off_20:		.text $22, $1b				; T
 off_22:		.text $17, $17, $17, $1b		; HEN
@@ -318,16 +318,16 @@ off_2b:		.text $2a				; $
 		; numerical variable input
 off_2c:		.text $b7, $58				; ,
 off_2e:		.text $76, $77, $34, $34, $7c, $3f, $4a, $78	; $&;<CR>,
-		.text cmd_le - cmd_table, <do_ne	; [<]>
-		.text cmd_lt - cmd_table, <do_le	; [<]=
+		.text cmd_le - cmd_tbl, <do_ne	; [<]>
+		.text cmd_lt - cmd_tbl, <do_le	; [<]=
 		.text <do_lt				; [<]
 		.text <do_eq				; [=]
-		.text cmd_gt - cmd_table, <do_ge	; [>]=
+		.text cmd_gt - cmd_tbl, <do_ge	; [>]=
 		.text <do_gt				; [>]
 		.text <do_fnn				; [fn -]
 off_40:		.text $45, $22, $31, $40		; =
 off_44:		.text $4d, $4d, $42, $53		; =
-		.text cmd_unk - cmd_table		; [C]H
+		.text cmd_unk - cmd_tbl		; [C]H
 		.text <do_ch
 off_4a:		.text $15, $15, $bd			; [L]EN
 off_4d:		.text $45, $45, $14			; $
@@ -335,39 +335,39 @@ off_4d:		.text $45, $45, $14			; $
 		.text <do_bktop				; [(]
 		.text <do_pling				; [!]
 		.text <do_query				; [?]
-		.text cmd_unk - cmd_table		; [R]ND
-		.text cmd_unk - cmd_table
+		.text cmd_unk - cmd_tbl		; [R]ND
+		.text cmd_unk - cmd_tbl
 		.text <do_rnd
-		.text cmd_unk - cmd_table		; [T]OP
-		.text cmd_unk - cmd_table
+		.text cmd_unk - cmd_tbl		; [T]OP
+		.text cmd_unk - cmd_tbl
 		.text <do_top
 		.text $48	; ND
-		.text cmd_unk - cmd_table		; [C]OUNT
-		.text cmd_unk - cmd_table
-		.text cmd_unk - cmd_table
+		.text cmd_unk - cmd_tbl		; [C]OUNT
+		.text cmd_unk - cmd_tbl
+		.text cmd_unk - cmd_tbl
 		.text <do_count
-		.text cmd_unk - cmd_table		; [A]BS
-		.text cmd_unk - cmd_table
+		.text cmd_unk - cmd_tbl		; [A]BS
+		.text cmd_unk - cmd_tbl
 		.text <do_abs
-		.text cmd_unk - cmd_table		; [P]TR
-		.text cmd_unk - cmd_table
+		.text cmd_unk - cmd_tbl		; [P]TR
+		.text cmd_unk - cmd_tbl
 		.text <do_ptr
-		.text cmd_unk - cmd_table		; [E]XT
-		.text cmd_unk - cmd_table
+		.text cmd_unk - cmd_tbl		; [E]XT
+		.text cmd_unk - cmd_tbl
 		.text <do_ext
-		.text cmd_unk - cmd_table		; [G]ET
-		.text cmd_unk - cmd_table
+		.text cmd_unk - cmd_tbl		; [G]ET
+		.text cmd_unk - cmd_tbl
 		.text <do_get
-		.text cmd_unk - cmd_table		; [B]GET
-		.text cmd_unk - cmd_table
-		.text cmd_unk - cmd_table
+		.text cmd_unk - cmd_tbl		; [B]GET
+		.text cmd_unk - cmd_tbl
+		.text cmd_unk - cmd_tbl
 		.text <do_bget
-		.text cmd_fout - cmd_table		; [F]IN
-		.text cmd_unk - cmd_table
+		.text cmd_fout - cmd_tbl		; [F]IN
+		.text cmd_unk - cmd_tbl
 		.text <do_fin
-		.text cmd_unk - cmd_table		; [F]OUT
-		.text cmd_unk - cmd_table
-		.text cmd_unk - cmd_table
+		.text cmd_unk - cmd_tbl		; [F]OUT
+		.text cmd_unk - cmd_tbl
+		.text cmd_unk - cmd_tbl
 		.text <do_fout
 		.text $90				; IN
 off_77:		.text $35, $e3, $8f, $8f		; OUT
@@ -462,7 +462,7 @@ c236:		INY			; Point to the next character in text
 c23d:		STY $5e			; Save current interpreter index
 		STA $52			; Save character under interpretation
 c241:		INX			; Point to next character in command table
-		LDA cmd_table - 1,X	; ... and fetch it
+		LDA cmd_tbl - 1,X	; ... and fetch it
 		BMI c26b		; ... a negative byte indicates the end of
 					; the initial letter table
 		CMP $52			; Same as character under interpretation?
@@ -470,11 +470,11 @@ c241:		INX			; Point to next character in command table
 
 			; MATCH THE REST OF THE COMMAND WORD
 
-c24b:		LDA off_table - 1,X	; Get index to rest-of-command-word table
+c24b:		LDA off_tbl - 1,X	; Get index to rest-of-command-word table
 		TAX			; This is now the new table pointer
 c24f:		INX			; Point to the next character in the table
 		INY			; Point to the next character under analysis
-		LDA cmd_table - 1,X	; Fetch the next command table character
+		LDA cmd_tbl - 1,X	; Fetch the next command table character
 		BMI c26b		; ... a negative byte means a successful
 					; match of end of command table
 		CMP ($5),Y		; Same as character under interpretation?
@@ -491,7 +491,7 @@ c24f:		INX			; Point to the next character in the table
 			; THE END OF THE COMMAND WORD IN THE TABLE
 
 c264:		INX			; Point to the next character in the table
-		LDA cmd_table - 1,X	; and fetch it
+		LDA cmd_tbl - 1,X	; and fetch it
 		BPL c264		; Keep incrementing to reach the command
 					; word's negative termination byte
 		INY			; Point to the next character under analysis
@@ -505,7 +505,7 @@ c26b:		CMP #$fe		; reached the end of the command table ?
 			; ZERO PAGE AND JUMP TO IT
 
 c26f:		STA $53			; Termination byte is the MSB jump address
-		LDA off_table - 1,X	; Get the LSB jump address from the table
+		LDA off_tbl - 1,X	; Get the LSB jump address from the table
 		BCC c29f		; Dump it to $52, update $3 and $4 and
 					; jump to the command address now in ($52)
 
@@ -675,7 +675,7 @@ c313:		JMP cdc9		; Deal with line insertion and removal
 
 				; EXECUTE A DIRECT COMMAND AT $100
 
-c316:		LDX #cmd_7d - cmd_table	; Set the interpreter table pointer to $C???
+c316:		LDX #cmd_7d - cmd_tbl	; Set the interpreter table pointer to $C???
 c318:		JMP c233		; ... and interpret & execute the command
 
 
@@ -686,7 +686,7 @@ c31b:		JSR c434		; If the first non space character is
 					; is not (but is not '.')
 c31e:		BCS c32f		; ... then treat this as an integer variable
 					; assignment
-c320:		LDX #cmd_7f - cmd_table	; Set the interpreter table pointer to $C???
+c320:		LDX #cmd_7f - cmd_tbl	; Set the interpreter table pointer to $C???
 c322:		JMP c233		; ... and interpret & execute the command
 
 
@@ -713,7 +713,7 @@ c334:		SEC
 c335:		ROR $f			; Set bit 7 of the hex print flag to get
 					; the default decimal print mode
 c337:		JSR c372
-c33a:		LDX #cmd_2e - cmd_table	; Set the interpreter table pointer to $C???
+c33a:		LDX #cmd_2e - cmd_tbl	; Set the interpreter table pointer to $C???
 c33c:		JMP c233		; ... and interpret & execute '=', '?' or '!'
 
 
@@ -1215,7 +1215,7 @@ c569:		DEX
 c56a:		STX $4
 c56c:		LDA $16,X
 c56e:		BEQ c575
-c570:		LDX #cmd_20 - cmd_table
+c570:		LDX #cmd_20 - cmd_tbl
 c572:		JMP c233
 
 
@@ -1466,7 +1466,7 @@ c70b:		RTS
 ; Used by IF and UNTIL commands.
 
 c70c:		JSR c72c
-c70f:		LDX #cmd_43 - cmd_table
+c70f:		LDX #cmd_43 - cmd_tbl
 c711:		JMP c233
 
 
@@ -1487,7 +1487,7 @@ c725:		LDA $14,X
 c727:		ORA $15,X
 c729:		JMP c71b
 
-c72c:		LDX #cmd_46 - cmd_table
+c72c:		LDX #cmd_46 - cmd_tbl
 c72e:		JMP c233
 
 
@@ -1513,7 +1513,7 @@ c751:		BEQ c761
 
 
 c753:		JSR c78b
-c756:		LDX #cmd_00 - cmd_table
+c756:		LDX #cmd_00 - cmd_tbl
 c758:		JMP c233
 
 
@@ -1772,7 +1772,7 @@ c8b9:		JMP c80e
 ; the last character in the string interpreted.
 ; The Workspace Stack pointer ?4 is incremented.
 
-c8bc:		LDX #cmd_04 - cmd_table
+c8bc:		LDX #cmd_04 - cmd_tbl
 c8be:		JMP c233
 
 
@@ -1833,7 +1833,7 @@ c8f7:		RTS
 
 c8f8:		JSR c46a
 c8fb:		BCS c8f7
-c8fd:		LDX #cmd_07 - cmd_table
+c8fd:		LDX #cmd_07 - cmd_tbl
 c8ff:		JMP c233
 
 
@@ -2211,7 +2211,7 @@ cb71:		STA WORKSP + $061,Y
 cb74:		STA WORKSP + $056,Y
 cb77:		LDA #$1
 cb79:		STA WORKSP + $04b,Y
-cb7c:		LDX #cmd_tbl_for - cmd_table
+cb7c:		LDX #cmd_tbl_for - cmd_tbl
 cb7e:		JMP c233
 
 
@@ -2229,7 +2229,7 @@ cb93:		LDA $34,X
 cb95:		STA WORKSP + $08d,Y
 cb98:		LDA $43,X
 cb9a:		STA WORKSP + $098,Y
-cb9d:		LDX #cmd_tbl_forto - cmd_table
+cb9d:		LDX #cmd_tbl_forto - cmd_tbl
 cb9f:		JMP c233
 
 
@@ -2379,7 +2379,7 @@ cc80:		RTS
 cc81:		JSR c372
 cc84:		JSR c434
 cc87:		BCS cc8e
-cc89:		LDX #cmd_2b - cmd_table
+cc89:		LDX #cmd_2b - cmd_tbl
 cc8b:		JMP c233
 
 
@@ -2405,7 +2405,7 @@ ccab:		PLA
 ccac:		STA $6
 ccae:		PLA
 ccaf:		STA $5
-ccb1:		LDX #cmd_2c - cmd_table
+ccb1:		LDX #cmd_2c - cmd_tbl
 ccb3:		JMP c233
 
 
@@ -2768,7 +2768,7 @@ ceae:		JSR c279
 ; If successful, returns with (5),?3 pointimg to the character following,
 ; otherwise executes BRK.
 
-ceb1:		LDX #cmd_26 - cmd_table
+ceb1:		LDX #cmd_26 - cmd_tbl
 ceb3:		JMP c233
 
 
