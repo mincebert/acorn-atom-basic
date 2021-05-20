@@ -194,7 +194,7 @@ cmd_to:		.text "O", >do_to		; [T]O
 
 cmd_tbl_forto:	; [FOR ... TO ...]
 		.text "S"
-		.text $cb
+		.text >do_nostep
 		;
 cmd_step	.text "TEP", >do_step		; [S]TEP
 
@@ -321,7 +321,7 @@ off_tbl:
 
 		; [FOR ... TO ...]
 		.text cmd_step - cmd_tbl		; S
-		.text $be
+		.text <do_nostep
 		;
 		.text cmd_end - cmd_tbl			; [S]TEP
 		.text cmd_end - cmd_tbl
@@ -2292,7 +2292,7 @@ cbbb:		STA WORKSP + $06c,Y
 			; CBBB  99 6d 02  STA $26D,Y	; 6D not 6C
 
 
-cbbe:		JSR c50c
+do_nostep:	JSR c50c
 cbc1:		LDY $15
 cbc3:		LDA $5
 cbc5:		STA WORKSP + $0a3,Y
