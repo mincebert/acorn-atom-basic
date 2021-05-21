@@ -238,11 +238,12 @@ cmd_gt:		.text >do_gt			; [>]
 cmd_fnn:	.text >do_fnn			; [fn -]
 
 cmd_or:		.text "R", >do_or		; [O]R
-		.text $c7
+cmd_str_cmp:	.text >do_str_cmp		; ???
 cmd_tbl_log:	.text "O"
 		.text "A"
 cmd_log_err:	.text $fe
-cmd_46:		.text "$", $c7
+cmd_tbl_dol:	.text "$", >do_dol		; ???
+
 cmd_ch:		.text "H", >do_ch		; [C]H
 cmd_len:	.text "EN", $c9			; num [L]EN
 cmd_and:	.text "ND", >do_and		; [A]ND
@@ -391,17 +392,21 @@ off_tbl:
 
 off_40:		.text cmd_log_err - cmd_tbl		; [O]R
 		.text <do_or
-		.text $31
+
+		.text <do_str_cmp
+
 		.text cmd_or - cmd_tbl			; O
-off_44:		.text $4d				; A
-		.text $4d
-		.text $42
-		.text $53
+		.text cmd_and - cmd_tbl			; A
+		.text $4d				; error?
+
+		.text <cmd_str_cmp - cmd_tbl		; $
+		.text <do_dol
+
 		.text cmd_unk - cmd_tbl			; [C]H
 		.text <do_ch
 off_4a:		.text $15, $15, $bd			; [L]EN
-off_4d:		.text $45				; [A]ND
-		.text $45
+off_4d:		.text cmd_log_err - cmd_tbl		; [A]ND
+		.text cmd_log_err - cmd_tbl
 		.text <do_and
 		.text <do_hash				; [#]
 		.text <do_bktop				; [(]
@@ -1566,13 +1571,16 @@ c725:		LDA $14,X
 c727:		ORA $15,X
 c729:		JMP c71b
 
-c72c:		LDX #cmd_46 - cmd_tbl
+
+; ?
+
+c72c:		LDX #cmd_tbl_dol - cmd_tbl
 c72e:		JMP c233
 
 
 ; '$' String Comparison Test
 
-c731:		JSR c78b
+do_str_cmp:	JSR c78b
 c734:		JSR ceae
 c737:		LDA $15,X
 c739:		STA $54
@@ -1591,7 +1599,9 @@ c74f:		LDY #$0
 c751:		BEQ c761
 
 
-c753:		JSR c78b
+; ?
+
+do_dol:		JSR c78b
 c756:		LDX #cmd_tbl_op - cmd_tbl
 c758:		JMP c233
 
