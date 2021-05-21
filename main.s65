@@ -267,8 +267,9 @@ cmd_78:		.text "RINT"
 cmd_pr_com:	.text >do_pr_com		; [,]
 cmd_7d:		.text "N"
 		.text "L"
-cmd_tbl_then:	.text "UNIGRF!?$PDLSB*E", $f0
-		.text "AVE", $cf
+cmd_tbl_then:	.text "UNIGRF!?$PDLSB*E"
+cmd_unk2	.text $f0			; error
+here:		.text "AVE", $cf
 		.text "EW", >do_new
 		.text "O", $cc
 		.text "ET", $c3
@@ -280,7 +281,7 @@ cmd_tbl_then:	.text "UNIGRF!?$PDLSB*E", $f0
 		.text "F", $c5
 		.text "NPUT"
 cmd_input_do:	.text >do_input
-here:		.text "OSUB", $cb
+		.text "OSUB", $cb
 		.text "OTO", $cc
 		.text "ETURN", $cb
 		.text "EM", $c5
@@ -291,8 +292,12 @@ here:		.text "OSUB", $cb
 		.text "PUT", $cf
 		.text "HUT", $cf
 		.text "PUT", $cf
-		.text "TR", $cf
-		.text "UT", $cf, $c3, $c4, $cd, $c4
+cmd_ptr2:	.text "TR", >do_ptr2		; [P]TR
+		.text "UT", >do_put		; [P]UT
+		.text $c3
+		.text $c4
+		.text $cd
+		.text $c4
 		.text ",", $fe
 
 
@@ -450,7 +455,9 @@ off_4d:		.text cmd_log_err - cmd_tbl		; [A]ND
 		.text <do_fout
 		.text <do_pr_dol			; [$]
 off_77:		.text <do_pr_amp			; [&]
-		.text $e3, $8f, $8f		; OUT
+		.text cmd_ptr2 - cmd_tbl		; [P]RINT
+		.text $8f
+		.text $8f
 off_7b:		.text $8f
 		.text <do_pr_com			; RINT
 		; TODO out of sync somewhere above here!
@@ -483,9 +490,18 @@ off_d3:		.text $d7, $8f, $8f			; ND
 off_d6:		.text $e3, $db, $8f, $8f		; GET
 off_da:		.text $c5, $90, $8f, $8f		; PUT
 off_de:		.text $b6, $8f, $8f			; TR
-off_e1:		.text $8f, $8f, $e6, $8f, $47, $8f, $8f	; UT
-off_e8:		.text $95, $ee				; ,
-off_ea:		.text $06, $5c, $0f, $35		; ???
+off_e1:		.text $8f, $8f
+off_e3:		.text $e6				; [P]TR
+		.text cmd_unk2 - cmd_tbl
+		.text <do_ptr2
+off_e6:		.text cmd_unk2 - cmd_tbl		; [P]UT
+		.text cmd_unk2 - cmd_tbl
+off_e8:		.text <do_put
+		.text $ee				; ,
+off_ea:		.text $06
+		.text $5c
+		.text $0f
+		.text $35		; ???
 
 
 ; Interpreter Single Byte Command Lookup Table
@@ -2976,7 +2992,9 @@ cf44:		STX $4
 cf46:		RTS
 
 
-cf47:		JSR c8bc
+; Do PTR [#2]
+
+do_ptr2:		JSR c8bc
 cf4a:		JSR c4de
 cf4d:		JSR c3cb
 cf50:		JSR cf41
@@ -3028,7 +3046,7 @@ cf92:		JMP c55b
 
 ; Execute 'PUT', 'FIN' and 'FOUT' subroutines
 
-cf95:		JSR cf7b
+do_put:		JSR cf7b
 cf98:		LDX #$1
 cf9a:		LDA $52,X
 cf9c:		JSR OSBPUT
