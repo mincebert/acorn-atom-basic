@@ -263,11 +263,26 @@ cmd_fin:	.text "IN", >do_fin		; [F]IN
 cmd_fout:	.text "OUT", >do_fout		; [F]OUT
 cmd_pr_dol:	.text >do_pr_dol		; [$]
 cmd_pr_amp:	.text >do_pr_amp		; [&]
-cmd_78:		.text "RINT"
+cmd_78:		.text "RINT"			; [P]RINT
 cmd_pr_com:	.text >do_pr_com		; [,]
 cmd_7d:		.text "N"
 		.text "L"
-cmd_tbl_then:	.text "UNIGRF!?$PDLSB*E"
+cmd_tbl_then:	.text "U"
+		.text "N"
+		.text "I"
+		.text "G"
+		.text "R"
+		.text "F"
+		.text "!"
+		.text "?"
+		.text "$"
+		.text "P"
+		.text "D"
+		.text "L"
+		.text "S"
+		.text "B"
+		.text "*"
+		.text "E"
 cmd_unk2	.text $f0			; error
 here:		.text "AVE", $cf
 		.text "EW", >do_new
@@ -461,10 +476,29 @@ off_77:		.text <do_pr_amp			; [&]
 off_7b:		.text $8f
 		.text <do_pr_com			; RINT
 		; TODO out of sync somewhere above here!
-off_7d:		.text $94, $a0, $a8			; NL...
-off_80:		.text $ad, $b1				; ???
-off_82:		.text $bd, $c1, $cd, $e9, $ea, $eb, $78, $97		; ...UNIGRF!?...
-off_8a:		.text $99, $d3, $df, $ec, $d0, $4b, $8f, $8f, $8f	; ...$PDLSB*E
+off_7d:		.text $94				; N
+		.text $a0				; L
+							; THEN
+		.text $a8				; U
+off_80:		.text $ad				; N
+		.text $b1				; I
+off_82:		.text $bd				; G
+		.text $c1				; R
+		.text $cd				; F
+		.text $e9				; !
+		.text $ea				; ?
+		.text $eb				; $
+		.text $78				; P
+		.text $97				; D
+off_8a:		.text $99				; L
+		.text $d3				; S
+		.text $df				; B
+		.text $ec				; *
+		.text $d0				; E
+		.text $4b				; unk2
+		.text $8f				; 
+		.text $8f				; 
+		.text $8f				; 
 off_93:		.text $0a, $8f				; ???
 off_95:		.text <do_new, <do_new, $8f		; [N]EW
 off_98:		.text $f0, $9c				; EW
