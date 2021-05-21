@@ -223,9 +223,12 @@ cmd_tbl_print:	; PRINT parameters
 		.text ";"
 		.text $0d
 		.text ","
-		.text $c3
-		.text $c5
+		.text >do_pr_exp
+		;
+cmd_pr_semi:	.text >do_pr_semi		; [;] or <CR>
+
 		.text $c2
+
 cmd_ne:		.text ">", >do_ne		; [<]>
 cmd_le:		.text "=", >do_le		; [<]=
 cmd_lt:		.text >do_lt			; [<]
@@ -255,8 +258,10 @@ cmd_fin:	.text "IN", >do_fin		; [F]IN
 cmd_fout:	.text "OUT", >do_fout		; [F]OUT
 cmd_pr_dol:	.text >do_pr_dol		; [$]
 cmd_pr_amp:	.text >do_pr_amp		; [&]
-cmd_78:		.text "RINT", $c3
-cmd_7d:		.text "NL"
+cmd_78:		.text "RINT"
+cmd_pr_com:	.text >do_pr_com		; [,]
+cmd_7d:		.text "N"
+		.text "L"
 cmd_7f:		.text "UNIGRF!?$PDLSB*E", $f0
 		.text "AVE", $cf
 		.text "EW", >do_new
@@ -360,14 +365,18 @@ off_tbl:
 		.text cmd_input_do - cmd_tbl		; ,
 		.text <do_input_num
 
-off_2e:		.text cmd_pr_dol - cmd_tbl		; $
+		; PRINT parameters
+		.text cmd_pr_dol - cmd_tbl		; $
 		.text cmd_pr_amp - cmd_tbl		; &
-		.text $34				; ;
-		.text $34				; <CR>
-		.text $7c				; ,
-		.text $3f
-		.text $4a
-		.text $78	; $&;<CR>,
+		.text cmd_pr_semi - cmd_tbl		; ;
+		.text cmd_pr_semi - cmd_tbl		; <CR>
+		.text cmd_pr_com - cmd_tbl		; ,
+		.text <do_pr_exp
+		;
+		.text <do_pr_semi			; [;]
+
+		.text $78
+
 		.text cmd_le - cmd_tbl, <do_ne		; [<]>
 		.text cmd_lt - cmd_tbl, <do_le		; [<]=
 		.text <do_lt				; [<]
@@ -422,7 +431,8 @@ off_4d:		.text $45, $45, $14			; $
 		.text <do_pr_dol			; [$]
 off_77:		.text <do_pr_amp			; [&]
 		.text $e3, $8f, $8f		; OUT
-off_7b:		.text $8f, $34				; RINT
+off_7b:		.text $8f
+		.text <do_pr_com			; RINT
 		; TODO out of sync somewhere above here!
 off_7d:		.text $94, $a0, $a8			; NL...
 off_80:		.text $ad, $b1				; ???
@@ -763,7 +773,7 @@ c331:		JMP c27b		; Search for & execute '=', '?' or '!'
 
 ; Execute the command 'PRINT'
 
-c334:		SEC
+do_pr_com:	SEC
 do_pr_amp:	ROR $f			; Set bit 7 of the hex print flag to get
 					; the default decimal print mode
 c337:		JSR c372
@@ -774,7 +784,7 @@ c33c:		JMP c233		; ... and interpret & execute '=', '?' or '!'
 
 ; Execute and Print an Arbitrarily Complex Expression
 
-c33f:		JSR c78b		; Evaluate an arbitrarily complex
+do_pr_exp:	JSR c78b		; Evaluate an arbitrarily complex
 					; expression, followed by a single byte
 					; symbol, followed by '<', '=' or '>'
 c342:		JSR c3cb		; Copy the last level of the w/s stack to
@@ -1240,7 +1250,7 @@ c547:		JMP c2cf
 ; Jumps indirectly to the FP ROM via ($D002) if the command cannot be
 ; interpreted.
 
-c54a:		DEY
+do_pr_semi:	DEY
 c54b:		JSR c4f6
 c54e:		BNE c55b
 c550:		JSR c424		; Handle unrecognised statement
