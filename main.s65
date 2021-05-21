@@ -214,10 +214,18 @@ cmd_strvar:	.text >do_strvar
 cmd_tbl_input:	; INPUT...
 		.text "$"
 		; numerical variable input
-cmd_2c:		.text ","
+cmd_tbl_numin:	.text ","
 		.text >do_input_num
 
-cmd_2e:		.text "$&;", $0d, ",", $c3, $c5, $c2
+cmd_tbl_print:	; PRINT parameters
+		.text "$"
+		.text "&"
+		.text ";"
+		.text $0d
+		.text ","
+		.text $c3
+		.text $c5
+		.text $c2
 cmd_ne:		.text ">", >do_ne		; [<]>
 cmd_le:		.text "=", >do_le		; [<]=
 cmd_lt:		.text >do_lt			; [<]
@@ -245,7 +253,8 @@ cmd_get:	.text "ET", >do_get		; [G]ET
 cmd_bget:	.text "GET", >do_bget		; [B]GET
 cmd_fin:	.text "IN", >do_fin		; [F]IN
 cmd_fout:	.text "OUT", >do_fout		; [F]OUT
-		.text $c3, $c3
+cmd_pr_dol:	.text >do_pr_dol		; [$]
+cmd_pr_amp:	.text >do_pr_amp		; [&]
 cmd_78:		.text "RINT", $c3
 cmd_7d:		.text "NL"
 cmd_7f:		.text "UNIGRF!?$PDLSB*E", $f0
@@ -351,7 +360,14 @@ off_tbl:
 		.text cmd_input_do - cmd_tbl		; ,
 		.text <do_input_num
 
-off_2e:		.text $76, $77, $34, $34, $7c, $3f, $4a, $78	; $&;<CR>,
+off_2e:		.text cmd_pr_dol - cmd_tbl		; $
+		.text cmd_pr_amp - cmd_tbl		; &
+		.text $34				; ;
+		.text $34				; <CR>
+		.text $7c				; ,
+		.text $3f
+		.text $4a
+		.text $78	; $&;<CR>,
 		.text cmd_le - cmd_tbl, <do_ne		; [<]>
 		.text cmd_lt - cmd_tbl, <do_le		; [<]=
 		.text <do_lt				; [<]
@@ -403,8 +419,9 @@ off_4d:		.text $45, $45, $14			; $
 		.text cmd_unk - cmd_tbl
 		.text cmd_unk - cmd_tbl
 		.text <do_fout
-		.text $90				; IN
-off_77:		.text $35, $e3, $8f, $8f		; OUT
+		.text <do_pr_dol			; [$]
+off_77:		.text <do_pr_amp			; [&]
+		.text $e3, $8f, $8f		; OUT
 off_7b:		.text $8f, $34				; RINT
 		; TODO out of sync somewhere above here!
 off_7d:		.text $94, $a0, $a8			; NL...
@@ -747,10 +764,11 @@ c331:		JMP c27b		; Search for & execute '=', '?' or '!'
 ; Execute the command 'PRINT'
 
 c334:		SEC
-c335:		ROR $f			; Set bit 7 of the hex print flag to get
+do_pr_amp:	ROR $f			; Set bit 7 of the hex print flag to get
 					; the default decimal print mode
 c337:		JSR c372
-c33a:		LDX #cmd_2e - cmd_tbl	; Set the interpreter table pointer to $C???
+					; Set the interpreter table pointer to $C???
+c33a:		LDX #cmd_tbl_print - cmd_tbl
 c33c:		JMP c233		; ... and interpret & execute '=', '?' or '!'
 
 
@@ -825,7 +843,7 @@ c389:		CMP #$22
 c38b:		BNE c372
 c38d:		INY
 c38e:		BCS c377
-c390:		JSR c78b
+do_pr_dol:	JSR c78b
 c393:		JSR c3cb
 c396:		ORA $54
 c398:		ORA $53
@@ -2442,7 +2460,7 @@ ccab:		PLA
 ccac:		STA $6
 ccae:		PLA
 ccaf:		STA $5
-ccb1:		LDX #cmd_2c - cmd_tbl
+ccb1:		LDX #cmd_tbl_numin - cmd_tbl
 ccb3:		JMP c233
 
 
