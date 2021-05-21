@@ -227,7 +227,7 @@ cmd_tbl_print:	; PRINT parameters
 		;
 cmd_pr_semi:	.text >do_pr_semi		; [;] or <CR>
 
-		.text $c2			; points at RTS
+		.text >do_rts			; points at RTS
 
 cmd_ne:		.text ">", >do_ne		; [<]>
 cmd_le:		.text "=", >do_le		; [<]=
@@ -245,7 +245,7 @@ cmd_log_err:	.text $fe
 cmd_tbl_dol:	.text "$", >do_dol		; ???
 
 cmd_ch:		.text "H", >do_ch		; [C]H
-cmd_len:	.text "EN", $c9			; num [L]EN
+cmd_len:	.text "EN", >do_len		; num [L]EN
 cmd_and:	.text "ND", >do_and		; [A]ND
 cmd_hash:	.text >do_hash			; [#]
 cmd_bktop:	.text >do_bktop			; [(]
@@ -380,7 +380,7 @@ off_tbl:
 		;
 		.text <do_pr_semi			; [;]
 
-		.text $78				; points at RTS
+		.text <do_rts				; points at RTS
 
 		.text cmd_le - cmd_tbl, <do_ne		; [<]>
 		.text cmd_lt - cmd_tbl, <do_le		; [<]=
@@ -404,7 +404,9 @@ off_40:		.text cmd_log_err - cmd_tbl		; [O]R
 
 		.text cmd_unk - cmd_tbl			; [C]H
 		.text <do_ch
-off_4a:		.text $15, $15, $bd			; [L]EN
+off_4a:		.text cmd_unk - cmd_tbl			; num [L]EN
+		.text cmd_unk - cmd_tbl
+		.text <do_len
 off_4d:		.text cmd_log_err - cmd_tbl		; [A]ND
 		.text cmd_log_err - cmd_tbl
 		.text <do_and
@@ -592,7 +594,7 @@ c26f:		STA $53			; Termination byte is the MSB jump address
 					; jump to the command address now in ($52)
 
 c276:		LDX $4
-c278:		RTS
+do_rts:		RTS
 
 
 ; Search for '=' subroutine
@@ -2070,7 +2072,7 @@ c9bc:		RTS
 
 ; Execute the Function 'LEN'
 
-c9bd:		JSR c8bc
+do_len:		JSR c8bc
 c9c0:		JSR c3cb
 c9c3:		LDY #$0
 c9c5:		LDA #$d
