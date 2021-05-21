@@ -227,7 +227,7 @@ cmd_tbl_print:	; PRINT parameters
 		;
 cmd_pr_semi:	.text >do_pr_semi		; [;] or <CR>
 
-		.text $c2
+		.text $c2			; points at RTS
 
 cmd_ne:		.text ">", >do_ne		; [<]>
 cmd_le:		.text "=", >do_le		; [<]=
@@ -236,12 +236,16 @@ cmd_eq:		.text >do_eq			; [=]
 cmd_ge:		.text "=", >do_ge		; [>]=
 cmd_gt:		.text >do_gt			; [>]
 cmd_fnn:	.text >do_fnn			; [fn -]
-cmd_40:		.text "R", $c7, $c7
-cmd_43:		.text "OA", $fe
+
+cmd_or:		.text "R", >do_or		; [O]R
+		.text $c7
+cmd_tbl_log:	.text "O"
+		.text "A"
+cmd_log_err:	.text $fe
 cmd_46:		.text "$", $c7
 cmd_ch:		.text "H", >do_ch		; [C]H
 cmd_len:	.text "EN", $c9			; num [L]EN
-cmd_4d:		.text "ND", $c7
+cmd_and:	.text "ND", >do_and		; [A]ND
 cmd_hash:	.text >do_hash			; [#]
 cmd_bktop:	.text >do_bktop			; [(]
 cmd_pling:	.text >do_pling			; [!]
@@ -262,7 +266,7 @@ cmd_78:		.text "RINT"
 cmd_pr_com:	.text >do_pr_com		; [,]
 cmd_7d:		.text "N"
 		.text "L"
-cmd_7f:		.text "UNIGRF!?$PDLSB*E", $f0
+cmd_tbl_then:	.text "UNIGRF!?$PDLSB*E", $f0
 		.text "AVE", $cf
 		.text "EW", >do_new
 		.text "O", $cc
@@ -375,7 +379,7 @@ off_tbl:
 		;
 		.text <do_pr_semi			; [;]
 
-		.text $78
+		.text $78				; points at RTS
 
 		.text cmd_le - cmd_tbl, <do_ne		; [<]>
 		.text cmd_lt - cmd_tbl, <do_le		; [<]=
@@ -384,12 +388,21 @@ off_tbl:
 		.text cmd_gt - cmd_tbl, <do_ge		; [>]=
 		.text <do_gt				; [>]
 		.text <do_fnn				; [fn -]
-off_40:		.text $45, $22, $31, $40		; =
-off_44:		.text $4d, $4d, $42, $53		; =
+
+off_40:		.text cmd_log_err - cmd_tbl		; [O]R
+		.text <do_or
+		.text $31
+		.text cmd_or - cmd_tbl			; O
+off_44:		.text $4d				; A
+		.text $4d
+		.text $42
+		.text $53
 		.text cmd_unk - cmd_tbl			; [C]H
 		.text <do_ch
 off_4a:		.text $15, $15, $bd			; [L]EN
-off_4d:		.text $45, $45, $14			; $
+off_4d:		.text $45				; [A]ND
+		.text $45
+		.text <do_and
 		.text <do_hash				; [#]
 		.text <do_bktop				; [(]
 		.text <do_pling				; [!]
@@ -574,7 +587,7 @@ c26f:		STA $53			; Termination byte is the MSB jump address
 					; jump to the command address now in ($52)
 
 c276:		LDX $4
-		RTS
+c278:		RTS
 
 
 ; Search for '=' subroutine
@@ -750,7 +763,8 @@ do_then:	JSR c434		; If the first non space character is
 					; is not (but is not '.')
 c31e:		BCS c32f		; ... then treat this as an integer variable
 					; assignment
-c320:		LDX #cmd_7f - cmd_tbl	; Set the interpreter table pointer to $C???
+c320:		LDX #cmd_tbl_then - cmd_tbl	
+					; Set the interpreter table pointer to $C???
 c322:		JMP c233		; ... and interpret & execute the command
 
 
@@ -1531,13 +1545,13 @@ c70b:		RTS
 ; Used by IF and UNTIL commands.
 
 c70c:		JSR c72c
-c70f:		LDX #cmd_43 - cmd_tbl
+c70f:		LDX #cmd_tbl_log - cmd_tbl
 c711:		JMP c233
 
 
 ; Logical AND Truth Test
 
-c714:		JSR c72c
+do_and:		JSR c72c
 c717:		LDA $14,X
 c719:		AND $15,X
 c71b:		STA $14,X
@@ -1547,7 +1561,7 @@ c71f:		JMP c70f
 
 ; Logical OR Truth Test
 
-c722:		JSR c72c
+do_or:		JSR c72c
 c725:		LDA $14,X
 c727:		ORA $15,X
 c729:		JMP c71b
