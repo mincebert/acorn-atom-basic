@@ -298,8 +298,8 @@ cmd_next:	.text "EXT", >do_next		; [N]EXT
 cmd_if:		.text "F", >do_if		; [I]F
 cmd_input:	.text "NPUT"
 cmd_input_do:	.text >do_input
-		.text "OSUB", $cb		; [G]OSUB
-cmd_goto:	.text "OTO", $cc		; [G]OTO
+cmd_gosub:	.text "OSUB", >do_gosub		; [G]OSUB
+cmd_goto:	.text "OTO", >do_goto		; [G]OTO
 cmd_return:	.text "ETURN", $cb
 		.text "EM", $c5
 		.text "UN", $f1
@@ -540,10 +540,16 @@ off_9c:		.text cmd_unk2 - cmd_tbl		; [L]INK
 		.text cmd_unk2 - cmd_tbl
 		.text cmd_unk2 - cmd_tbl
 		.text <do_input
-off_b8:		.text $8f, $8f		; INPUT
-		.text $8f
-off_bb:		.text $8f, $d2, $8f, $b8, $8f		; OSUB
-off_c0:		.text $05, $ca, $c7, $8f		; OTO
+		.text cmd_unk2 - cmd_tbl		; [G]OSUB
+		.text cmd_unk2 - cmd_tbl
+		.text cmd_unk2 - cmd_tbl
+		.text cmd_unk2 - cmd_tbl
+		.text <do_gosub
+		.text cmd_unk2 - cmd_tbl		; [G]OTO
+		.text cmd_gosub - cmd_tbl
+		.text cmd_unk2 - cmd_tbl
+off_c0:		.text <do_goto
+		.text $ca, $c7, $8f		; OTO
 off_c4:		.text $8f, $8f, $ec, $8f, $8f, $75	; ETURN
 off_ca:		.text $8f, $8f, $41			; EM
 off_cd:		.text $8f, $8f, $57			; UN
@@ -2437,7 +2443,7 @@ cbcf:		JMP do_then
 
 ; Execute the Command 'GOSUB'
 
-cbd2:		JSR cc1f
+do_gosub:	JSR cc1f
 cbd5:		JSR c50c
 cbd8:		LDY $14
 cbda:		CPY #$e
@@ -2466,7 +2472,7 @@ cc02:		JMP do_then
 
 ; Execute the Command 'GOTO'
 
-cc05:		JSR cc1f
+do_goto:	JSR cc1f
 cc08:		JSR c4e4
 cc0b:		LDA $57
 cc0d:		BNE cc14
