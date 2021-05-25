@@ -300,9 +300,9 @@ cmd_input:	.text "NPUT"
 cmd_input_do:	.text >do_input
 cmd_gosub:	.text "OSUB", >do_gosub		; [G]OSUB
 cmd_goto:	.text "OTO", >do_goto		; [G]OTO
-cmd_return:	.text "ETURN", $cb
-		.text "EM", $c5
-		.text "UN", $f1
+cmd_return:	.text "ETURN", >do_return
+cmd_rem:	.text "EM", >do_rem
+cmd_run:	.text "UN", $f1
 cmd_for:	.text "OR", $cb
 		.text "ND", $cd
 		.text "GET", $cf
@@ -549,12 +549,27 @@ off_9c:		.text cmd_unk2 - cmd_tbl		; [L]INK
 		.text cmd_gosub - cmd_tbl
 		.text cmd_unk2 - cmd_tbl
 off_c0:		.text <do_goto
-		.text $ca, $c7, $8f		; OTO
-off_c4:		.text $8f, $8f, $ec, $8f, $8f, $75	; ETURN
-off_ca:		.text $8f, $8f, $41			; EM
-off_cd:		.text $8f, $8f, $57			; UN
-off_d0:		.text $8f, $8f, $98			; OR
-off_d3:		.text $d7, $8f, $8f			; ND
+		.text cmd_run - cmd_tbl			; [R]ETURN
+		.text cmd_rem - cmd_tbl
+		.text cmd_unk2 - cmd_tbl
+off_c4:		.text cmd_unk2 - cmd_tbl
+		.text cmd_unk2 - cmd_tbl
+		.text <do_return
+		.text cmd_unk2 - cmd_tbl		; [R]EM
+		.text cmd_unk2 - cmd_tbl
+		.text <do_rem
+off_ca:		.text cmd_unk2 - cmd_tbl		; [R]UN
+		.text cmd_unk2 - cmd_tbl
+		.text $41
+off_cd:		.text $8f				; [B]GET
+		.text $8f
+		.text $57			; UN
+off_d0:		.text $8f
+		.text $8f
+		.text $98			; OR
+off_d3:		.text $d7
+		.text $8f
+		.text $8f			; ND
 off_d6:		.text $e3, $db, $8f, $8f		; GET
 off_da:		.text $c5, $90, $8f, $8f		; PUT
 off_de:		.text $b6, $8f, $8f			; TR
@@ -1385,7 +1400,7 @@ do_if:		JSR c70c
 c569:		DEX
 c56a:		STX $4
 c56c:		LDA $16,X
-c56e:		BEQ c575
+c56e:		BEQ do_rem
 c570:		LDX #cmd_tbl_if - cmd_tbl
 c572:		JMP c233
 
@@ -1394,7 +1409,7 @@ c572:		JMP c233
 ;
 ; Increments (5),Y until a <CR> is found.
 
-c575:		LDA #$d
+do_rem:		LDA #$d
 c577:		DEY
 c578:		INY
 c579:		CMP ($5),Y
@@ -2458,7 +2473,7 @@ cbea:		BCC cc0b
 
 ; Execute the Command 'RETURN'
 
-cbec:		JSR c4e4
+do_return:	JSR c4e4
 cbef:		LDY $14
 cbf1:		BEQ cc1d
 cbf3:		DEC $14
