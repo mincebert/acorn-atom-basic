@@ -289,12 +289,12 @@ cmd_unk2	.text $f0			; error???
 cmd_save	.text "AVE", >do_save
 cmd_new:	.text "EW", >do_new		; [N]EW
 cmd_do:		.text "O", >do_do		; [D]O
-cmd_let:	.text "ET", $c3
-		.text "INK", $c3
+cmd_let:	.text "ET", >do_let
+cmd_link:	.text "INK", >do_link
 cmd_list:	.text "IST", >do_list		; [L]IST
 cmd_load:	.text "OAD", >do_load		; [L]OAD
-cmd_until:	.text "NTIL", $cc		; [U]NTIL
-cmd_next:	.text "EXT", $ca		; [N]EXT
+cmd_until:	.text "NTIL", >do_until		; [U]NTIL
+cmd_next:	.text "EXT", >do_next		; [N]EXT
 cmd_if:		.text "F", $c5			; [I]F
 		.text "NPUT"
 cmd_input_do:	.text >do_input
@@ -504,29 +504,36 @@ off_4d:		.text cmd_log_err - cmd_tbl		; [A]ND
 		.text cmd_unk2 - cmd_tbl
 		.text cmd_unk2 - cmd_tbl
 		.text <do_save
-here:		.text cmd_unk2 - cmd_tbl		; [N]EW
+		.text cmd_unk2 - cmd_tbl		; [N]EW
 		.text <do_new
 		.text <do_new
 		.text cmd_unk2 - cmd_tbl		; [D]O
-off_98:		.text <do_do
-		.text $9c				; EW
-off_9a:		.text cmd_unk2 - cmd_tbl
-		.text $25				; O
+		.text <do_do
+		.text cmd_link - cmd_tbl		; [L]ET
+		.text cmd_unk2 - cmd_tbl
+		.text <do_let
 off_9c:		.text cmd_unk2 - cmd_tbl		; [L]INK
 		.text cmd_unk2 - cmd_tbl
 		.text cmd_unk2 - cmd_tbl
-off_9f:		.text $b2
+		.text <do_link
 		.text cmd_load - cmd_tbl		; [L]IST
 		.text $9c
 		.text cmd_unk2 - cmd_tbl
 		.text <do_list
-off_a3:		.text cmd_let - cmd_tbl			; [L]OAD
+		.text cmd_let - cmd_tbl			; [L]OAD
 		.text cmd_unk2 - cmd_tbl
 		.text cmd_unk2 - cmd_tbl
 		.text <do_load
-		.text $8f, $8f, $8f		; OAD
-off_ab:		.text $8f, $d2, $8f, $8f, $8f		; NTIL
-off_b0:		.text $cd, $b3, $66, $8f		; EXT
+		.text cmd_unk2 - cmd_tbl		; [U]NTIL
+		.text cmd_unk2 - cmd_tbl
+		.text cmd_unk2 - cmd_tbl
+		.text cmd_unk2 - cmd_tbl
+		.text <do_until
+		.text cmd_unk2 - cmd_tbl		; [N]EXT
+		.text cmd_unk2 - cmd_tbl
+		.text cmd_unk2 - cmd_tbl
+		.text <do_next
+		.text $b3, $66, $8f		; EXT
 off_b4:		.text $8f, $8f				; F
 off_b6:		.text $8f
 		.text <do_input
@@ -846,7 +853,7 @@ c322:		JMP c233		; ... and interpret & execute the command
 
 ; Execute the command 'LET'
 
-c325:		JSR c434		; If the first non space character is
+do_let:		JSR c434		; If the first non space character is
 					; alphabetic and the the subsequent
 					; is not (but is not '.')
 c328:		BCS c32f		; ... then interpret a simple integer variable
@@ -962,7 +969,7 @@ c3af:		JMP c337
 
 ; Execute the command 'LINK'
 
-c3b2:		JSR c3c8		; Evaluate an arbitrarily complex function
+do_link:	JSR c3c8		; Evaluate an arbitrarily complex function
 					; to $52(LSB)..$55(MSB)
 c3b5:		JSR c4e4		; Do interpreter post-test
 c3b8:		LDA WORKSP + $122	; Load accumulator with LSB integer 'A'
@@ -2291,7 +2298,7 @@ cacb:		BCS ca6e
 
 ; Execute the Command 'NEXT'
 
-cacd:		JSR c434
+do_next:	JSR c434
 cad0:		LDY $15
 cad2:		BEQ cae4
 cad4:		BCC cae5
@@ -2588,7 +2595,7 @@ ccd0:		BNE ccc5
 
 ; Execute the Command 'UNTIL'
 
-ccd2:		JSR c70c
+do_until:		JSR c70c
 ccd5:		LDY $13
 ccd7:		BEQ ccc3 + 1
 ccd9:		DEX
