@@ -303,12 +303,12 @@ cmd_goto:	.text "OTO", >do_goto		; [G]OTO
 cmd_return:	.text "ETURN", >do_return
 cmd_rem:	.text "EM", >do_rem
 cmd_run:	.text "UN", $f1
-cmd_for:	.text "OR", $cb
-		.text "ND", $cd
-		.text "GET", $cf
-		.text "PUT", $cf
-		.text "HUT", $cf
-		.text "PUT", $cf
+cmd_for:	.text "OR", >do_for
+		.text "ND", >do_end
+cmd_sget:	.text "GET", >do_sget
+cmd_sput:	.text "PUT", >do_sput
+cmd_shut:	.text "HUT", >do_shut
+cmd_bput:	.text "PUT", >do_bput
 cmd_ptr2:	.text "TR", >do_ptr2		; [P]TR
 		.text "UT", >do_put		; [P]UT
 cmd_pling:	.text >do_pling			; [!]
@@ -561,19 +561,28 @@ off_c4:		.text cmd_unk2 - cmd_tbl
 off_ca:		.text cmd_unk2 - cmd_tbl		; [R]UN
 		.text cmd_unk2 - cmd_tbl
 		.text $41
-off_cd:		.text $8f				; [B]GET
-		.text $8f
-		.text $57			; UN
-off_d0:		.text $8f
-		.text $8f
-		.text $98			; OR
-off_d3:		.text $d7
-		.text $8f
-		.text $8f			; ND
-off_d6:		.text $e3, $db, $8f, $8f		; GET
-off_da:		.text $c5, $90, $8f, $8f		; PUT
-off_de:		.text $b6, $8f, $8f			; TR
-off_e1:		.text $8f, $8f
+off_cd:		.text cmd_unk2 - cmd_tbl		; [F]OR
+		.text cmd_unk2 - cmd_tbl
+		.text <do_for
+off_d0:		.text cmd_unk2 - cmd_tbl		; [E]ND
+		.text cmd_unk2 - cmd_tbl
+		.text <do_end
+off_d3:		.text cmd_sput - cmd_tbl		; [S]GET
+		.text cmd_unk2 - cmd_tbl
+		.text cmd_unk2 - cmd_tbl
+off_d6:		.text <do_sget
+		.text cmd_shut - cmd_tbl		; [S]PUT
+		.text cmd_unk2 - cmd_tbl
+		.text cmd_unk2 - cmd_tbl
+off_da:		.text <do_sput
+		.text cmd_save - cmd_tbl		; [S]HUT
+		.text cmd_unk2 - cmd_tbl
+		.text cmd_unk2 - cmd_tbl
+off_de:		.text <do_shut
+		.text cmd_unk2 - cmd_tbl		; [B]PUT
+		.text cmd_unk2 - cmd_tbl
+		.text cmd_unk2 - cmd_tbl
+		.text <do_bput
 off_e3:		.text $e6				; [P]TR
 		.text cmd_unk2 - cmd_tbl
 		.text <do_ptr2
@@ -2387,7 +2396,7 @@ cb54:		JMP do_input_num
 
 ; Execute the Command 'FOR'
 
-cb57:		JSR c434
+do_for:		JSR c434
 cb5a:		BCC cb6c + 1
 cb5c:		JSR c279
 cb5f:		JSR ca2c
@@ -2767,7 +2776,7 @@ cd97:		RTS
 ; sets the TOP vector $D, $E.
 ; Exits to Direct Mode.
 
-cd98:		JSR c4e4
+do_end:		JSR c4e4
 cd9b:		LDA $12
 cd9d:		STA $e
 cd9f:		LDY #$0
@@ -3124,7 +3133,7 @@ cf8c:		JMP (BPTVEC)
 
 ; Execute the Command 'BPUT'
 
-cf8f:		JSR cf7b
+do_bput:	JSR cf7b
 cf92:		JMP c55b
 
 
@@ -3148,7 +3157,9 @@ cfb1:		LDX $4
 cfb3:		JMP c97c
 
 
-cfb6:		JSR c8bc
+; Do command 'SHUT'
+
+do_shut:	JSR c8bc
 cfb9:		JSR c4e4
 cfbc:		JSR cf41
 cfbf:		JSR OSSHUT
@@ -3157,7 +3168,7 @@ cfc2:		JMP c55b
 
 ; Execute the Command 'SPUT'
 
-cfc5:		JSR c22c
+do_sput:	JSR c22c
 cfc8:		JSR ceb1
 cfcb:		JSR c4e4
 cfce:		DEY
@@ -3176,7 +3187,7 @@ cfe1:		BNE cfcf
 
 ; Execute the Command 'SGET'
 
-cfe3:		JSR c22c
+do_sget:	JSR c22c
 cfe6:		JSR c4e1
 cfe9:		JSR c3cb
 cfec:		LDY #$0
