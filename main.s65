@@ -310,7 +310,7 @@ cmd_sput:	.text "PUT", >do_sput
 cmd_shut:	.text "HUT", >do_shut
 cmd_bput:	.text "PUT", >do_bput
 cmd_ptr2:	.text "TR", >do_ptr2		; [P]TR
-		.text "UT", >do_put		; [P]UT
+cmd_put:	.text "UT", >do_put		; [P]UT
 cmd_pling:	.text >do_pling			; [!]
 		.text >do_query			; [?]
 		.text >do_str			; [$]
@@ -558,39 +558,39 @@ off_c4:		.text cmd_unk2 - cmd_tbl
 		.text cmd_unk2 - cmd_tbl		; [R]EM
 		.text cmd_unk2 - cmd_tbl
 		.text <do_rem
-off_ca:		.text cmd_unk2 - cmd_tbl		; [R]UN
+		.text cmd_unk2 - cmd_tbl		; [R]UN
 		.text cmd_unk2 - cmd_tbl
 		.text $41
-off_cd:		.text cmd_unk2 - cmd_tbl		; [F]OR
+		.text cmd_unk2 - cmd_tbl		; [F]OR
 		.text cmd_unk2 - cmd_tbl
 		.text <do_for
-off_d0:		.text cmd_unk2 - cmd_tbl		; [E]ND
+		.text cmd_unk2 - cmd_tbl		; [E]ND
 		.text cmd_unk2 - cmd_tbl
 		.text <do_end
-off_d3:		.text cmd_sput - cmd_tbl		; [S]GET
+		.text cmd_sput - cmd_tbl		; [S]GET
 		.text cmd_unk2 - cmd_tbl
 		.text cmd_unk2 - cmd_tbl
-off_d6:		.text <do_sget
+		.text <do_sget
 		.text cmd_shut - cmd_tbl		; [S]PUT
 		.text cmd_unk2 - cmd_tbl
 		.text cmd_unk2 - cmd_tbl
-off_da:		.text <do_sput
+		.text <do_sput
 		.text cmd_save - cmd_tbl		; [S]HUT
 		.text cmd_unk2 - cmd_tbl
 		.text cmd_unk2 - cmd_tbl
-off_de:		.text <do_shut
+		.text <do_shut
 		.text cmd_unk2 - cmd_tbl		; [B]PUT
 		.text cmd_unk2 - cmd_tbl
 		.text cmd_unk2 - cmd_tbl
 		.text <do_bput
-off_e3:		.text $e6				; [P]TR
+		.text cmd_put - cmd_tbl			; [P]TR
 		.text cmd_unk2 - cmd_tbl
 		.text <do_ptr2
-off_e6:		.text cmd_unk2 - cmd_tbl		; [P]UT
+		.text cmd_unk2 - cmd_tbl		; [P]UT
 		.text cmd_unk2 - cmd_tbl
-off_e8:		.text <do_put
+		.text <do_put
 		.text <do_pling				; [!]
-off_ea:		.text <do_query				; [?]
+		.text <do_query				; [?]
 		.text <do_str				; [$]
 		.text <do_oscmd				; [*]
 		.text $35		; ???
