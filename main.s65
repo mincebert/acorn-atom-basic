@@ -286,9 +286,9 @@ cmd_tbl_then:	.text "U"
 		.text "E"
 cmd_unk2	.text $f0			; error???
 
-		.text "AVE", $cf
+cmd_save	.text "AVE", >do_save
 cmd_new:	.text "EW", >do_new		; [N]EW
-		.text "O", $cc
+cmd_do:		.text "O", >do_do		; [D]O
 cmd_let:	.text "ET", $c3
 		.text "INK", $c3
 cmd_list:	.text "IST", >do_list		; [L]IST
@@ -483,9 +483,9 @@ off_4d:		.text cmd_log_err - cmd_tbl		; [A]ND
 		.text cmd_list - cmd_tbl		; L
 		; THEN
 		.text cmd_until - cmd_tbl		; U
-off_80:		.text cmd_next - cmd_tbl		; N
+		.text cmd_next - cmd_tbl		; N
 		.text cmd_if - cmd_tbl			; I
-off_82:		.text cmd_goto - cmd_tbl		; G
+		.text cmd_goto - cmd_tbl		; G
 		.text cmd_return - cmd_tbl		; R
 		.text cmd_for - cmd_tbl			; F
 		.text cmd_pling - cmd_tbl		; !
@@ -493,19 +493,22 @@ off_82:		.text cmd_goto - cmd_tbl		; G
 		.text $eb				; $
 		.text $78				; P
 		.text $97				; D
-off_8a:		.text $99				; L
+		.text $99				; L
 		.text $d3				; S
 		.text $df				; B
 		.text $ec				; *
 		.text $d0				; E
 		.text $4b				; unk2
-		.text cmd_unk2 - cmd_tbl		; 
-		.text cmd_unk2 - cmd_tbl		; 
-		.text cmd_unk2 - cmd_tbl		; 
-off_93:		.text $0a
-		.text cmd_unk2 - cmd_tbl		; ???
-off_95:		.text <do_new, <do_new, $8f		; [N]EW
-off_98:		.text $f0
+
+		.text cmd_unk2 - cmd_tbl		; [S]AVE
+		.text cmd_unk2 - cmd_tbl
+		.text cmd_unk2 - cmd_tbl
+		.text <do_save
+here:		.text cmd_unk2 - cmd_tbl		; [N]EW
+		.text <do_new
+		.text <do_new
+		.text cmd_unk2 - cmd_tbl		; [D]O
+off_98:		.text <do_do
 		.text $9c				; EW
 off_9a:		.text cmd_unk2 - cmd_tbl
 		.text $25				; O
@@ -2603,7 +2606,7 @@ cced:		JMP cbfd
 
 ; Execute the Command 'DO'
 
-ccf0:		LDX $13
+do_do:		LDX $13
 ccf2:		CPX #$b
 ccf4:		BCS cd0f + 1
 ccf6:		DEY
@@ -3001,7 +3004,7 @@ cf09:		RTS
 
 ; Execute the Command 'SAVE'
 
-cf0a:		JSR cefa
+do_save:	JSR cefa
 cf0d:		STY $58
 cf0f:		STA $59
 cf11:		LDA $d
