@@ -295,8 +295,8 @@ cmd_list:	.text "IST", >do_list		; [L]IST
 cmd_load:	.text "OAD", >do_load		; [L]OAD
 cmd_until:	.text "NTIL", >do_until		; [U]NTIL
 cmd_next:	.text "EXT", >do_next		; [N]EXT
-cmd_if:		.text "F", $c5			; [I]F
-		.text "NPUT"
+cmd_if:		.text "F", >do_if		; [I]F
+cmd_input:	.text "NPUT"
 cmd_input_do:	.text >do_input
 		.text "OSUB", $cb		; [G]OSUB
 cmd_goto:	.text "OTO", $cc		; [G]OTO
@@ -533,9 +533,12 @@ off_9c:		.text cmd_unk2 - cmd_tbl		; [L]INK
 		.text cmd_unk2 - cmd_tbl
 		.text cmd_unk2 - cmd_tbl
 		.text <do_next
-		.text $b3, $66, $8f		; EXT
-off_b4:		.text $8f, $8f				; F
-off_b6:		.text $8f
+		.text cmd_input - cmd_tbl		; [I]F
+		.text <do_if
+		.text cmd_unk2 - cmd_tbl		; [I]NPUT
+		.text cmd_unk2 - cmd_tbl
+		.text cmd_unk2 - cmd_tbl
+		.text cmd_unk2 - cmd_tbl
 		.text <do_input
 off_b8:		.text $8f, $8f		; INPUT
 		.text $8f
@@ -1372,7 +1375,7 @@ c563:		JMP do_then
 ;
 ; Puts a zero on the Workspace Stack at $16,X where X=?4 if false.
 
-c566:		JSR c70c
+do_if:		JSR c70c
 c569:		DEX
 c56a:		STX $4
 c56c:		LDA $16,X
