@@ -285,13 +285,13 @@ cmd_tbl_then:	.text "U"
 		.text "*"
 		.text "E"
 cmd_unk2	.text $f0			; error
-here:		.text "AVE", $cf
-		.text "EW", >do_new
+		.text "AVE", $cf
+cmd_new:	.text "EW", >do_new		; [N]EW
 		.text "O", $cc
-		.text "ET", $c3
+cmd_let:	.text "ET", $c3
 		.text "INK", $c3
-		.text "IST", $ca
-		.text "OAD", >ceed
+cmd_list:	.text "IST", >do_list		; [L]IST
+cmd_load:	.text "OAD", >do_load		; [L]OAD
 		.text "NTIL", $cc
 		.text "EXT", $ca
 		.text "F", $c5
@@ -477,8 +477,8 @@ off_4d:		.text cmd_log_err - cmd_tbl		; [A]ND
 		.text cmd_unk2 - cmd_tbl
 		.text <do_pr_com			; RINT
 
-off_7d:		.text $94				; N
-		.text $a0				; L
+off_7d:		.text cmd_new - cmd_tbl			; N
+		.text cmd_list - cmd_tbl		; L
 							; THEN
 		.text $a8				; U
 off_80:		.text $ad				; N
@@ -497,17 +497,29 @@ off_8a:		.text $99				; L
 		.text $ec				; *
 		.text $d0				; E
 		.text $4b				; unk2
-		.text $8f				; 
-		.text $8f				; 
-		.text $8f				; 
-off_93:		.text $0a, $8f				; ???
+		.text cmd_unk2 - cmd_tbl		; 
+		.text cmd_unk2 - cmd_tbl		; 
+		.text cmd_unk2 - cmd_tbl		; 
+off_93:		.text $0a
+		.text cmd_unk2 - cmd_tbl		; ???
 off_95:		.text <do_new, <do_new, $8f		; [N]EW
-off_98:		.text $f0, $9c				; EW
-off_9a:		.text $8f, $25				; O
-off_9c:		.text $8f, $8f, $8f			; ET
-off_9f:		.text $b2, $a4, $9c, $8f		; INK
-off_a3:		.text $51, $99, $8f, $8f		; IST
-off_a7:		.text $ed, $8f, $8f, $8f		; OAD
+off_98:		.text $f0
+		.text $9c				; EW
+off_9a:		.text cmd_unk2 - cmd_tbl
+		.text $25				; O
+off_9c:		.text cmd_unk2 - cmd_tbl		; [L]INK
+		.text cmd_unk2 - cmd_tbl
+		.text cmd_unk2 - cmd_tbl
+off_9f:		.text $b2
+		.text cmd_load - cmd_tbl		; [L]IST
+		.text $9c
+		.text cmd_unk2 - cmd_tbl
+		.text <do_list
+off_a3:		.text cmd_let - cmd_tbl			; [L]OAD
+		.text cmd_unk2 - cmd_tbl
+		.text cmd_unk2 - cmd_tbl
+		.text <do_load
+		.text $8f, $8f, $8f		; OAD
 off_ab:		.text $8f, $d2, $8f, $8f, $8f		; NTIL
 off_b0:		.text $cd, $b3, $66, $8f		; EXT
 off_b4:		.text $8f, $8f				; F
@@ -2214,7 +2226,7 @@ ca4e:		JMP (WRCVEC)
 ; X register must be zero on entry.
 ; Exits to the Direct Mode.
 
-ca51:		LDA #$0
+do_list:	LDA #$0
 ca53:		JSR c97c
 ca56:		LDA #$ff
 ca58:		JSR c97c
@@ -2962,7 +2974,7 @@ ceeb:		BCS cec7
 
 ; 'LOAD' File
 
-ceed:		JSR cefa
+do_load:	JSR cefa
 cef0:		DEY
 cef1:		STY $56
 cef3:		SEC
