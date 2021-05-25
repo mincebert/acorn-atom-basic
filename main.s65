@@ -241,7 +241,7 @@ cmd_or:		.text "R", >do_or		; [O]R
 cmd_str_cmp:	.text >do_str_cmp		; ???
 cmd_tbl_log:	.text "O"
 		.text "A"
-cmd_log_err:	.text $fe
+cmd_log_err:	.text $fe			; error???
 cmd_tbl_dol:	.text "$", >do_dol		; ???
 
 cmd_ch:		.text "H", >do_ch		; [C]H
@@ -263,9 +263,10 @@ cmd_fin:	.text "IN", >do_fin		; [F]IN
 cmd_fout:	.text "OUT", >do_fout		; [F]OUT
 cmd_pr_dol:	.text >do_pr_dol		; [$]
 cmd_pr_amp:	.text >do_pr_amp		; [&]
-cmd_78:		.text "RINT"			; [P]RINT
+		.text "RINT"			; [P]RINT
 cmd_pr_com:	.text >do_pr_com		; [,]
-cmd_7d:		.text "N"
+
+cmd_tbl_direct:	.text "N"
 		.text "L"
 cmd_tbl_then:	.text "U"
 		.text "N"
@@ -413,11 +414,11 @@ off_tbl:
 off_40:		.text cmd_log_err - cmd_tbl		; [O]R
 		.text <do_or
 
-		.text <do_str_cmp
+		.text <do_str_cmp			; ???
 
 		.text cmd_or - cmd_tbl			; O
 		.text cmd_and - cmd_tbl			; A
-		.text $4d				; error?
+		.text $4d				; error???
 
 		.text <cmd_str_cmp - cmd_tbl		; $
 		.text <do_dol
@@ -469,13 +470,13 @@ off_4d:		.text cmd_log_err - cmd_tbl		; [A]ND
 		.text cmd_unk - cmd_tbl
 		.text <do_fout
 		.text <do_pr_dol			; [$]
-off_77:		.text <do_pr_amp			; [&]
+		.text <do_pr_amp			; [&]
 		.text cmd_ptr2 - cmd_tbl		; [P]RINT
-		.text $8f
-		.text $8f
-off_7b:		.text $8f
+		.text cmd_unk2 - cmd_tbl
+		.text cmd_unk2 - cmd_tbl
+		.text cmd_unk2 - cmd_tbl
 		.text <do_pr_com			; RINT
-		; TODO out of sync somewhere above here!
+
 off_7d:		.text $94				; N
 		.text $a0				; L
 							; THEN
@@ -809,7 +810,8 @@ c313:		JMP cdc9		; Deal with line insertion and removal
 
 				; EXECUTE A DIRECT COMMAND AT $100
 
-c316:		LDX #cmd_7d - cmd_tbl	; Set the interpreter table pointer to $C???
+c316:		LDX #cmd_tbl_direct - cmd_tbl
+					; Set the interpreter table pointer to $C???
 c318:		JMP c233		; ... and interpret & execute the command
 
 
