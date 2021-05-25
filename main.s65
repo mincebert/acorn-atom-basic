@@ -614,8 +614,21 @@ c1f8:		.text <do_sub				; -
 		.text <do_or_num			; |
 		.text <do_eor_num			; :
 		.text <do_eor_num			; error???
-		.text <do_mul, $5E, $70
-		.text $B3, $9C, $7B, $7B, $78, $78, $78, $78, $EE, $06, $5C, $5C, $E5, $75, $7B, $7B
+		;
+		.text <do_mul				; *
+		.text <do_div				; /
+		.text <do_mod				; %
+		.text <do_pling2			; !
+		.text <do_query2			; ?
+		.text <do_and_log			; &
+		.text <do_and_log			; error???
+		;
+		.text $78
+		.text $78
+		.text $78
+		.text $78
+		.text $EE
+		.text $06, $5C, $5C, $E5, $75, $7B, $7B
 		.text $6F, $7A
 
 
@@ -626,7 +639,17 @@ c212:		.text >do_sub				; -
 		.text >do_or_num			; |
 		.text >do_eor_num			; :
 		.text >do_eor_num			; error???
-		.text >do_mul, $C8, $C8, $C8, $C8, $C8, $C8, $C2, $C2
+		;
+		.text >do_mul				; *
+		.text >do_div				; /
+		.text >do_mod				; %
+		.text >do_pling2			; !
+		.text >do_query2			; ?
+		.text >do_and_log			; &
+		.text >do_and_log			; error???
+		;
+		.text $C2
+		.text $C2
 		.text $C2, $C2, $C3, $C4, $CD, $CD, $C3, $CD, $CD, $CD, $C3, $C3
 
 
@@ -1912,7 +1935,7 @@ c85b:		JMP c80e
 
 ; <factor> / <factor>
 
-c85e:		JSR c689
+do_div:		JSR c689
 c861:		ROL $57
 c863:		ROL $58
 c865:		ROL $59
@@ -1925,7 +1948,7 @@ c86e:		BNE c852
 
 ; <factor> % <factor>
 
-c870:		JSR c689
+do_mod:		JSR c689
 c873:		LDX $4
 c875:		LDA $44,X
 c877:		PHP
@@ -1934,7 +1957,7 @@ c878:		JMP c850
 
 ; <factor> & <factor>
 
-c87b:		JSR c8bc
+do_and_log:	JSR c8bc
 c87e:		DEX
 c87f:		STX $4
 c881:		LDA $15,X
@@ -1954,7 +1977,7 @@ c899:		JMP c80e
 
 ; <factor> ? <factor>
 
-c89c:		JSR c8a2
+do_query2:	JSR c8a2
 c89f:		JMP c80e
 c8a2:		JSR c8bc
 c8a5:		CLC
@@ -1969,7 +1992,7 @@ c8b0:		JMP c953
 
 ; <factor> ! <factor>
 
-c8b3:		JSR c8a2
+do_pling2:	JSR c8a2
 c8b6:		JSR c962
 c8b9:		JMP c80e
 
