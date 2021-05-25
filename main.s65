@@ -249,7 +249,7 @@ cmd_len:	.text "EN", >do_len		; num [L]EN
 cmd_and:	.text "ND", >do_and		; [A]ND
 cmd_hash:	.text >do_hash			; [#]
 cmd_bktop:	.text >do_bktop			; [(]
-cmd_pling:	.text >do_pling			; [!]
+cmd_pling_fn:	.text >do_pling_fn		; [!]
 cmd_query:	.text >do_query			; [?]
 cmd_rnd:	.text "ND", >do_rnd		; [R]ND
 cmd_top:	.text "OP", >do_top		; [T]OP
@@ -284,7 +284,8 @@ cmd_tbl_then:	.text "U"
 		.text "B"
 		.text "*"
 		.text "E"
-cmd_unk2	.text $f0			; error
+cmd_unk2	.text $f0			; error???
+
 		.text "AVE", $cf
 cmd_new:	.text "EW", >do_new		; [N]EW
 		.text "O", $cc
@@ -292,17 +293,17 @@ cmd_let:	.text "ET", $c3
 		.text "INK", $c3
 cmd_list:	.text "IST", >do_list		; [L]IST
 cmd_load:	.text "OAD", >do_load		; [L]OAD
-		.text "NTIL", $cc
-		.text "EXT", $ca
-		.text "F", $c5
+cmd_until:	.text "NTIL", $cc		; [U]NTIL
+cmd_next:	.text "EXT", $ca		; [N]EXT
+cmd_if:		.text "F", $c5			; [I]F
 		.text "NPUT"
 cmd_input_do:	.text >do_input
-		.text "OSUB", $cb
-		.text "OTO", $cc
-		.text "ETURN", $cb
+		.text "OSUB", $cb		; [G]OSUB
+cmd_goto:	.text "OTO", $cc		; [G]OTO
+cmd_return:	.text "ETURN", $cb
 		.text "EM", $c5
 		.text "UN", $f1
-		.text "OR", $cb
+cmd_for:	.text "OR", $cb
 		.text "ND", $cd
 		.text "GET", $cf
 		.text "PUT", $cf
@@ -310,7 +311,7 @@ cmd_input_do:	.text >do_input
 		.text "PUT", $cf
 cmd_ptr2:	.text "TR", >do_ptr2		; [P]TR
 		.text "UT", >do_put		; [P]UT
-		.text $c3
+cmd_pling:	.text >do_pling			; [!]
 		.text $c4
 		.text $cd
 		.text $c4
@@ -338,7 +339,7 @@ off_tbl:
 		; numerical assignments
 		.text cmd_hash - cmd_tbl		; #
 		.text cmd_bktop - cmd_tbl		; (
-		.text cmd_pling - cmd_tbl		; !
+		.text cmd_pling_fn - cmd_tbl		; !
 		.text cmd_query - cmd_tbl		; ?
 		.text cmd_rnd - cmd_tbl			; R
 		.text cmd_top - cmd_tbl			; T
@@ -433,7 +434,7 @@ off_4d:		.text cmd_log_err - cmd_tbl		; [A]ND
 		.text <do_and
 		.text <do_hash				; [#]
 		.text <do_bktop				; [(]
-		.text <do_pling				; [!]
+		.text <do_pling_fn			; [!]
 		.text <do_query				; [?]
 		.text cmd_unk - cmd_tbl			; [R]ND
 		.text cmd_unk - cmd_tbl
@@ -477,16 +478,16 @@ off_4d:		.text cmd_log_err - cmd_tbl		; [A]ND
 		.text cmd_unk2 - cmd_tbl
 		.text <do_pr_com			; RINT
 
-off_7d:		.text cmd_new - cmd_tbl			; N
+		.text cmd_new - cmd_tbl			; N
 		.text cmd_list - cmd_tbl		; L
-							; THEN
-		.text $a8				; U
-off_80:		.text $ad				; N
-		.text $b1				; I
-off_82:		.text $bd				; G
-		.text $c1				; R
-		.text $cd				; F
-		.text $e9				; !
+		; THEN
+		.text cmd_until - cmd_tbl		; U
+off_80:		.text cmd_next - cmd_tbl		; N
+		.text cmd_if - cmd_tbl			; I
+off_82:		.text cmd_goto - cmd_tbl		; G
+		.text cmd_return - cmd_tbl		; R
+		.text cmd_for - cmd_tbl			; F
+		.text cmd_pling - cmd_tbl		; !
 		.text $ea				; ?
 		.text $eb				; $
 		.text $78				; P
@@ -544,7 +545,7 @@ off_e3:		.text $e6				; [P]TR
 off_e6:		.text cmd_unk2 - cmd_tbl		; [P]UT
 		.text cmd_unk2 - cmd_tbl
 off_e8:		.text <do_put
-		.text $ee				; ,
+		.text <do_pling				; [!]
 off_ea:		.text $06
 		.text $5c
 		.text $0f
@@ -1040,7 +1041,7 @@ c3eb:		JMP c55b		; Return to execute the next command whether
 ;
 ; Sets pre-interpreted vector to an arbitrarily complex expression.
 
-c3ee:		JSR c8bc		; Evaluate an arbitrarily complex numeric
+do_pling:	JSR c8bc		; Evaluate an arbitrarily complex numeric
 					; expression pointed to by (5),Y
 					; which is the ! base address
 c3f1:		JSR ce93		; Interpret an '=' sign and a numerical
@@ -2062,7 +2063,7 @@ c95c:		JMP c97c
 
 ; Deal with '!'
 
-do_pling:	JSR do_query
+do_pling_fn:	JSR do_query
 c962:		LDY #$1
 c964:		LDA ($52),Y
 c966:		STA $24,X
