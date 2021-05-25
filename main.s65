@@ -206,7 +206,7 @@ cmd_then:	.text "HEN", >do_then
 cmd_tbl_str:	; check for valid string
 		.text """"
 		.text "$"
-cmd_str:	.text >do_str			; [$]
+cmd_str_fn:	.text >do_str_fn		; [$]
 		;
 cmd_quote	.text >do_quote			; ["]
 
@@ -250,7 +250,7 @@ cmd_and:	.text "ND", >do_and		; [A]ND
 cmd_hash:	.text >do_hash			; [#]
 cmd_bktop:	.text >do_bktop			; [(]
 cmd_pling_fn:	.text >do_pling_fn		; [!]
-cmd_query:	.text >do_query			; [?]
+cmd_query_fn:	.text >do_query_fn		; [?]
 cmd_rnd:	.text "ND", >do_rnd		; [R]ND
 cmd_top:	.text "OP", >do_top		; [T]OP
 cmd_count:	.text "OUNT", >do_count		; [C]OUNT
@@ -312,10 +312,11 @@ cmd_for:	.text "OR", $cb
 cmd_ptr2:	.text "TR", >do_ptr2		; [P]TR
 		.text "UT", >do_put		; [P]UT
 cmd_pling:	.text >do_pling			; [!]
-		.text $c4
-		.text $cd
-		.text $c4
-		.text ",", $fe
+		.text >do_query			; [?]
+		.text >do_str			; [$]
+		.text >do_oscmd			; [*]
+		.text ","
+		.text $fe
 
 
 ; Jump Address and Return Branch Table
@@ -340,7 +341,7 @@ off_tbl:
 		.text cmd_hash - cmd_tbl		; #
 		.text cmd_bktop - cmd_tbl		; (
 		.text cmd_pling_fn - cmd_tbl		; !
-		.text cmd_query - cmd_tbl		; ?
+		.text cmd_query_fn - cmd_tbl		; ?
 		.text cmd_rnd - cmd_tbl			; R
 		.text cmd_top - cmd_tbl			; T
 		.text cmd_len - cmd_tbl			; L
@@ -380,8 +381,8 @@ off_tbl:
 
 		; check for valid string
 		.text cmd_quote - cmd_tbl		; "
-		.text cmd_str - cmd_tbl			; $
-		.text <do_str				; [$]
+		.text cmd_str_fn - cmd_tbl			; $
+		.text <do_str_fn			; [$]
 		;
 		.text <do_quote				; ["]
 
@@ -435,7 +436,7 @@ off_4d:		.text cmd_log_err - cmd_tbl		; [A]ND
 		.text <do_hash				; [#]
 		.text <do_bktop				; [(]
 		.text <do_pling_fn			; [!]
-		.text <do_query				; [?]
+		.text <do_query_fn			; [?]
 		.text cmd_unk - cmd_tbl			; [R]ND
 		.text cmd_unk - cmd_tbl
 		.text <do_rnd
@@ -546,9 +547,9 @@ off_e6:		.text cmd_unk2 - cmd_tbl		; [P]UT
 		.text cmd_unk2 - cmd_tbl
 off_e8:		.text <do_put
 		.text <do_pling				; [!]
-off_ea:		.text $06
-		.text $5c
-		.text $0f
+off_ea:		.text <do_query				; [?]
+		.text <do_str				; [$]
+		.text <do_oscmd				; [*]
 		.text $35		; ???
 
 
@@ -1064,7 +1065,7 @@ c403:		JMP c55b		; Return to execute the next command whether
 ;
 ; Sets pre-interpreted byte to an arbitrarily complex expression.
 
-c406:		JSR c8bc		; Evaluate an arbitrarily complex numeric
+do_query:	JSR c8bc		; Evaluate an arbitrarily complex numeric
 					; expression pointed to by (5),Y
 c409:		JSR ce93		; Interpret an '=' sign and a numerical
 					; expression following, and copy the LSB
@@ -1080,7 +1081,7 @@ c40c:		JMP c55b		; Return to execute the next command whether
 ; to the Direct Mode buffer at $100 and then calls OSCLI indirected
 ; by vector ($206,$207).
 
-c40f:		LDX #$0			; Initialise the Direct Mode buffer pointer
+do_oscmd:	LDX #$0			; Initialise the Direct Mode buffer pointer
 c411:		LDA ($5),Y		; Get character under analysis from text
 c413:		STA $100,X		; ... and copy to the direct mode buffer
 c416:		STY $3			; Update the interpreter pointer
@@ -2050,7 +2051,7 @@ c949:		JMP c27b
 
 ; Deal with '?'
 
-do_query:	JSR c8bc
+do_query_fn:	JSR c8bc
 c94f:		LDY $15,X
 c951:		LDA $24,X
 c953:		STA $53
@@ -2063,7 +2064,7 @@ c95c:		JMP c97c
 
 ; Deal with '!'
 
-do_pling_fn:	JSR do_query
+do_pling_fn:	JSR do_query_fn
 c962:		LDY #$1
 c964:		LDA ($52),Y
 c966:		STA $24,X
@@ -2685,7 +2686,7 @@ cd5b:		RTS
 
 ; Assign '$' String Variable
 
-cd5c:		JSR c78b
+do_str:		JSR c78b
 cd5f:		JSR ceae
 cd62:		LDY #$54
 cd64:		JSR c3cd
@@ -2930,7 +2931,7 @@ ceb3:		JMP c233
 
 ; Set up $ String Ready for Asssignment
 
-do_str:		JSR c78b
+do_str_fn:	JSR c78b
 ceb9:		JSR c3cb
 cebc:		LDY $3
 cebe:		RTS
