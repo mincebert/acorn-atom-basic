@@ -613,7 +613,7 @@ c1f8:		.text <do_sub				; -
 		.text <do_add				; +
 		.text <do_or_num			; |
 		.text <do_eor_num			; :
-		.text <do_eor_num			; error???
+		.text <do_eor_num			; ignored???
 		;
 		.text <do_mul				; *
 		.text <do_div				; /
@@ -621,15 +621,26 @@ c1f8:		.text <do_sub				; -
 		.text <do_pling2			; !
 		.text <do_query2			; ?
 		.text <do_and_log			; &
-		.text <do_and_log			; error???
+		.text <do_and_log			; ignored???
 		;
-		.text $78
-		.text $78
-		.text $78
-		.text $78
-		.text $EE
-		.text $06, $5C, $5C, $E5, $75, $7B, $7B
-		.text $6F, $7A
+		.text <do_rts				; )
+		.text <do_rts				; ignored???
+		;
+		.text <do_rts				; =
+		.text <do_rts				; ignored???
+		;
+		.text <do_pling				; !
+		.text <do_query				; ?
+		.text <do_str				; $
+		.text <do_str				; ignored???
+		;
+		.text <do_num_ass			; =
+		.text <do_pling_ass			; !
+		.text <do_query_ass			; ?
+		.text <do_query_ass			; ignored???
+		;
+		.text <do_crlf				; '
+		.text <do_print_cont			; ignored???
 
 
 ; MSB Execution Address Table for Single Byte Commands
@@ -638,7 +649,7 @@ c212:		.text >do_sub				; -
 		.text >do_add				; +
 		.text >do_or_num			; |
 		.text >do_eor_num			; :
-		.text >do_eor_num			; error???
+		.text >do_eor_num			; ignored???
 		;
 		.text >do_mul				; *
 		.text >do_div				; /
@@ -646,11 +657,26 @@ c212:		.text >do_sub				; -
 		.text >do_pling2			; !
 		.text >do_query2			; ?
 		.text >do_and_log			; &
-		.text >do_and_log			; error???
+		.text >do_and_log			; ignored???
 		;
-		.text $C2
-		.text $C2
-		.text $C2, $C2, $C3, $C4, $CD, $CD, $C3, $CD, $CD, $CD, $C3, $C3
+		.text >do_rts				; )
+		.text >do_rts				; ignored???
+		;
+		.text >do_rts				; =
+		.text >do_rts				; ignored???
+		;
+		.text >do_pling				; !
+		.text >do_query				; ?
+		.text >do_str				; $
+		.text >do_str				; ignored???
+		;
+		.text >do_num_ass			; =
+		.text >do_pling_ass			; !
+		.text >do_query_ass			; ?
+		.text >do_query_ass			; ignored???
+		;
+		.text >do_crlf				; '
+		.text >do_print_cont			; ignored???
 
 
 ; Function Interpreter subroutine
@@ -995,7 +1021,7 @@ c36d:		BMI c337		; Branch ALWAYS to interpret the next item
 					; in the print stream
 
 
-c36f:		JSR cd54		; Send <CR><LF> to OSWRCH
+do_crlf:	JSR cd54		; Send <CR><LF> to OSWRCH
 c372:		LDX #$18		; Set the interpreter table pointer to $C???
 c374:		JMP c27b		; ... and interpret 'O' ??
 
@@ -1004,7 +1030,7 @@ c374:		JMP c27b		; ... and interpret 'O' ??
 
 c377:		JSR ca4c		; Increment COUNT and send the contents of
 					; the accumulator to OSWRCH
-c37a:		LDA ($5),Y
+do_print_cont:	LDA ($5),Y
 c37c:		INY
 c37d:		CMP #$d
 c37f:		BEQ c39c + 1
@@ -1106,7 +1132,7 @@ c3e4:		RTS
 ; Enter with the variable number (0=@, 1=A, etc TO 26=Z) in the LSB of
 ; the workspace stack at level (?4-1).
 
-c3e5:		JSR c4e1		; Evaluate a numerical expression onto the
+do_num_ass:	JSR c4e1		; Evaluate a numerical expression onto the
 					; w/s stack and do post-test.
 c3e8:		JSR ca2f		; Assign value on the w/s stack to a variable
 					; number on the w/s stack
@@ -2777,13 +2803,13 @@ cd72:		JMP do_input_num
 
 ; Assign !<variable>
 
-cd75:		JSR cd81
+do_pling_ass:	JSR cd81
 cd78:		JMP c3f1
 
 
 ; Assign ?<variable>
 
-cd7b:		JSR cd81
+do_query_ass:	JSR cd81
 cd7e:		JMP c409
 
 
