@@ -859,7 +859,7 @@ c2cc:		STA WORKSP + $121	; ..and set LSB integer variable '@'
 ;
 ; Entered after a command execution or at the end of a program.
 
-c2cf:		LDA #$3e		; Get '>'
+c2cf:		LDA #">"		; Get '>'
 c2d1:		CLD
 c2d2:		JSR cd0f		; Print the contents of the accumulator and
 					; get a line of text terminated by <CR> from
@@ -2274,7 +2274,11 @@ c9e2:		STA $6
 c9e4:		JMP c2f2
 
 
-c9e7:		.text "@=1;P.$6$7'""ERROR ""?0;@=8;IF?1|?2P."" LINE""!1& #FFFF", $0d, $00, $00, "P.';E.", $0d
+c9e7:		.text "@=1;P.$6$7'""ERROR ""?0;@=8;IF?1|?2P."" LINE""!1& #FFFF", $0d
+
+ca1b:		brk
+		brk
+		.text "P.';E.", $0d
 
 
 ; Handle Unrecognised Command
@@ -2282,7 +2286,7 @@ c9e7:		.text "@=1;P.$6$7'""ERROR ""?0;@=8;IF?1|?2P."" LINE""!1& #FFFF", $0d, $00
 ; Jumps indirectly to ($D002) if the FP ROM exists, otherwise executes BRK.
 
 ca24:		JSR c424
-ca27:		BCC c9e7 + 52
+ca27:		BCC ca1b
 ca29:		JMP ($d004)
 
 
