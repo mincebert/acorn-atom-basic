@@ -14,7 +14,7 @@ basbbc basbbc.labels: main.s65
 	@grep start basbbc.labels
 
 basatom.hex: basatom
-	od -A x -t x1 -t a basatom > basatom.hex
+	head -c 4096 basatom | od -A x -t x1 -t a > basatom.hex
 
 diff: basatom.hex
 	diff basatom-orig.hex basatom.hex

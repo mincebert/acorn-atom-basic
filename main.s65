@@ -1202,11 +1202,11 @@ c421:		JMP do_input_num		; Perform post test, check for <ESC> etc and
 ;
 ; Returns with Carry set if the FP ROM at $D000 exists.
 
-c424:		LDA $d000
+c424:		LDA d000
 c427:		CMP #$aa
 c429:		BNE c463
 c42b:		LSR A
-c42c:		CMP $d001
+c42c:		CMP d000 + 1
 c42f:		BNE c463
 c431:		LDY $5e
 c433:		RTS
@@ -3259,3 +3259,19 @@ cff9:		INY
 cffa:		CMP #$d
 cffc:		BNE cfee
 cffe:		BEQ cfc2
+
+
+
+; Floating Point ROM goes here
+
+
+d000:
+
+; on the BBC SWROM version, include two zero bytes where the floating point
+; ROM would be to fail the checksum test
+
+.if BBC == 1
+
+		.text 0, 0
+
+.endif
