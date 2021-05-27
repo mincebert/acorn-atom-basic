@@ -43,10 +43,10 @@ BPTVEC=$216
 *=$8000
 
 ; we need two pages of workspace, starting here
-WORKSP=$7200
+WORKSP=$0400
 
 ; start of fixed variable area
-VARSTORE=$738c
+VARSTORE=$058c
 
 
 ; --- PAGED ROM HEADER ---
@@ -67,7 +67,7 @@ copyright:	.byte 0			; terminator
 
 
 lang:		; enable interrupts
-		cli
+		CLI
 		; reset start pointer
 		LDX #$ff
 		TXS
@@ -893,7 +893,7 @@ c2ec:		STA $10
 c2ee:		LDA #>c9e7
 c2f0:		STA $11
 
-		; EXECUTE THE TEXT POINTED BTO BY (5),Y
+		; EXECUTE THE TEXT POINTED TO BY (5),Y
 
 c2f2:		LDX #$ff
 c2f4:		TXS			; Reset the stack poimter
@@ -903,10 +903,10 @@ c2f9:		STA $3			; Reset the interpreter index
 c2fb:		STA $15			; Reset the FOR....NEXT stack pointer
 c2fd:		STA $13			; Reset the GOSUB...RETURN stack pointer
 c2ff:		STA $14			; Reset the DO...UNTIL stack pointer
-c301:		LDX #$34
 
 		; CLEAR THE LABEL (@ to z) ADDRESS STACK
 
+c301:		LDX #$34
 c303:		STA VARSTORE,X
 c306:		DEX
 c307:		BNE c303
@@ -920,7 +920,7 @@ c30c:		BCS c32f		; ... then interpret a simple integer variable
 					; CHECK FOR TEXT LINE ENTRY OR DELETION
 
 c30e:		JSR c46a		; interpret a decimal string as a number
-				; into the w/s stack, and increment ?4
+					; into the w/s stack, and increment ?4
 c311:		BCC c316		; ... invalid number
 c313:		JMP cdc9		; Deal with line insertion and removal
 
@@ -2262,7 +2262,7 @@ c9d5:		JMP c958
 ;
 ; Points the BASIC interpreter at the vector ($10,$11) which is normally
 ; set to point to C9E7.
-; Exits to the Diect Mode.
+; Exits to the Direct Mode.
 
 c9d8:		PLA
 c9d9:		PLA
@@ -2276,8 +2276,8 @@ c9e4:		JMP c2f2
 
 c9e7:		.text "@=1;P.$6$7'""ERROR ""?0;@=8;IF?1|?2P."" LINE""!1& #FFFF", $0d
 
-ca1b:		brk
-		brk
+ca1b:		BRK
+		BRK
 		.text "P.';E.", $0d
 
 
@@ -2301,7 +2301,6 @@ ca2f:		LDX $4
 ca31:		DEX
 ca32:		DEX
 ca33:		STX $4
-ca35:		LDY $16,X
 
 
 ; Assign Integer Variable subroutine
@@ -2310,6 +2309,7 @@ ca35:		LDY $16,X
 ; variable pointed to by Y (where 0=@, 1=A, etc to 26=Z).
 ; Destroys accumulator.
 
+ca35:		LDY $16,X
 ca37:		LDA $17,X
 ca39:		STA WORKSP + $121,Y
 ca3c:		LDA $26,X
@@ -3150,7 +3150,7 @@ cf46:		RTS
 
 ; Do PTR [#2]
 
-do_ptr2:		JSR c8bc
+do_ptr2:	JSR c8bc
 cf4a:		JSR c4de
 cf4d:		JSR c3cb
 cf50:		JSR cf41
