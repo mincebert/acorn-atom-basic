@@ -1,7 +1,7 @@
 all: basatom basbbc basatom.hex
 
 clean:
-	-rm basatom basbbc basatom.labels basbbc.labels basatom.hex
+	-rm basatom basbbc basatom.labels basbbc.labels basatom.hex basbbc.ssd
 
 remake: clean all diff
 
@@ -20,9 +20,8 @@ diff: basatom.hex
 	diff basatom-orig.hex basatom.hex
 
 .PHONY: copy
-copy: bbc
-	beeb blank_ssd atombas.ssd
-	beeb title atombas.ssd ATOMBASIC
-	beeb delete atombas.ssd -y bbcatom
-	beeb putfile atombas.ssd bbcatom
-	cp atombas.ssd /Volumes/GOTEK-FF
+copy: basbbc
+	-beeb blank_ssd basbbc.ssd
+	-beeb title basbbc.ssd ATOMBASIC
+	-beeb delete basbbc.ssd -y basbbc
+	-beeb putfile basbbc.ssd basbbc
