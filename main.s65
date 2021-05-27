@@ -36,6 +36,7 @@ BPTVEC=$216
 
 ; Atom MOS ROM routines
 
+f04b=$f04b
 f141=$f141
 
 
@@ -260,7 +261,7 @@ cmd_tbl_numass:	.text "#"
 		.text "B"
 		.text "F"
 		; error?
-cmd_unk:	.text $f0
+cmd_unk:	.text >f04b
 
 cmd_tbl_for:	; [FOR ...]
 		.text "T"
@@ -574,7 +575,7 @@ off_4d:		.text cmd_log_err - cmd_tbl		; [A]ND
 		.text cmd_bput - cmd_tbl		; B
 		.text cmd_oscmd - cmd_tbl		; *
 		.text cmd_end - cmd_tbl			; E
-		.text $4b				; unk2
+		.text <f04b				; unk2
 
 		.text cmd_unk2 - cmd_tbl		; [S]AVE
 		.text cmd_unk2 - cmd_tbl
