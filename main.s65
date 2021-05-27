@@ -34,6 +34,11 @@ WRCVEC=$208
 BPTVEC=$216
 
 
+; Atom MOS ROM routines
+
+f141=$f141
+
+
 .else
 
 
@@ -143,6 +148,16 @@ BBCBPUTV=$218
 BPTVEC=BBCBPUTV
 
 
+; Bits of Atom MOS ROM that are called directly by BASIC
+
+f141:
+		LDA $0d
+		STA $23
+		LDA $0e
+		STA $24
+		JMP ce83
+
+
 .endif
 
 
@@ -188,7 +203,7 @@ cmd_unk:	.text $f0
 
 cmd_tbl_for:	; [FOR ...]
 		.text "T"
-cmd_end:	.text $ff
+cmd_end_tbl:	.text $ff
 		;
 cmd_to:		.text "O", >do_to		; [T]O
 
@@ -263,7 +278,7 @@ cmd_fin:	.text "IN", >do_fin		; [F]IN
 cmd_fout:	.text "OUT", >do_fout		; [F]OUT
 cmd_pr_dol:	.text >do_pr_dol		; [$]
 cmd_pr_amp:	.text >do_pr_amp		; [&]
-		.text "RINT"			; [P]RINT
+cmd_print:	.text "RINT"			; [P]RINT
 cmd_pr_com:	.text >do_pr_com		; [,]
 
 cmd_tbl_direct:	.text "N"
@@ -302,9 +317,9 @@ cmd_gosub:	.text "OSUB", >do_gosub		; [G]OSUB
 cmd_goto:	.text "OTO", >do_goto		; [G]OTO
 cmd_return:	.text "ETURN", >do_return
 cmd_rem:	.text "EM", >do_rem
-cmd_run:	.text "UN", $f1
+cmd_run:	.text "UN", >f141
 cmd_for:	.text "OR", >do_for
-		.text "ND", >do_end
+cmd_end:	.text "ND", >do_end
 cmd_sget:	.text "GET", >do_sget
 cmd_sput:	.text "PUT", >do_sput
 cmd_shut:	.text "HUT", >do_shut
@@ -312,9 +327,9 @@ cmd_bput:	.text "PUT", >do_bput
 cmd_ptr2:	.text "TR", >do_ptr2		; [P]TR
 cmd_put:	.text "UT", >do_put		; [P]UT
 cmd_pling:	.text >do_pling			; [!]
-		.text >do_query			; [?]
-		.text >do_str			; [$]
-		.text >do_oscmd			; [*]
+cmd_query:	.text >do_query			; [?]
+cmd_str:	.text >do_str			; [$]
+cmd_oscmd:	.text >do_oscmd			; [*]
 		.text ","
 		.text $fe
 
@@ -358,25 +373,25 @@ off_tbl:
 		.text cmd_to - cmd_tbl			; T
 		.text $ac
 		;
-		.text cmd_end - cmd_tbl			; [T]O
+		.text cmd_end_tbl - cmd_tbl		; [T]O
 		.text <do_to
 
 		; [FOR ... TO ...]
 		.text cmd_step - cmd_tbl		; S
 		.text <do_nostep
 		;
-		.text cmd_end - cmd_tbl			; [S]TEP
-		.text cmd_end - cmd_tbl
-		.text cmd_end - cmd_tbl
+		.text cmd_end_tbl - cmd_tbl		; [S]TEP
+		.text cmd_end_tbl - cmd_tbl
+		.text cmd_end_tbl - cmd_tbl
 		.text <do_step
 
 		; [IF ...]
 		.text cmd_then - cmd_tbl		; T
 		.text <do_then
 		;
-		.text cmd_end - cmd_tbl			; [T]HEN
-		.text cmd_end - cmd_tbl
-		.text cmd_end - cmd_tbl
+		.text cmd_end_tbl - cmd_tbl		; [T]HEN
+		.text cmd_end_tbl - cmd_tbl
+		.text cmd_end_tbl - cmd_tbl
 		.text <do_then
 
 		; check for valid string
@@ -489,15 +504,15 @@ off_4d:		.text cmd_log_err - cmd_tbl		; [A]ND
 		.text cmd_return - cmd_tbl		; R
 		.text cmd_for - cmd_tbl			; F
 		.text cmd_pling - cmd_tbl		; !
-		.text $ea				; ?
-		.text $eb				; $
-		.text $78				; P
-		.text $97				; D
-		.text $99				; L
-		.text $d3				; S
-		.text $df				; B
-		.text $ec				; *
-		.text $d0				; E
+		.text cmd_query - cmd_tbl		; ?
+		.text cmd_str - cmd_tbl			; $
+		.text cmd_print - cmd_tbl		; P
+		.text cmd_do - cmd_tbl			; D
+		.text cmd_let - cmd_tbl			; L
+		.text cmd_sget - cmd_tbl		; S
+		.text cmd_bput - cmd_tbl		; B
+		.text cmd_oscmd - cmd_tbl		; *
+		.text cmd_end - cmd_tbl			; E
 		.text $4b				; unk2
 
 		.text cmd_unk2 - cmd_tbl		; [S]AVE
@@ -560,7 +575,7 @@ off_c4:		.text cmd_unk2 - cmd_tbl
 		.text <do_rem
 		.text cmd_unk2 - cmd_tbl		; [R]UN
 		.text cmd_unk2 - cmd_tbl
-		.text $41
+		.text <f141
 		.text cmd_unk2 - cmd_tbl		; [F]OR
 		.text cmd_unk2 - cmd_tbl
 		.text <do_for
