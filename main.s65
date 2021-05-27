@@ -150,8 +150,69 @@ BPTVEC=BBCBPUTV
 
 ; Bits of Atom MOS ROM that are called directly by BASIC
 
-f141:
-		LDA $0d
+f000:		.text 'PLOT', $f5, 'N'
+		.text 'DRAW', $f5, 'B'
+		.text 'MOVE', $f5, 'F'
+		.text 'CLEAR', $f6, $7b
+		.text 'DIM', $f0, $ae
+		.text $5b, $f2, $a1
+		.text 'OLD', $f5, $31
+		.text 'WAIT'
+
+f04b:		LDX #$ff
+		LDY $5e
+		DEC $5e
+		LDA ($05),Y
+		CMP #$40
+		BCC f060
+		CMP #$5b
+		BCS f060
+		INY
+		CMP ($05),Y
+		BEQ f085
+f060:		LDY $5e
+f062:		INX
+		INY
+		LDA f000,X	; points to "PLOT"
+		BMI f075
+		CMP ($05),Y
+		BEQ f062
+f06d:		INX
+		LDA f000 - 1,X
+		BPL f06d
+		BNE f060
+f075:		STA $53
+		LDA f000 + 1,X	; points to "PLOT" plus 1
+		STA $52
+		STY $03
+		LDX $04
+		INC $5e
+		JMP ($0052)
+f085:		JSR f08b
+		JMP c3f1
+f08b:		INY
+		STY $03
+		SBC #$40
+		PHA
+		JSR c8bc
+		PLA
+		TAY
+		LDA $15,X
+		ASL A
+		ROL $24,X
+		ASL A
+		ROL $24,X
+		CLC
+		ADC $02eb,Y
+		STA $15,X
+		LDA $24,X
+		ADC $0306,Y
+		STA $24,X
+		BCS f0ae	; jumps to a 00 nopcode = break?
+		RTS
+f0ae:		BRK
+
+f141:		LDA $0d
 		STA $23
 		LDA $0e
 		STA $24
@@ -953,7 +1014,7 @@ do_then:	JSR c434		; If the first non space character is
 					; is not (but is not '.')
 c31e:		BCS c32f		; ... then treat this as an integer variable
 					; assignment
-c320:		LDX #cmd_tbl_then - cmd_tbl	
+c320:		LDX #cmd_tbl_then - cmd_tbl
 					; Set the interpreter table pointer to $C???
 c322:		JMP c233		; ... and interpret & execute the command
 
