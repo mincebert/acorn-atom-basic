@@ -151,14 +151,17 @@ BPTVEC=BBCBPUTV
 
 ; Bits of Atom MOS ROM that are called directly by BASIC
 
-f000:		.text 'PLOT', $f5, 'N'
-		.text 'DRAW', $f5, 'B'
-		.text 'MOVE', $f5, 'F'
-		.text 'CLEAR', $f6, $7b
-		.text 'DIM', $f0, $ae
-		.text $5b, $f2, $a1
-		.text 'OLD', $f5, $31
-		.text 'WAIT'
+; Commands that follow on from the BASIC table
+
+f000:		.text "PLOT", $f5, $4e
+		.text "DRAW", $f5, $42
+		.text "MOVE", $f5, $46
+		.text "CLEAR", $f6, $7b
+		.text "DIM", $f0, $ae
+		.text "[", $f2, $a1
+		.text "OLD", $f5, $31
+		.text "WAIT", $f1, $4c
+		.text >c550, <c550
 
 f04b:		LDX #$ff
 		LDY $5e
@@ -174,7 +177,7 @@ f04b:		LDX #$ff
 f060:		LDY $5e
 f062:		INX
 		INY
-		LDA f000,X	; points to "PLOT"
+		LDA f000,X		; points to "PLOT"
 		BMI f075
 		CMP ($05),Y
 		BEQ f062
@@ -183,7 +186,7 @@ f06d:		INX
 		BPL f06d
 		BNE f060
 f075:		STA $53
-		LDA f000 + 1,X	; points to "PLOT" plus 1
+		LDA f000 + 1,X		; points to "PLOT" plus 1
 		STA $52
 		STY $03
 		LDX $04
@@ -212,6 +215,9 @@ f08b:		INY
 		BCS f0ae	; jumps to a 00 nopcode = break?
 		RTS
 f0ae:		BRK
+
+
+; Execute command RUN
 
 f141:		LDA $0d
 		STA $23
@@ -315,7 +321,7 @@ cmd_gt:		.text >do_gt			; [>]
 cmd_fnn:	.text >do_fnn			; [fn -]
 
 cmd_or:		.text "R", >do_or		; [O]R
-cmd_str_cmp:	.text >do_str_cmp		; ???
+cmd_str_cmp:	.text >do_str_cmp
 cmd_tbl_log:	.text "O"
 		.text "A"
 cmd_log_err:	.text $fe			; error???
